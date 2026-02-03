@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useBlockDesignerStore, DEFAULT_GRID_SIZE } from '@quillty/core';
+import { UndoRedoControls } from '@/components/block-designer/UndoRedoControls';
 
 // Dynamic import for BlockCanvas (Konva requires browser APIs)
 const BlockCanvas = dynamic(
@@ -65,6 +66,8 @@ export default function BlockDesignerPage() {
             </svg>
           </Link>
           <h1 className="text-lg font-semibold text-gray-900">Block Designer</h1>
+          <div className="w-px h-6 bg-gray-200" />
+          <UndoRedoControls />
         </div>
 
         <div className="flex items-center gap-3">

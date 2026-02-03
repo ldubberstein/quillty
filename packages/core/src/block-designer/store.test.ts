@@ -8,6 +8,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { useBlockDesignerStore } from './store';
 import { DEFAULT_GRID_SIZE, DEFAULT_PALETTE } from './constants';
 import type { Block, GridPosition, HstVariant, FlyingGeeseDirection, SquareShape, HstShape, FlyingGeeseShape } from './types';
+import { createUndoManagerState } from './history/undoManager';
 
 // Helper to reset store state before each test
 function resetStore() {
@@ -31,6 +32,7 @@ function resetStore() {
     activeFabricRole: null,
     mode: 'idle',
     flyingGeesePlacement: null,
+    undoManager: createUndoManagerState(),
   });
 }
 
@@ -998,6 +1000,231 @@ describe('BlockDesignerStore', () => {
         useBlockDesignerStore.getState().flipShapeVertical(id);
         expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('right');
       });
+    });
+  });
+
+  // ===========================================================================
+  // Undo/Redo
+  // ===========================================================================
+
+  describe('undo', () => {
+    it('undoes add shape operation', () => {
+      const store = useBlockDesignerStore.getState();
+      store.addSquare({ row: 0, col: 0 });
+
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+
+      store.undo();
+
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+    });
+
+    it('undoes remove shape operation', () => {
+      const store = useBlockDesignerStore.getState();
+      const id = store.addSquare({ row: 0, col: 0 });
+      store.removeShape(id);
+
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+
+      store.undo();
+
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+    });
+
+    it('undoes fabric role change', () => {
+      const store = useBlockDesignerStore.getState();
+      const id = store.addSquare({ row: 0, col: 0 }, 'background');
+      store.assignFabricRole(id, 'accent1');
+
+      expect((useBlockDesignerStore.getState().block.shapes[0] as SquareShape).fabricRole).toBe('accent1');
+
+      store.undo();
+
+      expect((useBlockDesignerStore.getState().block.shapes[0] as SquareShape).fabricRole).toBe('background');
+    });
+
+    it('undoes palette color change', () => {
+      const store = useBlockDesignerStore.getState();
+      const originalColor = store.block.previewPalette.roles.find((r) => r.id === 'background')?.color;
+      store.setRoleColor('background', '#FF0000');
+
+      expect(useBlockDesignerStore.getState().block.previewPalette.roles.find((r) => r.id === 'background')?.color).toBe('#FF0000');
+
+      store.undo();
+
+      expect(useBlockDesignerStore.getState().block.previewPalette.roles.find((r) => r.id === 'background')?.color).toBe(originalColor);
+    });
+
+    it('undoes HST rotation', () => {
+      const store = useBlockDesignerStore.getState();
+      const id = store.addHst({ row: 0, col: 0 }, 'nw');
+      store.rotateShape(id);
+
+      expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('ne');
+
+      store.undo();
+
+      expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('nw');
+    });
+
+    it('undoes HST flip horizontal', () => {
+      const store = useBlockDesignerStore.getState();
+      const id = store.addHst({ row: 0, col: 0 }, 'nw');
+      store.flipShapeHorizontal(id);
+
+      expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('ne');
+
+      store.undo();
+
+      expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('nw');
+    });
+
+    it('undoes Flying Geese rotation', () => {
+      const store = useBlockDesignerStore.getState();
+      const id = store.addFlyingGeese({ row: 0, col: 0 }, 'up');
+      store.rotateShape(id);
+
+      expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('right');
+      expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).span).toEqual({ rows: 1, cols: 2 });
+
+      store.undo();
+
+      expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('up');
+      expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).span).toEqual({ rows: 2, cols: 1 });
+    });
+
+    it('clears selection when undoing removes selected shape', () => {
+      const store = useBlockDesignerStore.getState();
+      const id = store.addSquare({ row: 0, col: 0 });
+      store.selectShape(id);
+
+      expect(useBlockDesignerStore.getState().selectedShapeId).toBe(id);
+
+      store.undo();
+
+      expect(useBlockDesignerStore.getState().selectedShapeId).toBeNull();
+    });
+
+    it('does nothing when undo stack is empty', () => {
+      const store = useBlockDesignerStore.getState();
+
+      // Should not throw
+      expect(() => store.undo()).not.toThrow();
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+    });
+
+    it('supports multiple undos in sequence', () => {
+      const store = useBlockDesignerStore.getState();
+      store.addSquare({ row: 0, col: 0 });
+      store.addSquare({ row: 0, col: 1 });
+      store.addSquare({ row: 0, col: 2 });
+
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(3);
+
+      store.undo();
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(2);
+
+      store.undo();
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+
+      store.undo();
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+    });
+  });
+
+  describe('redo', () => {
+    it('redoes undone add shape operation', () => {
+      const store = useBlockDesignerStore.getState();
+      store.addSquare({ row: 0, col: 0 });
+      store.undo();
+
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+
+      store.redo();
+
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+    });
+
+    it('redoes undone remove shape operation', () => {
+      const store = useBlockDesignerStore.getState();
+      const id = store.addSquare({ row: 0, col: 0 });
+      store.removeShape(id);
+      store.undo();
+
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+
+      store.redo();
+
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+    });
+
+    it('does nothing when redo stack is empty', () => {
+      const store = useBlockDesignerStore.getState();
+      store.addSquare({ row: 0, col: 0 });
+
+      // Should not throw
+      expect(() => store.redo()).not.toThrow();
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+    });
+
+    it('clears redo stack when new operation is performed', () => {
+      const store = useBlockDesignerStore.getState();
+      store.addSquare({ row: 0, col: 0 });
+      store.undo();
+
+      expect(useBlockDesignerStore.getState().canRedo()).toBe(true);
+
+      // New operation should clear redo stack
+      store.addSquare({ row: 1, col: 1 });
+
+      expect(useBlockDesignerStore.getState().canRedo()).toBe(false);
+    });
+
+    it('supports multiple redos in sequence', () => {
+      const store = useBlockDesignerStore.getState();
+      store.addSquare({ row: 0, col: 0 });
+      store.addSquare({ row: 0, col: 1 });
+      store.addSquare({ row: 0, col: 2 });
+      store.undo();
+      store.undo();
+      store.undo();
+
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+
+      store.redo();
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+
+      store.redo();
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(2);
+
+      store.redo();
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(3);
+    });
+  });
+
+  describe('canUndo', () => {
+    it('returns false when undo stack is empty', () => {
+      expect(useBlockDesignerStore.getState().canUndo()).toBe(false);
+    });
+
+    it('returns true when undo stack has operations', () => {
+      useBlockDesignerStore.getState().addSquare({ row: 0, col: 0 });
+
+      expect(useBlockDesignerStore.getState().canUndo()).toBe(true);
+    });
+  });
+
+  describe('canRedo', () => {
+    it('returns false when redo stack is empty', () => {
+      expect(useBlockDesignerStore.getState().canRedo()).toBe(false);
+    });
+
+    it('returns true after undo', () => {
+      const store = useBlockDesignerStore.getState();
+      store.addSquare({ row: 0, col: 0 });
+      store.undo();
+
+      expect(store.canRedo()).toBe(true);
     });
   });
 });

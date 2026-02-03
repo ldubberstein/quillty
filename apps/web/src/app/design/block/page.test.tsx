@@ -8,6 +8,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
+// Mock the keyboard hook
+vi.mock('@/hooks/useUndoRedoKeyboard', () => ({
+  useUndoRedoKeyboard: vi.fn(),
+}));
+
 // Mock the store before importing the component
 vi.mock('@quillty/core', () => ({
   useBlockDesignerStore: vi.fn((selector) => {
@@ -25,9 +30,15 @@ vi.mock('@quillty/core', () => ({
         },
       },
       initBlock: vi.fn(),
+      undo: vi.fn(),
+      redo: vi.fn(),
+      canUndo: vi.fn(() => false),
+      canRedo: vi.fn(() => false),
     };
     return selector ? selector(state) : state;
   }),
+  useCanUndo: vi.fn(() => false),
+  useCanRedo: vi.fn(() => false),
   DEFAULT_GRID_SIZE: 3,
 }));
 

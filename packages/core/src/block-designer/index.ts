@@ -112,6 +112,8 @@ export {
   useDesignerMode,
   useIsPaintMode,
   useFlyingGeesePlacement,
+  useCanUndo,
+  useCanRedo,
   type BlockDesignerStore,
 } from './store';
 
