@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useBlockDesignerStore, DEFAULT_GRID_SIZE } from '@quillty/core';
 
 // Dynamic import for BlockCanvas (Konva requires browser APIs)
@@ -18,9 +18,17 @@ const BlockCanvas = dynamic(
   }
 );
 
+// Dynamic import for FabricPanel
+const FabricPanel = dynamic(
+  () => import('@/components/block-designer/FabricPanel').then((mod) => mod.FabricPanel),
+  { ssr: false }
+);
+
 export default function BlockDesignerPage() {
   const initBlock = useBlockDesignerStore((state) => state.initBlock);
   const block = useBlockDesignerStore((state) => state.block);
+  const mode = useBlockDesignerStore((state) => state.mode);
+  const [showFabricPanel, setShowFabricPanel] = useState(true);
 
   // Initialize a new block on mount
   useEffect(() => {
@@ -29,6 +37,8 @@ export default function BlockDesignerPage() {
       initBlock(DEFAULT_GRID_SIZE);
     }
   }, [initBlock, block.shapes.length, block.title]);
+
+  const isPaintMode = mode === 'paint_mode';
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
@@ -63,6 +73,28 @@ export default function BlockDesignerPage() {
             {block.gridSize}×{block.gridSize} grid
           </span>
 
+          {/* Fabric panel toggle */}
+          <button
+            onClick={() => setShowFabricPanel((prev) => !prev)}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              showFabricPanel
+                ? 'text-white bg-blue-500 hover:bg-blue-600'
+                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+            }`}
+            aria-label={showFabricPanel ? 'Hide fabric panel' : 'Show fabric panel'}
+          >
+            <span className="flex items-center gap-2">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Fabrics
+            </span>
+          </button>
+
           {/* Placeholder buttons */}
           <button
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
@@ -79,15 +111,27 @@ export default function BlockDesignerPage() {
         </div>
       </header>
 
-      {/* Main Canvas Area */}
-      <main className="flex-1 min-h-0 relative">
-        <BlockCanvas />
+      {/* Main Content Area */}
+      <main className="flex-1 min-h-0 flex relative">
+        {/* Canvas */}
+        <div className="flex-1 min-w-0 relative">
+          <BlockCanvas />
+        </div>
+
+        {/* Fabric Panel Sidebar */}
+        {showFabricPanel && (
+          <aside className="w-64 flex-shrink-0 bg-gray-50 border-l border-gray-200 p-4 overflow-y-auto">
+            <FabricPanel />
+          </aside>
+        )}
       </main>
 
       {/* Footer hint */}
       <footer className="px-4 py-2 bg-white border-t border-gray-200">
         <p className="text-sm text-gray-500 text-center">
-          Tap a cell to add a shape • Scroll to zoom • Drag to pan
+          {isPaintMode
+            ? 'Tap shapes to paint them with the selected fabric'
+            : 'Tap a cell to add a shape • Scroll to zoom • Drag to pan'}
         </p>
       </footer>
     </div>

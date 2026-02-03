@@ -33,6 +33,7 @@ export function BlockCanvas() {
   const block = useBlockDesignerStore((state) => state.block);
   const mode = useBlockDesignerStore((state) => state.mode);
   const flyingGeesePlacement = useBlockDesignerStore((state) => state.flyingGeesePlacement);
+  const activeFabricRole = useBlockDesignerStore((state) => state.activeFabricRole);
   const addSquare = useBlockDesignerStore((state) => state.addSquare);
   const addHst = useBlockDesignerStore((state) => state.addHst);
   const isCellOccupied = useBlockDesignerStore((state) => state.isCellOccupied);
@@ -41,8 +42,10 @@ export function BlockCanvas() {
   const startFlyingGeesePlacement = useBlockDesignerStore((state) => state.startFlyingGeesePlacement);
   const completeFlyingGeesePlacement = useBlockDesignerStore((state) => state.completeFlyingGeesePlacement);
   const cancelFlyingGeesePlacement = useBlockDesignerStore((state) => state.cancelFlyingGeesePlacement);
+  const assignFabricRole = useBlockDesignerStore((state) => state.assignFabricRole);
 
   const { gridSize, shapes, previewPalette } = block;
+  const isPaintMode = mode === 'paint_mode';
 
   // Canvas state - start with 0 to force measurement
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -359,6 +362,17 @@ export function BlockCanvas() {
     setPickerState(null);
   }, []);
 
+  // Handle shape click (for paint mode)
+  const handleShapeClick = useCallback(
+    (shapeId: string) => {
+      if (isPaintMode && activeFabricRole) {
+        assignFabricRole(shapeId, activeFabricRole);
+      }
+      // In non-paint mode, could open edit popup (future iteration)
+    },
+    [isPaintMode, activeFabricRole, assignFabricRole]
+  );
+
   // Filter shapes by type
   const squareShapes = shapes.filter((s): s is SquareShape => s.type === 'square');
   const hstShapes = shapes.filter((s): s is HstShape => s.type === 'hst');
@@ -406,6 +420,7 @@ export function BlockCanvas() {
                   offsetX={gridOffsetX}
                   offsetY={gridOffsetY}
                   palette={previewPalette}
+                  onClick={isPaintMode ? () => handleShapeClick(shape.id) : undefined}
                 />
               ))}
 
@@ -418,6 +433,7 @@ export function BlockCanvas() {
                   offsetX={gridOffsetX}
                   offsetY={gridOffsetY}
                   palette={previewPalette}
+                  onClick={isPaintMode ? () => handleShapeClick(shape.id) : undefined}
                 />
               ))}
 
@@ -430,6 +446,7 @@ export function BlockCanvas() {
                   offsetX={gridOffsetX}
                   offsetY={gridOffsetY}
                   palette={previewPalette}
+                  onClick={isPaintMode ? () => handleShapeClick(shape.id) : undefined}
                 />
               ))}
 
@@ -464,15 +481,18 @@ export function BlockCanvas() {
               )}
 
               {/* Invisible rect to capture clicks on the entire grid area */}
-              <Rect
-                x={gridOffsetX}
-                y={gridOffsetY}
-                width={gridPixelSize}
-                height={gridPixelSize}
-                fill="transparent"
-                onClick={handleGridClick}
-                onTap={handleGridClick}
-              />
+              {/* Only render when NOT in paint mode, so shape clicks work */}
+              {!isPaintMode && (
+                <Rect
+                  x={gridOffsetX}
+                  y={gridOffsetY}
+                  width={gridPixelSize}
+                  height={gridPixelSize}
+                  fill="transparent"
+                  onClick={handleGridClick}
+                  onTap={handleGridClick}
+                />
+              )}
             </Layer>
           </Stage>
 
@@ -496,6 +516,21 @@ export function BlockCanvas() {
               >
                 Cancel
               </button>
+            </div>
+          )}
+
+          {/* Paint mode indicator */}
+          {isPaintMode && activeFabricRole && (
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2">
+              <div
+                className="w-4 h-4 rounded border border-white/50"
+                style={{
+                  backgroundColor:
+                    previewPalette.roles.find((r) => r.id === activeFabricRole)?.color ?? '#CCC',
+                }}
+              />
+              Tap shapes to paint with{' '}
+              {previewPalette.roles.find((r) => r.id === activeFabricRole)?.name ?? 'fabric'}
             </div>
           )}
 
