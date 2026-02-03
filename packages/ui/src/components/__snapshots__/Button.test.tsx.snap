@@ -1,0 +1,13 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Button > renders with text content 1`] = `
+<Pressable
+  className="items-center justify-center rounded-full min-h-[44px] px-6 py-3 bg-brand"
+>
+  <Text
+    className="font-semibold text-base text-white"
+  >
+    Click me
+  </Text>
+</Pressable>
+`;

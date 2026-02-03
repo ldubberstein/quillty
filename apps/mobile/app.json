@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Quillty",
+    "slug": "quillty",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "quillty",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#e85d04"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.quillty.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#e85d04"
+      },
+      "package": "com.quillty.app"
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

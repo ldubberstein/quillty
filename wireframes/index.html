@@ -1,0 +1,1852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quillty Wireframes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8f8f8;
+      --bg-elevated: #f1f1f1;
+      --bg-card: #ffffff;
+      --bg-card-hover: #fafafa;
+
+      --text-primary: #111111;
+      --text-secondary: #555555;
+      --text-tertiary: #888888;
+
+      --accent: #111111;
+      --accent-hover: #333333;
+      --accent-muted: rgba(0, 0, 0, 0.06);
+
+      --brand: #e85d04;
+      --brand-light: #fff4ed;
+
+      --border: rgba(0,0,0,0.08);
+      --border-hover: rgba(0,0,0,0.15);
+
+      --success: #16a34a;
+      --coral: #e85d04;
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --radius-full: 9999px;
+
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-8: 32px;
+      --space-10: 40px;
+      --space-12: 48px;
+
+      --touch-target: 44px;
+
+      --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+
+      --header-height: 64px;
+      --nav-height: 72px;
+      --sidebar-width: 240px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,0.15);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(0,0,0,0.25);
+    }
+
+    /* Layout */
+    .app {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar - Desktop */
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: var(--sidebar-width);
+      background: var(--bg-primary);
+      border-right: 1px solid var(--border);
+      padding: var(--space-6);
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+    }
+
+    @media (max-width: 1024px) {
+      .sidebar {
+        display: none;
+      }
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: var(--space-10);
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--brand);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-icon svg {
+      width: 20px;
+      height: 20px;
+      color: white;
+    }
+
+    .nav-links {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+      flex: 1;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      padding: var(--space-4);
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 500;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      min-height: var(--touch-target);
+    }
+
+    .nav-link:hover {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+    }
+
+    .nav-link.active {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+    }
+
+    .nav-link svg {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .nav-link.create {
+      background: var(--brand);
+      color: white;
+      margin-top: var(--space-4);
+    }
+
+    .nav-link.create:hover {
+      background: #d45404;
+      color: white;
+    }
+
+    .nav-profile {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-4);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .nav-profile:hover {
+      background: var(--bg-elevated);
+    }
+
+    .nav-profile-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-full);
+      background: linear-gradient(135deg, var(--coral), var(--accent));
+    }
+
+    .nav-profile-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .nav-profile-name {
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .nav-profile-handle {
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+
+    /* Main Content */
+    .main {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      min-height: 100vh;
+    }
+
+    @media (max-width: 1024px) {
+      .main {
+        margin-left: 0;
+        padding-bottom: var(--nav-height);
+      }
+    }
+
+    /* Header */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--space-6);
+      height: var(--header-height);
+      max-width: 1800px;
+      margin: 0 auto;
+    }
+
+    .header-tabs {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .header-tab {
+      padding: var(--space-3) var(--space-5);
+      border-radius: var(--radius-full);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      min-height: var(--touch-target);
+    }
+
+    .header-tab:hover {
+      color: var(--text-primary);
+      background: var(--bg-elevated);
+    }
+
+    .header-tab.active {
+      color: var(--text-primary);
+      background: var(--bg-card);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .header-search {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-3) var(--space-4);
+      background: var(--bg-elevated);
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border);
+      min-width: 240px;
+      transition: all 0.15s ease;
+    }
+
+    .header-search:focus-within {
+      border-color: var(--accent);
+      background: var(--bg-card);
+    }
+
+    .header-search svg {
+      width: 18px;
+      height: 18px;
+      color: var(--text-tertiary);
+      flex-shrink: 0;
+    }
+
+    .header-search input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-primary);
+      font-size: 14px;
+      width: 100%;
+      font-family: inherit;
+    }
+
+    .header-search input::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    .icon-btn {
+      width: var(--touch-target);
+      height: var(--touch-target);
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .icon-btn:hover {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+    }
+
+    .icon-btn svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    /* Mobile Header */
+    .mobile-logo {
+      display: none;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 1024px) {
+      .mobile-logo {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+      }
+      .header-search {
+        display: none;
+      }
+    }
+
+    /* Feed Grid */
+    .feed {
+      padding: var(--space-6);
+      max-width: 1800px;
+      margin: 0 auto;
+    }
+
+    .masonry {
+      column-count: 5;
+      column-gap: var(--space-4);
+    }
+
+    @media (max-width: 1600px) {
+      .masonry { column-count: 4; }
+    }
+    @media (max-width: 1200px) {
+      .masonry { column-count: 3; }
+    }
+    @media (max-width: 768px) {
+      .masonry { column-count: 2; column-gap: var(--space-3); }
+      .feed { padding: var(--space-3); }
+    }
+    @media (max-width: 480px) {
+      .masonry { column-count: 2; }
+    }
+
+    /* Cards */
+    .card {
+      break-inside: avoid;
+      margin-bottom: var(--space-4);
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    @media (max-width: 768px) {
+      .card {
+        margin-bottom: var(--space-3);
+      }
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: var(--border-hover);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+    }
+
+    .card-media {
+      position: relative;
+      width: 100%;
+      aspect-ratio: var(--ratio, 4/5);
+      background: var(--bg-elevated);
+      overflow: hidden;
+    }
+
+    .card-media.square {
+      --ratio: 1;
+    }
+
+    .card-media.tall {
+      --ratio: 3/4;
+    }
+
+    .card-media.wide {
+      --ratio: 5/4;
+    }
+
+    /* Quilt Preview Patterns */
+    .quilt-preview {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      gap: 2px;
+      padding: 2px;
+      background: #e5e5e5;
+    }
+
+    .quilt-preview.g3 { grid-template-columns: repeat(3, 1fr); }
+    .quilt-preview.g4 { grid-template-columns: repeat(4, 1fr); }
+    .quilt-preview.g5 { grid-template-columns: repeat(5, 1fr); }
+    .quilt-preview.g6 { grid-template-columns: repeat(6, 1fr); }
+
+    .q-cell {
+      background: #9ca3af;
+      position: relative;
+    }
+
+    .q-cell.c1 { background: var(--brand); }
+    .q-cell.c2 { background: #ef4444; }
+    .q-cell.c3 { background: #6366f1; }
+    .q-cell.c4 { background: #0891b2; }
+    .q-cell.c5 { background: #fafafa; }
+    .q-cell.c6 { background: #ec4899; }
+    .q-cell.c7 { background: #8b5cf6; }
+
+    .q-cell.hst::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent 50%, #fafafa 50%);
+    }
+
+    .q-cell.hst-r::after {
+      background: linear-gradient(225deg, transparent 50%, #fafafa 50%);
+    }
+
+    /* Card Badges */
+    .card-badge {
+      position: absolute;
+      top: var(--space-3);
+      left: var(--space-3);
+      padding: var(--space-1) var(--space-3);
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .card-badge.block {
+      background: rgba(255,255,255,0.9);
+      color: var(--text-secondary);
+    }
+
+    .card-price {
+      position: absolute;
+      top: var(--space-3);
+      left: var(--space-3);
+      padding: var(--space-1) var(--space-3);
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .card-price.premium {
+      background: var(--text-primary);
+      color: white;
+    }
+
+    .card-price.free {
+      background: var(--success);
+      color: white;
+    }
+
+    /* Card Hover Actions */
+    .card-actions {
+      position: absolute;
+      top: var(--space-3);
+      right: var(--space-3);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      opacity: 0;
+      transform: translateX(8px);
+      transition: all 0.2s ease;
+    }
+
+    .card:hover .card-actions {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .card-action {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-full);
+      background: white;
+      backdrop-filter: blur(10px);
+      border: none;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .card-action:hover {
+      background: var(--brand);
+      color: white;
+      transform: scale(1.1);
+    }
+
+    .card-action svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Card Content */
+    .card-content {
+      padding: var(--space-4);
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-3);
+    }
+
+    .card-creator {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      min-width: 0;
+    }
+
+    .card-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: var(--radius-full);
+      background: linear-gradient(135deg, var(--coral), var(--accent));
+      flex-shrink: 0;
+    }
+
+    .card-username {
+      font-size: 13px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-stats {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      flex-shrink: 0;
+    }
+
+    .card-stat {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+
+    .card-stat svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Mobile Bottom Nav */
+    .mobile-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      padding: var(--space-2) var(--space-4);
+      padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom, 0));
+      z-index: 100;
+    }
+
+    @media (max-width: 1024px) {
+      .mobile-nav {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+      }
+    }
+
+    .mobile-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-2);
+      min-width: var(--touch-target);
+      min-height: var(--touch-target);
+      border: none;
+      background: transparent;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      transition: color 0.15s ease;
+      border-radius: var(--radius-md);
+    }
+
+    .mobile-nav-item:hover,
+    .mobile-nav-item.active {
+      color: var(--text-primary);
+    }
+
+    .mobile-nav-item svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .mobile-nav-item span {
+      font-size: 10px;
+      font-weight: 500;
+    }
+
+    .mobile-nav-item.create {
+      background: var(--brand);
+      color: white;
+      border-radius: var(--radius-full);
+      width: 48px;
+      height: 48px;
+      padding: 0;
+      margin-top: -12px;
+    }
+
+    .mobile-nav-item.create span {
+      display: none;
+    }
+
+    /* Screen Management */
+    .screen {
+      display: none;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Detail Pages */
+    .detail-screen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--bg-primary);
+      z-index: 200;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+    }
+
+    .detail-screen.active {
+      display: block;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .detail-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4) var(--space-6);
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .detail-close {
+      width: var(--touch-target);
+      height: var(--touch-target);
+      border-radius: var(--radius-full);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .detail-close:hover {
+      background: var(--bg-card);
+      border-color: var(--border-hover);
+    }
+
+    .detail-close svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .detail-header-actions {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .detail-layout {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      min-height: calc(100vh - 73px);
+    }
+
+    @media (max-width: 1024px) {
+      .detail-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .detail-media {
+      background: var(--bg-elevated);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-8);
+      position: sticky;
+      top: 73px;
+      height: calc(100vh - 73px);
+    }
+
+    @media (max-width: 1024px) {
+      .detail-media {
+        position: relative;
+        top: 0;
+        height: auto;
+        aspect-ratio: 1;
+        padding: var(--space-6);
+      }
+    }
+
+    .detail-media .quilt-preview {
+      max-width: 500px;
+      max-height: 500px;
+      aspect-ratio: 1;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .detail-info {
+      padding: var(--space-8);
+      border-left: 1px solid var(--border);
+      overflow-y: auto;
+    }
+
+    @media (max-width: 1024px) {
+      .detail-info {
+        border-left: none;
+        border-top: 1px solid var(--border);
+        padding: var(--space-6);
+      }
+    }
+
+    .detail-price-badge {
+      display: inline-flex;
+      padding: var(--space-2) var(--space-4);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: var(--space-4);
+    }
+
+    .detail-price-badge.premium {
+      background: var(--text-primary);
+      color: white;
+    }
+
+    .detail-price-badge.free {
+      background: var(--success);
+      color: white;
+    }
+
+    .detail-title {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: var(--space-6);
+      letter-spacing: -0.5px;
+    }
+
+    .detail-creator {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      margin-bottom: var(--space-6);
+      padding-bottom: var(--space-6);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .detail-creator-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-full);
+      background: linear-gradient(135deg, var(--coral), var(--accent));
+    }
+
+    .detail-creator-info {
+      flex: 1;
+    }
+
+    .detail-creator-name {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .detail-creator-handle {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .follow-btn {
+      padding: var(--space-3) var(--space-5);
+      border-radius: var(--radius-full);
+      font-size: 14px;
+      font-weight: 600;
+      background: var(--text-primary);
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      min-height: var(--touch-target);
+    }
+
+    .follow-btn:hover {
+      background: var(--brand);
+    }
+
+    .detail-stats {
+      display: flex;
+      gap: var(--space-6);
+      margin-bottom: var(--space-6);
+    }
+
+    .detail-stat {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      color: var(--text-secondary);
+      font-size: 15px;
+    }
+
+    .detail-stat svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .detail-stat strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .detail-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      margin-bottom: var(--space-6);
+    }
+
+    .detail-tag {
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-elevated);
+      border-radius: var(--radius-full);
+      font-size: 13px;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .detail-tag.hashtag {
+      color: var(--brand);
+      cursor: pointer;
+    }
+
+    .detail-tag.hashtag:hover {
+      background: var(--brand-light);
+    }
+
+    .detail-description {
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-6);
+    }
+
+    .detail-actions {
+      display: flex;
+      gap: var(--space-3);
+      margin-bottom: var(--space-6);
+    }
+
+    .action-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      padding: var(--space-4);
+      border-radius: var(--radius-md);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      min-height: var(--touch-target);
+    }
+
+    .action-btn:hover {
+      background: var(--bg-card);
+      border-color: var(--border-hover);
+    }
+
+    .action-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .primary-btn {
+      width: 100%;
+      padding: var(--space-4) var(--space-6);
+      border-radius: var(--radius-md);
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      min-height: var(--touch-target);
+    }
+
+    .primary-btn.purchase {
+      background: var(--brand);
+      color: white;
+    }
+
+    .primary-btn.purchase:hover {
+      background: #d45404;
+    }
+
+    .primary-btn.use {
+      background: var(--text-primary);
+      color: white;
+    }
+
+    .primary-btn.use:hover {
+      background: var(--brand);
+    }
+
+    /* Comments Section */
+    .comments-section {
+      margin-top: var(--space-8);
+      padding-top: var(--space-6);
+      border-top: 1px solid var(--border);
+    }
+
+    .comments-header {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: var(--space-4);
+    }
+
+    .comment {
+      display: flex;
+      gap: var(--space-3);
+      padding: var(--space-4) 0;
+    }
+
+    .comment-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-full);
+      background: var(--bg-elevated);
+      flex-shrink: 0;
+    }
+
+    .comment-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .comment-header {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-2);
+      margin-bottom: var(--space-1);
+    }
+
+    .comment-author {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .comment-time {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    .comment-text {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Used In Section */
+    .used-in {
+      margin-top: var(--space-6);
+      padding: var(--space-5);
+      background: var(--bg-elevated);
+      border-radius: var(--radius-lg);
+    }
+
+    .used-in-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-4);
+    }
+
+    .used-in-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .used-in-count {
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+
+    .used-in-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-2);
+    }
+
+    .used-in-item {
+      aspect-ratio: 1;
+      background: var(--bg-card);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .used-in-item:hover {
+      transform: scale(1.05);
+    }
+
+    /* Screen Label */
+    .screen-label {
+      position: fixed;
+      bottom: var(--space-4);
+      right: var(--space-4);
+      padding: var(--space-2) var(--space-4);
+      background: var(--text-primary);
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      z-index: 1000;
+    }
+
+    @media (max-width: 1024px) {
+      .screen-label {
+        bottom: calc(var(--nav-height) + var(--space-4));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Desktop Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <rect x="3" y="3" width="7" height="7"/>
+            <rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/>
+          </svg>
+        </div>
+        Quillty
+      </div>
+
+      <nav class="nav-links">
+        <button class="nav-link active" data-nav="home">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          Home
+        </button>
+        <button class="nav-link" data-nav="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          Search
+        </button>
+        <button class="nav-link" data-nav="blocks">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Blocks
+        </button>
+        <button class="nav-link" data-nav="saved">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+          Saved
+        </button>
+        <button class="nav-link create" data-nav="create">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          Create
+        </button>
+      </nav>
+
+      <div class="nav-profile">
+        <div class="nav-profile-avatar"></div>
+        <div class="nav-profile-info">
+          <div class="nav-profile-name">Jane Doe</div>
+          <div class="nav-profile-handle">@quilter_jane</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Feed Screen -->
+      <div class="screen active" id="feed-screen">
+        <header class="header">
+          <div class="header-inner">
+            <div class="mobile-logo">
+              <div class="logo-icon" style="width:28px;height:28px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px;">
+                  <rect x="3" y="3" width="7" height="7"/>
+                  <rect x="14" y="3" width="7" height="7"/>
+                  <rect x="3" y="14" width="7" height="7"/>
+                  <rect x="14" y="14" width="7" height="7"/>
+                </svg>
+              </div>
+              Quillty
+            </div>
+            <div class="header-tabs">
+              <button class="header-tab active">For You</button>
+              <button class="header-tab">Following</button>
+            </div>
+            <div class="header-actions">
+              <div class="header-search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                <input type="text" placeholder="Search patterns, blocks, creators...">
+              </div>
+              <button class="icon-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <div class="feed">
+          <div class="masonry">
+            <!-- Pattern Card 1 -->
+            <article class="card" onclick="showDetail('pattern')">
+              <div class="card-media">
+                <div class="quilt-preview g4">
+                  <div class="q-cell c1"></div><div class="q-cell c5"></div><div class="q-cell c1"></div><div class="q-cell c5"></div>
+                  <div class="q-cell c5"></div><div class="q-cell c2"></div><div class="q-cell c5"></div><div class="q-cell c2"></div>
+                  <div class="q-cell c1"></div><div class="q-cell c5"></div><div class="q-cell c1"></div><div class="q-cell c5"></div>
+                  <div class="q-cell c5"></div><div class="q-cell c2"></div><div class="q-cell c5"></div><div class="q-cell c2"></div>
+                </div>
+                <span class="card-price premium">$8.99</span>
+                <div class="card-actions">
+                  <button class="card-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
+                  <button class="card-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+                </div>
+              </div>
+              <div class="card-content">
+                <h3 class="card-title">Modern Star Sampler</h3>
+                <div class="card-meta">
+                  <div class="card-creator">
+                    <div class="card-avatar"></div>
+                    <span class="card-username">@quilter_jane</span>
+                  </div>
+                  <div class="card-stats">
+                    <span class="card-stat">
+                      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                      1.2k
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <!-- Block Card 1 -->
+            <article class="card" onclick="showDetail('block')">
+              <div class="card-media square">
+                <div class="quilt-preview g3">
+                  <div class="q-cell c1 hst"></div><div class="q-cell c5"></div><div class="q-cell c1 hst-r"></div>
+                  <div class="q-cell c5"></div><div class="q-cell c1"></div><div class="q-cell c5"></div>
+                  <div class="q-cell c1 hst-r"></div><div class="q-cell c5"></div><div class="q-cell c1 hst"></div>
+                </div>
+                <span class="card-badge block">Block</span>
+                <div class="card-actions">
+                  <button class="card-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
+                </div>
+              </div>
+              <div class="card-content">
+                <h3 class="card-title">Log Cabin Classic</h3>
+                <div class="card-meta">
+                  <div class="card-creator">
+                    <div class="card-avatar" style="background: linear-gradient(135deg, #6366f1, #06b6d4);"></div>
+                    <span class="card-username">@tradquilt</span>
+                  </div>
+                  <div class="card-stats">
+                    <span class="card-stat">
+                      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                      456
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <!-- Pattern Card 2 - Free -->
+            <article class="card" onclick="showDetail('pattern')">
+              <div class="card-media tall">
+                <div class="quilt-preview g3">
+                  <div class="q-cell c4"></div><div class="q-cell c5"></div><div class="q-cell c4"></div>
+                  <div class="q-cell c5"></div><div class="q-cell c4"></div><div class="q-cell c5"></div>
+                  <div class="q-cell c4"></div><div class="q-cell c5"></div><div class="q-cell c4"></div>
+                </div>
+                <span class="card-price free">Free</span>
+                <div class="card-actions">
+                  <button class="card-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
+                  <button class="card-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+                </div>
+              </div>
+              <div class="card-content">
+                <h3 class="card-title">Beginner's First Quilt</h3>
+                <div class="card-meta">
+                  <div class="card-creator">
+                    <div class="card-avatar" style="background: linear-gradient(135deg, #22c55e, #06b6d4);"></div>
+                    <span class="card-username">@sewsimple</span>
+                  </div>
+                  <div class="card-stats">
+                    <span class="card-stat">
+                      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                      2.3k
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <!-- Block Card 2 -->
+            <article class="card" onclick="showDetail('block')">
+              <div class="card-media square">
+                <div class="quilt-preview g4">
+                  <div class="q-cell c2"></div><div class="q-cell c2 hst"></div><div class="q-cell c2 hst-r"></div><div class="q-cell c2"></div>
+                  <div class="q-cell c2 hst-r"></div><div class="q-cell c5"></div><div class="q-cell c5"></div><div class="q-cell c2 hst"></div>
+                  <div class="q-cell c2 hst"></div><div class="q-cell c5"></div><div class="q-cell c5"></div><div class="q-cell c2 hst-r"></div>
+                  <div class="q-cell c2"></div><div class="q-cell c2 hst-r"></div><div class="q-cell c2 hst"></div><div class="q-cell c2"></div>
+                </div>
+                <span class="card-badge block">Block</span>
+              </div>
+              <div class="card-content">
+                <h3 class="card-title">Flying Geese</h3>
+                <div class="card-meta">
+                  <div class="card-creator">
+                    <div class="card-avatar" style="background: linear-gradient(135deg, #f472b6, #a78bfa);"></div>
+                    <span class="card-username">@patchworkpro</span>
+                  </div>
+                  <div class="card-stats">
+                    <span class="card-stat">
+                      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                      892
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <!-- Pattern Card 3 -->
+            <article class="card" onclick="showDetail('pattern')">
+              <div class="card-media">
+                <div class="quilt-preview g5">
+                  <div class="q-cell c3"></div><div class="q-cell c5"></div><div class="q-cell c3"></div><div class="q-cell c5"></div><div class="q-cell c3"></div>
+                  <div class="q-cell c5"></div><div class="q-cell c7"></div><div class="q-cell c5"></div><div class="q-cell c7"></div><div class="q-cell c5"></div>
+                  <div class="q-cell c3"></div><div class="q-cell c5"></div><div class="q-cell c3"></div><div class="q-cell c5"></div><div class="q-cell c3"></div>
+                  <div class="q-cell c5"></div><div class="q-cell c7"></div><div class="q-cell c5"></div><div class="q-cell c7"></div><div class="q-cell c5"></div>
+                  <div class="q-cell c3"></div><div class="q-cell c5"></div><div class="q-cell c3"></div><div class="q-cell c5"></div><div class="q-cell c3"></div>
+                </div>
+                <span class="card-price premium">$12.00</span>
+              </div>
+              <div class="card-content">
+                <h3 class="card-title">Dresden Plate Collection</h3>
+                <div class="card-meta">
+                  <div class="card-creator">
+                    <div class="card-avatar" style="background: linear-gradient(135deg, #a78bfa, #6366f1);"></div>
+                    <span class="card-username">@vintagesew</span>
+                  </div>
+                  <div class="card-stats">
+                    <span class="card-stat">
+                      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                      567
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <!-- Pattern Card 4 -->
+            <article class="card" onclick="showDetail('pattern')">
+              <div class="card-media wide">
+                <div class="quilt-preview g4">
+                  <div class="q-cell c6 hst"></div><div class="q-cell c6"></div><div class="q-cell c6"></div><div class="q-cell c6 hst-r"></div>
+                  <div class="q-cell c6"></div><div class="q-cell c5"></div><div class="q-cell c5"></div><div class="q-cell c6"></div>
+                  <div class="q-cell c6"></div><div class="q-cell c5"></div><div class="q-cell c5"></div><div class="q-cell c6"></div>
+                  <div class="q-cell c6 hst-r"></div><div class="q-cell c6"></div><div class="q-cell c6"></div><div class="q-cell c6 hst"></div>
+                </div>
+                <span class="card-price free">Free</span>
+              </div>
+              <div class="card-content">
+                <h3 class="card-title">Baby Bear Blanket</h3>
+                <div class="card-meta">
+                  <div class="card-creator">
+                    <div class="card-avatar" style="background: linear-gradient(135deg, #f472b6, #ff6b6b);"></div>
+                    <span class="card-username">@littlestitches</span>
+                  </div>
+                  <div class="card-stats">
+                    <span class="card-stat">
+                      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                      1.8k
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <!-- Block Card 3 -->
+            <article class="card" onclick="showDetail('block')">
+              <div class="card-media square">
+                <div class="quilt-preview g3">
+                  <div class="q-cell c4"></div><div class="q-cell c4 hst"></div><div class="q-cell c4"></div>
+                  <div class="q-cell c4 hst-r"></div><div class="q-cell c5"></div><div class="q-cell c4 hst"></div>
+                  <div class="q-cell c4"></div><div class="q-cell c4 hst-r"></div><div class="q-cell c4"></div>
+                </div>
+                <span class="card-badge block">Block</span>
+              </div>
+              <div class="card-content">
+                <h3 class="card-title">Ohio Star</h3>
+                <div class="card-meta">
+                  <div class="card-creator">
+                    <div class="card-avatar" style="background: linear-gradient(135deg, #06b6d4, #22c55e);"></div>
+                    <span class="card-username">@starmaker</span>
+                  </div>
+                  <div class="card-stats">
+                    <span class="card-stat">
+                      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                      723
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <!-- Pattern Card 5 -->
+            <article class="card" onclick="showDetail('pattern')">
+              <div class="card-media">
+                <div class="quilt-preview g6">
+                  <div class="q-cell c1"></div><div class="q-cell c5"></div><div class="q-cell c1"></div><div class="q-cell c5"></div><div class="q-cell c1"></div><div class="q-cell c5"></div>
+                  <div class="q-cell c5"></div><div class="q-cell c1"></div><div class="q-cell c5"></div><div class="q-cell c1"></div><div class="q-cell c5"></div><div class="q-cell c1"></div>
+                  <div class="q-cell c1"></div><div class="q-cell c5"></div><div class="q-cell c1"></div><div class="q-cell c5"></div><div class="q-cell c1"></div><div class="q-cell c5"></div>
+                  <div class="q-cell c5"></div><div class="q-cell c1"></div><div class="q-cell c5"></div><div class="q-cell c1"></div><div class="q-cell c5"></div><div class="q-cell c1"></div>
+                  <div class="q-cell c1"></div><div class="q-cell c5"></div><div class="q-cell c1"></div><div class="q-cell c5"></div><div class="q-cell c1"></div><div class="q-cell c5"></div>
+                  <div class="q-cell c5"></div><div class="q-cell c1"></div><div class="q-cell c5"></div><div class="q-cell c1"></div><div class="q-cell c5"></div><div class="q-cell c1"></div>
+                </div>
+                <span class="card-price premium">$15.00</span>
+              </div>
+              <div class="card-content">
+                <h3 class="card-title">Checkerboard King</h3>
+                <div class="card-meta">
+                  <div class="card-creator">
+                    <div class="card-avatar"></div>
+                    <span class="card-username">@modernmaker</span>
+                  </div>
+                  <div class="card-stats">
+                    <span class="card-stat">
+                      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                      934
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <!-- More cards for visual density -->
+            <article class="card" onclick="showDetail('pattern')">
+              <div class="card-media tall">
+                <div class="quilt-preview g4">
+                  <div class="q-cell c7"></div><div class="q-cell c5"></div><div class="q-cell c7"></div><div class="q-cell c5"></div>
+                  <div class="q-cell c5"></div><div class="q-cell c3"></div><div class="q-cell c5"></div><div class="q-cell c3"></div>
+                  <div class="q-cell c7"></div><div class="q-cell c5"></div><div class="q-cell c7"></div><div class="q-cell c5"></div>
+                  <div class="q-cell c5"></div><div class="q-cell c3"></div><div class="q-cell c5"></div><div class="q-cell c3"></div>
+                </div>
+                <span class="card-price premium">$9.99</span>
+              </div>
+              <div class="card-content">
+                <h3 class="card-title">Cosmic Waves</h3>
+                <div class="card-meta">
+                  <div class="card-creator">
+                    <div class="card-avatar" style="background: linear-gradient(135deg, #a78bfa, #f472b6);"></div>
+                    <span class="card-username">@cosmicquilts</span>
+                  </div>
+                  <div class="card-stats">
+                    <span class="card-stat">
+                      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                      412
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="card" onclick="showDetail('block')">
+              <div class="card-media square">
+                <div class="quilt-preview g3">
+                  <div class="q-cell c6"></div><div class="q-cell c5"></div><div class="q-cell c6"></div>
+                  <div class="q-cell c5"></div><div class="q-cell c6"></div><div class="q-cell c5"></div>
+                  <div class="q-cell c6"></div><div class="q-cell c5"></div><div class="q-cell c6"></div>
+                </div>
+                <span class="card-badge block">Block</span>
+              </div>
+              <div class="card-content">
+                <h3 class="card-title">Nine Patch</h3>
+                <div class="card-meta">
+                  <div class="card-creator">
+                    <div class="card-avatar" style="background: linear-gradient(135deg, #f472b6, #ff6b6b);"></div>
+                    <span class="card-username">@basicblocks</span>
+                  </div>
+                  <div class="card-stats">
+                    <span class="card-stat">
+                      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                      1.5k
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="mobile-nav">
+      <button class="mobile-nav-item active">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        <span>Home</span>
+      </button>
+      <button class="mobile-nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <span>Search</span>
+      </button>
+      <button class="mobile-nav-item create">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        <span>Create</span>
+      </button>
+      <button class="mobile-nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span>Activity</span>
+      </button>
+      <button class="mobile-nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Profile</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Pattern Detail Screen -->
+  <div class="detail-screen" id="pattern-detail">
+    <header class="detail-header">
+      <button class="detail-close" onclick="closeDetail()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+      <div class="detail-header-actions">
+        <button class="icon-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+        </button>
+        <button class="icon-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+        </button>
+      </div>
+    </header>
+    <div class="detail-layout">
+      <div class="detail-media">
+        <div class="quilt-preview g4">
+          <div class="q-cell c1"></div><div class="q-cell c5"></div><div class="q-cell c1"></div><div class="q-cell c5"></div>
+          <div class="q-cell c5"></div><div class="q-cell c2"></div><div class="q-cell c5"></div><div class="q-cell c2"></div>
+          <div class="q-cell c1"></div><div class="q-cell c5"></div><div class="q-cell c1"></div><div class="q-cell c5"></div>
+          <div class="q-cell c5"></div><div class="q-cell c2"></div><div class="q-cell c5"></div><div class="q-cell c2"></div>
+        </div>
+      </div>
+      <div class="detail-info">
+        <span class="detail-price-badge premium">$8.99</span>
+        <h1 class="detail-title">Modern Star Sampler</h1>
+
+        <div class="detail-creator">
+          <div class="detail-creator-avatar"></div>
+          <div class="detail-creator-info">
+            <div class="detail-creator-name">Jane Doe</div>
+            <div class="detail-creator-handle">@quilter_jane</div>
+          </div>
+          <button class="follow-btn">Follow</button>
+        </div>
+
+        <div class="detail-stats">
+          <div class="detail-stat">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            <strong>1,234</strong>
+          </div>
+          <div class="detail-stat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            <strong>89</strong>
+          </div>
+          <div class="detail-stat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+            <strong>456</strong>
+          </div>
+        </div>
+
+        <div class="detail-tags">
+          <span class="detail-tag">Intermediate</span>
+          <span class="detail-tag">Queen • 90" × 100"</span>
+          <span class="detail-tag">Modern</span>
+        </div>
+
+        <div class="detail-tags">
+          <span class="detail-tag hashtag">#modernquilt</span>
+          <span class="detail-tag hashtag">#starquilt</span>
+          <span class="detail-tag hashtag">#sampler</span>
+        </div>
+
+        <p class="detail-description">
+          A stunning modern interpretation of the classic star block pattern. This sampler combines four different star variations in a harmonious layout, perfect for showcasing your favorite fabrics. Includes detailed cutting charts and step-by-step assembly.
+        </p>
+
+        <div class="detail-actions">
+          <button class="action-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            Like
+          </button>
+          <button class="action-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+            Save
+          </button>
+          <button class="action-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            Comment
+          </button>
+        </div>
+
+        <button class="primary-btn purchase">Purchase for $8.99</button>
+
+        <div class="comments-section">
+          <h3 class="comments-header">Comments (89)</h3>
+          <div class="comment">
+            <div class="comment-avatar"></div>
+            <div class="comment-content">
+              <div class="comment-header">
+                <span class="comment-author">@modernrose</span>
+                <span class="comment-time">2d</span>
+              </div>
+              <p class="comment-text">Just finished this quilt and it turned out beautifully! The instructions were so clear.</p>
+            </div>
+          </div>
+          <div class="comment">
+            <div class="comment-avatar"></div>
+            <div class="comment-content">
+              <div class="comment-header">
+                <span class="comment-author">@stitchsally</span>
+                <span class="comment-time">5d</span>
+              </div>
+              <p class="comment-text">What fabric did you use for the gold accents? Gorgeous!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Block Detail Screen -->
+  <div class="detail-screen" id="block-detail">
+    <header class="detail-header">
+      <button class="detail-close" onclick="closeDetail()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+      <div class="detail-header-actions">
+        <button class="icon-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+        </button>
+        <button class="icon-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+        </button>
+      </div>
+    </header>
+    <div class="detail-layout">
+      <div class="detail-media">
+        <div class="quilt-preview g3" style="max-width: 400px;">
+          <div class="q-cell c1 hst"></div><div class="q-cell c5"></div><div class="q-cell c1 hst-r"></div>
+          <div class="q-cell c5"></div><div class="q-cell c1"></div><div class="q-cell c5"></div>
+          <div class="q-cell c1 hst-r"></div><div class="q-cell c5"></div><div class="q-cell c1 hst"></div>
+        </div>
+      </div>
+      <div class="detail-info">
+        <span class="detail-price-badge free">Free Block</span>
+        <h1 class="detail-title">Log Cabin Classic</h1>
+
+        <div class="detail-creator">
+          <div class="detail-creator-avatar" style="background: linear-gradient(135deg, #6366f1, #06b6d4);"></div>
+          <div class="detail-creator-info">
+            <div class="detail-creator-name">Traditional Quilter</div>
+            <div class="detail-creator-handle">@tradquilt</div>
+          </div>
+          <button class="follow-btn">Follow</button>
+        </div>
+
+        <div class="detail-stats">
+          <div class="detail-stat">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            <strong>456</strong>
+          </div>
+          <div class="detail-stat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+            <strong>234</strong>
+          </div>
+          <div class="detail-stat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            <strong>847</strong> quilts
+          </div>
+        </div>
+
+        <div class="detail-tags">
+          <span class="detail-tag">Beginner</span>
+          <span class="detail-tag">9 pieces</span>
+          <span class="detail-tag">Traditional</span>
+        </div>
+
+        <div class="detail-tags">
+          <span class="detail-tag hashtag">#logcabin</span>
+          <span class="detail-tag hashtag">#traditional</span>
+          <span class="detail-tag hashtag">#beginner</span>
+        </div>
+
+        <p class="detail-description">
+          The timeless Log Cabin block is perfect for beginners and experienced quilters alike. Build strips around a center square to create this beloved traditional design.
+        </p>
+
+        <div class="detail-actions">
+          <button class="action-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            Like
+          </button>
+          <button class="action-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+            Save
+          </button>
+          <button class="action-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            Comment
+          </button>
+        </div>
+
+        <button class="primary-btn use">Use in My Quilt</button>
+
+        <div class="used-in">
+          <div class="used-in-header">
+            <span class="used-in-title">Used in quilts</span>
+            <span class="used-in-count">847 quilts →</span>
+          </div>
+          <div class="used-in-grid">
+            <div class="used-in-item">
+              <div class="quilt-preview g3">
+                <div class="q-cell c1"></div><div class="q-cell c5"></div><div class="q-cell c1"></div>
+                <div class="q-cell c5"></div><div class="q-cell c2"></div><div class="q-cell c5"></div>
+                <div class="q-cell c1"></div><div class="q-cell c5"></div><div class="q-cell c1"></div>
+              </div>
+            </div>
+            <div class="used-in-item">
+              <div class="quilt-preview g3">
+                <div class="q-cell c4"></div><div class="q-cell c4"></div><div class="q-cell c5"></div>
+                <div class="q-cell c4"></div><div class="q-cell c5"></div><div class="q-cell c4"></div>
+                <div class="q-cell c5"></div><div class="q-cell c4"></div><div class="q-cell c4"></div>
+              </div>
+            </div>
+            <div class="used-in-item">
+              <div class="quilt-preview g3">
+                <div class="q-cell c2"></div><div class="q-cell c5"></div><div class="q-cell c2"></div>
+                <div class="q-cell c5"></div><div class="q-cell c1"></div><div class="q-cell c5"></div>
+                <div class="q-cell c2"></div><div class="q-cell c5"></div><div class="q-cell c2"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="comments-section">
+          <h3 class="comments-header">Comments (23)</h3>
+          <div class="comment">
+            <div class="comment-avatar"></div>
+            <div class="comment-content">
+              <div class="comment-header">
+                <span class="comment-author">@quiltmom</span>
+                <span class="comment-time">1w</span>
+              </div>
+              <p class="comment-text">This was my first block ever! So satisfying to make.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen-label" id="screen-label">Feed</div>
+
+  <script>
+    // Tab switching
+    document.querySelectorAll('.header-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.header-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+      });
+    });
+
+    // Detail screens
+    function showDetail(type) {
+      if (type === 'pattern') {
+        document.getElementById('pattern-detail').classList.add('active');
+        document.getElementById('screen-label').textContent = 'Pattern Detail';
+      } else {
+        document.getElementById('block-detail').classList.add('active');
+        document.getElementById('screen-label').textContent = 'Block Detail';
+      }
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeDetail() {
+      document.querySelectorAll('.detail-screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('screen-label').textContent = 'Feed';
+      document.body.style.overflow = '';
+    }
+
+    // Close on escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeDetail();
+    });
+  </script>
+</body>
+</html>
