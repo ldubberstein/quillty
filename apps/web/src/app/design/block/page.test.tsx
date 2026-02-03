@@ -13,6 +13,11 @@ vi.mock('@/hooks/useUndoRedoKeyboard', () => ({
   useUndoRedoKeyboard: vi.fn(),
 }));
 
+// Store state that can be modified between renders
+let mockShapes: unknown[] = [];
+let mockTitle = '';
+const mockInitBlock = vi.fn();
+
 // Mock the store before importing the component
 vi.mock('@quillty/core', () => ({
   useBlockDesignerStore: vi.fn((selector) => {
@@ -20,8 +25,8 @@ vi.mock('@quillty/core', () => ({
       block: {
         id: 'test-block',
         gridSize: 3,
-        shapes: [],
-        title: '',
+        shapes: mockShapes,
+        title: mockTitle,
         previewPalette: {
           roles: [
             { id: 'background', color: '#FFFFFF' },
@@ -29,7 +34,8 @@ vi.mock('@quillty/core', () => ({
           ],
         },
       },
-      initBlock: vi.fn(),
+      initBlock: mockInitBlock,
+      mode: 'idle',
       undo: vi.fn(),
       redo: vi.fn(),
       canUndo: vi.fn(() => false),
@@ -48,6 +54,8 @@ import BlockDesignerPage from './page';
 describe('BlockDesignerPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockShapes = [];
+    mockTitle = '';
   });
 
   describe('header', () => {
@@ -118,6 +126,54 @@ describe('BlockDesignerPage', () => {
       render(<BlockDesignerPage />);
       const footer = screen.getByRole('contentinfo');
       expect(footer).toBeInTheDocument();
+    });
+  });
+
+  describe('initialization', () => {
+    it('calls initBlock on mount when block is empty', () => {
+      mockShapes = [];
+      mockTitle = '';
+
+      render(<BlockDesignerPage />);
+
+      expect(mockInitBlock).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not call initBlock when block already has shapes', () => {
+      mockShapes = [{ id: 'shape-1', type: 'square' }];
+      mockTitle = '';
+
+      render(<BlockDesignerPage />);
+
+      expect(mockInitBlock).not.toHaveBeenCalled();
+    });
+
+    it('does not call initBlock when block has a title', () => {
+      mockShapes = [];
+      mockTitle = 'My Block';
+
+      render(<BlockDesignerPage />);
+
+      expect(mockInitBlock).not.toHaveBeenCalled();
+    });
+
+    it('does not re-initialize when shapes.length changes from non-zero to zero', () => {
+      // Start with shapes
+      mockShapes = [{ id: 'shape-1', type: 'square' }];
+      mockTitle = '';
+
+      const { rerender } = render(<BlockDesignerPage />);
+
+      // initBlock should NOT be called (block has shapes)
+      expect(mockInitBlock).not.toHaveBeenCalled();
+
+      // Simulate undo removing all shapes
+      mockShapes = [];
+
+      rerender(<BlockDesignerPage />);
+
+      // initBlock should still NOT be called (already initialized)
+      expect(mockInitBlock).not.toHaveBeenCalled();
     });
   });
 });

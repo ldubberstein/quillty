@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useBlockDesignerStore, DEFAULT_GRID_SIZE } from '@quillty/core';
 import { UndoRedoControls } from '@/components/block-designer/UndoRedoControls';
 
@@ -30,10 +30,14 @@ export default function BlockDesignerPage() {
   const block = useBlockDesignerStore((state) => state.block);
   const mode = useBlockDesignerStore((state) => state.mode);
   const [showFabricPanel, setShowFabricPanel] = useState(true);
+  const hasInitialized = useRef(false);
 
-  // Initialize a new block on mount
+  // Initialize a new block on mount (only once)
   useEffect(() => {
-    // Only init if the block has no shapes (fresh start)
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
+    // Only init if the block is empty (fresh start)
     if (block.shapes.length === 0 && block.title === '') {
       initBlock(DEFAULT_GRID_SIZE);
     }
