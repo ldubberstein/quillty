@@ -156,10 +156,11 @@ describe('BlockCanvas', () => {
         render(<BlockCanvas />);
       });
       const rects = screen.getAllByTestId('konva-rect');
-      // GridLines renders background rect + border rect, BlockCanvas renders click capture rect
+      // GridLines renders background rect + border rect
+      // BlockCanvas renders click capture rect + background click rect for dismiss
       // No additional shape rects should be present
       expect(rects.length).toBeGreaterThanOrEqual(2);
-      expect(rects.length).toBeLessThanOrEqual(3);
+      expect(rects.length).toBeLessThanOrEqual(4);
     });
   });
 

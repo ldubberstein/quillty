@@ -9,8 +9,9 @@ import { Shapes, type ShapeSelection } from './Shapes';
 import { SquareRenderer } from './SquareRenderer';
 import { HstRenderer } from './HstRenderer';
 import { FlyingGeeseRenderer } from './FlyingGeeseRenderer';
+import { FloatingToolbar } from './FloatingToolbar';
 import { useBlockDesignerStore } from '@quillty/core';
-import type { GridPosition, SquareShape, HstShape, FlyingGeeseShape } from '@quillty/core';
+import type { GridPosition, SquareShape, HstShape, FlyingGeeseShape, Shape } from '@quillty/core';
 
 /** Canvas sizing constants */
 const CANVAS_PADDING = 40;
@@ -37,12 +38,19 @@ export function BlockCanvas() {
   const addSquare = useBlockDesignerStore((state) => state.addSquare);
   const addHst = useBlockDesignerStore((state) => state.addHst);
   const isCellOccupied = useBlockDesignerStore((state) => state.isCellOccupied);
+  const getShapeAt = useBlockDesignerStore((state) => state.getShapeAt);
   const clearSelection = useBlockDesignerStore((state) => state.clearSelection);
   const getValidAdjacentCells = useBlockDesignerStore((state) => state.getValidAdjacentCells);
   const startFlyingGeesePlacement = useBlockDesignerStore((state) => state.startFlyingGeesePlacement);
   const completeFlyingGeesePlacement = useBlockDesignerStore((state) => state.completeFlyingGeesePlacement);
   const cancelFlyingGeesePlacement = useBlockDesignerStore((state) => state.cancelFlyingGeesePlacement);
   const assignFabricRole = useBlockDesignerStore((state) => state.assignFabricRole);
+  const selectedShapeId = useBlockDesignerStore((state) => state.selectedShapeId);
+  const selectShape = useBlockDesignerStore((state) => state.selectShape);
+  const removeShape = useBlockDesignerStore((state) => state.removeShape);
+  const rotateShape = useBlockDesignerStore((state) => state.rotateShape);
+  const flipShapeHorizontal = useBlockDesignerStore((state) => state.flipShapeHorizontal);
+  const flipShapeVertical = useBlockDesignerStore((state) => state.flipShapeVertical);
 
   const { gridSize, shapes, previewPalette } = block;
   const isPaintMode = mode === 'paint_mode';
@@ -309,11 +317,18 @@ export function BlockCanvas() {
         return;
       }
 
-      // If cell is occupied, do nothing (edit mode will come in iteration 1.8)
+      // If cell is occupied, select the shape at that position
       if (isCellOccupied(gridPos)) {
         setPickerState(null);
+        const shapeAtPos = getShapeAt(gridPos);
+        if (shapeAtPos) {
+          selectShape(shapeAtPos.id);
+        }
         return;
       }
+
+      // Clear any selection before showing picker
+      clearSelection();
 
       // Show shape picker near the tap point
       // Calculate the center of the tapped cell
@@ -326,7 +341,7 @@ export function BlockCanvas() {
         gridPosition: gridPos,
       });
     },
-    [position, scale, stageToGrid, stageToScreen, isCellOccupied, clearSelection, gridOffsetX, gridOffsetY, cellSize, mode, flyingGeesePlacement, cancelFlyingGeesePlacement, completeFlyingGeesePlacement]
+    [position, scale, stageToGrid, stageToScreen, isCellOccupied, getShapeAt, selectShape, clearSelection, gridOffsetX, gridOffsetY, cellSize, mode, flyingGeesePlacement, cancelFlyingGeesePlacement, completeFlyingGeesePlacement]
   );
 
   // Handle shape selection from picker
@@ -364,16 +379,73 @@ export function BlockCanvas() {
     setPickerState(null);
   }, []);
 
-  // Handle shape click (for paint mode)
+  // Handle click on background (outside grid) to clear selection
+  const handleBackgroundClick = useCallback(() => {
+    setPickerState(null);
+    clearSelection();
+    if (mode === 'placing_flying_geese_second') {
+      cancelFlyingGeesePlacement();
+    }
+  }, [clearSelection, mode, cancelFlyingGeesePlacement]);
+
+  // Handle shape click (for paint mode or selection)
   const handleShapeClick = useCallback(
     (shapeId: string, partId?: string) => {
       if (isPaintMode && activeFabricRole) {
         assignFabricRole(shapeId, activeFabricRole, partId);
+      } else if (!isPaintMode) {
+        // Select the shape when not in paint mode
+        selectShape(shapeId);
       }
-      // In non-paint mode, could open edit popup (future iteration)
     },
-    [isPaintMode, activeFabricRole, assignFabricRole]
+    [isPaintMode, activeFabricRole, assignFabricRole, selectShape]
   );
+
+  // Get the selected shape for toolbar positioning
+  const selectedShape = selectedShapeId
+    ? shapes.find((s) => s.id === selectedShapeId)
+    : null;
+
+  // Calculate toolbar position based on selected shape
+  const getToolbarPosition = useCallback(
+    (shape: Shape): { x: number; y: number } => {
+      // Calculate shape center in stage coordinates
+      const shapeCenterX = gridOffsetX + (shape.position.col + shape.span.cols / 2) * cellSize;
+      const shapeTopY = gridOffsetY + shape.position.row * cellSize;
+
+      // Convert to screen coordinates
+      return {
+        x: shapeCenterX * scale + position.x,
+        y: shapeTopY * scale + position.y,
+      };
+    },
+    [gridOffsetX, gridOffsetY, cellSize, scale, position]
+  );
+
+  // Toolbar action handlers
+  const handleRotate = useCallback(() => {
+    if (selectedShapeId) {
+      rotateShape(selectedShapeId);
+    }
+  }, [selectedShapeId, rotateShape]);
+
+  const handleFlipHorizontal = useCallback(() => {
+    if (selectedShapeId) {
+      flipShapeHorizontal(selectedShapeId);
+    }
+  }, [selectedShapeId, flipShapeHorizontal]);
+
+  const handleFlipVertical = useCallback(() => {
+    if (selectedShapeId) {
+      flipShapeVertical(selectedShapeId);
+    }
+  }, [selectedShapeId, flipShapeVertical]);
+
+  const handleDelete = useCallback(() => {
+    if (selectedShapeId) {
+      removeShape(selectedShapeId);
+    }
+  }, [selectedShapeId, removeShape]);
 
   // Filter shapes by type
   const squareShapes = shapes.filter((s): s is SquareShape => s.type === 'square');
@@ -406,6 +478,17 @@ export function BlockCanvas() {
             onDragEnd={handleDragEnd}
           >
             <Layer>
+              {/* Background rect to capture clicks outside the grid */}
+              <Rect
+                x={0}
+                y={0}
+                width={dimensions.width / scale}
+                height={dimensions.height / scale}
+                fill="transparent"
+                onClick={handleBackgroundClick}
+                onTap={handleBackgroundClick}
+              />
+
               <GridLines
                 gridSize={gridSize}
                 cellSize={cellSize}
@@ -422,7 +505,8 @@ export function BlockCanvas() {
                   offsetX={gridOffsetX}
                   offsetY={gridOffsetY}
                   palette={previewPalette}
-                  onClick={isPaintMode ? () => handleShapeClick(shape.id) : undefined}
+                  isSelected={shape.id === selectedShapeId}
+                  onClick={() => handleShapeClick(shape.id)}
                 />
               ))}
 
@@ -435,11 +519,8 @@ export function BlockCanvas() {
                   offsetX={gridOffsetX}
                   offsetY={gridOffsetY}
                   palette={previewPalette}
-                  onClick={
-                    isPaintMode
-                      ? (partId) => handleShapeClick(shape.id, partId)
-                      : undefined
-                  }
+                  isSelected={shape.id === selectedShapeId}
+                  onClick={(partId) => handleShapeClick(shape.id, partId)}
                 />
               ))}
 
@@ -452,11 +533,8 @@ export function BlockCanvas() {
                   offsetX={gridOffsetX}
                   offsetY={gridOffsetY}
                   palette={previewPalette}
-                  onClick={
-                    isPaintMode
-                      ? (partId) => handleShapeClick(shape.id, partId)
-                      : undefined
-                  }
+                  isSelected={shape.id === selectedShapeId}
+                  onClick={(partId) => handleShapeClick(shape.id, partId)}
                 />
               ))}
 
@@ -550,6 +628,20 @@ export function BlockCanvas() {
               position={pickerState.screenPosition}
               onSelectShape={handleSelectShape}
               onDismiss={handleDismissPicker}
+            />
+          )}
+
+          {/* Floating toolbar for selected shape */}
+          {selectedShape && !isPaintMode && (
+            <FloatingToolbar
+              position={getToolbarPosition(selectedShape)}
+              canRotate={selectedShape.type === 'hst' || selectedShape.type === 'flying_geese'}
+              canFlip={selectedShape.type === 'hst' || selectedShape.type === 'flying_geese'}
+              onRotate={handleRotate}
+              onFlipHorizontal={handleFlipHorizontal}
+              onFlipVertical={handleFlipVertical}
+              onDelete={handleDelete}
+              onDismiss={clearSelection}
             />
           )}
         </>

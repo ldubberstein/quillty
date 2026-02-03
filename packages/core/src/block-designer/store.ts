@@ -142,6 +142,14 @@ interface BlockDesignerActions {
   /** Cancel Flying Geese placement */
   cancelFlyingGeesePlacement: () => void;
 
+  // Shape transformations
+  /** Rotate a shape 90° clockwise */
+  rotateShape: (shapeId: UUID) => void;
+  /** Flip a shape horizontally */
+  flipShapeHorizontal: (shapeId: UUID) => void;
+  /** Flip a shape vertically */
+  flipShapeVertical: (shapeId: UUID) => void;
+
   // Utility
   /** Get shape at a grid position */
   getShapeAt: (position: GridPosition) => Shape | undefined;
@@ -417,6 +425,111 @@ export const useBlockDesignerStore = create<BlockDesignerStore>()(
       set((state) => {
         state.flyingGeesePlacement = null;
         state.mode = 'idle';
+      });
+    },
+
+    // Shape transformations
+    rotateShape: (shapeId) => {
+      set((state) => {
+        const shape = state.block.shapes.find((s) => s.id === shapeId);
+        if (!shape) return;
+
+        if (shape.type === 'hst') {
+          // HST rotation: nw → ne → se → sw → nw
+          const hstShape = shape as HstShape;
+          const rotationMap: Record<HstVariant, HstVariant> = {
+            nw: 'ne',
+            ne: 'se',
+            se: 'sw',
+            sw: 'nw',
+          };
+          hstShape.variant = rotationMap[hstShape.variant];
+        } else if (shape.type === 'flying_geese') {
+          // Flying Geese rotation: up → right → down → left → up
+          // Also need to swap span dimensions
+          const fgShape = shape as FlyingGeeseShape;
+          const rotationMap: Record<FlyingGeeseDirection, FlyingGeeseDirection> = {
+            up: 'right',
+            right: 'down',
+            down: 'left',
+            left: 'up',
+          };
+          fgShape.direction = rotationMap[fgShape.direction];
+          // Swap span dimensions
+          const newSpan = { rows: fgShape.span.cols, cols: fgShape.span.rows };
+          fgShape.span = newSpan as typeof fgShape.span;
+        }
+        // Squares don't rotate (they're symmetric)
+
+        state.block.updatedAt = getCurrentTimestamp();
+      });
+    },
+
+    flipShapeHorizontal: (shapeId) => {
+      set((state) => {
+        const shape = state.block.shapes.find((s) => s.id === shapeId);
+        if (!shape) return;
+
+        if (shape.type === 'hst') {
+          // HST horizontal flip: nw ↔ ne, sw ↔ se
+          const hstShape = shape as HstShape;
+          const flipMap: Record<HstVariant, HstVariant> = {
+            nw: 'ne',
+            ne: 'nw',
+            sw: 'se',
+            se: 'sw',
+          };
+          hstShape.variant = flipMap[hstShape.variant];
+        } else if (shape.type === 'flying_geese') {
+          // Flying Geese horizontal flip
+          const fgShape = shape as FlyingGeeseShape;
+          if (fgShape.direction === 'left' || fgShape.direction === 'right') {
+            // Flip direction left ↔ right
+            fgShape.direction = fgShape.direction === 'left' ? 'right' : 'left';
+          } else {
+            // For up/down, swap sky1 and sky2
+            const temp = fgShape.partFabricRoles.sky1;
+            fgShape.partFabricRoles.sky1 = fgShape.partFabricRoles.sky2;
+            fgShape.partFabricRoles.sky2 = temp;
+          }
+        }
+        // Squares don't flip (they're symmetric)
+
+        state.block.updatedAt = getCurrentTimestamp();
+      });
+    },
+
+    flipShapeVertical: (shapeId) => {
+      set((state) => {
+        const shape = state.block.shapes.find((s) => s.id === shapeId);
+        if (!shape) return;
+
+        if (shape.type === 'hst') {
+          // HST vertical flip: nw ↔ sw, ne ↔ se
+          const hstShape = shape as HstShape;
+          const flipMap: Record<HstVariant, HstVariant> = {
+            nw: 'sw',
+            sw: 'nw',
+            ne: 'se',
+            se: 'ne',
+          };
+          hstShape.variant = flipMap[hstShape.variant];
+        } else if (shape.type === 'flying_geese') {
+          // Flying Geese vertical flip
+          const fgShape = shape as FlyingGeeseShape;
+          if (fgShape.direction === 'up' || fgShape.direction === 'down') {
+            // Flip direction up ↔ down
+            fgShape.direction = fgShape.direction === 'up' ? 'down' : 'up';
+          } else {
+            // For left/right, swap sky1 and sky2
+            const temp = fgShape.partFabricRoles.sky1;
+            fgShape.partFabricRoles.sky1 = fgShape.partFabricRoles.sky2;
+            fgShape.partFabricRoles.sky2 = temp;
+          }
+        }
+        // Squares don't flip (they're symmetric)
+
+        state.block.updatedAt = getCurrentTimestamp();
       });
     },
 

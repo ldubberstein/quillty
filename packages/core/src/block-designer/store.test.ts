@@ -827,4 +827,177 @@ describe('BlockDesignerStore', () => {
       expect(adjacent.every((p) => p.row >= 0 && p.col >= 0)).toBe(true);
     });
   });
+
+  // ===========================================================================
+  // Shape Transformations
+  // ===========================================================================
+
+  describe('rotateShape', () => {
+    describe('HST rotation', () => {
+      it('rotates HST nw -> ne -> se -> sw -> nw', () => {
+        const id = useBlockDesignerStore.getState().addHst({ row: 0, col: 0 }, 'nw');
+
+        useBlockDesignerStore.getState().rotateShape(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('ne');
+
+        useBlockDesignerStore.getState().rotateShape(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('se');
+
+        useBlockDesignerStore.getState().rotateShape(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('sw');
+
+        useBlockDesignerStore.getState().rotateShape(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('nw');
+      });
+
+      it('updates timestamp after rotation', () => {
+        const id = useBlockDesignerStore.getState().addHst({ row: 0, col: 0 }, 'nw');
+        const originalTime = useBlockDesignerStore.getState().block.updatedAt;
+
+        // Small delay to ensure time difference
+        const start = Date.now();
+        while (Date.now() - start < 5) {
+          // spin wait
+        }
+
+        useBlockDesignerStore.getState().rotateShape(id);
+
+        expect(useBlockDesignerStore.getState().block.updatedAt).not.toBe(originalTime);
+      });
+    });
+
+    describe('Flying Geese rotation', () => {
+      it('rotates Flying Geese direction: up -> right -> down -> left -> up', () => {
+        const id = useBlockDesignerStore.getState().addFlyingGeese({ row: 0, col: 0 }, 'up');
+
+        useBlockDesignerStore.getState().rotateShape(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('right');
+
+        useBlockDesignerStore.getState().rotateShape(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('down');
+
+        useBlockDesignerStore.getState().rotateShape(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('left');
+
+        useBlockDesignerStore.getState().rotateShape(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('up');
+      });
+
+      it('swaps span when rotating Flying Geese', () => {
+        const id = useBlockDesignerStore.getState().addFlyingGeese({ row: 0, col: 0 }, 'up'); // 2x1
+
+        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).span).toEqual({ rows: 2, cols: 1 });
+
+        useBlockDesignerStore.getState().rotateShape(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).span).toEqual({ rows: 1, cols: 2 });
+
+        useBlockDesignerStore.getState().rotateShape(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).span).toEqual({ rows: 2, cols: 1 });
+      });
+    });
+
+    it('does nothing for square shapes', () => {
+      const id = useBlockDesignerStore.getState().addSquare({ row: 0, col: 0 });
+      const originalShape = { ...useBlockDesignerStore.getState().block.shapes[0] };
+
+      useBlockDesignerStore.getState().rotateShape(id);
+
+      const shape = useBlockDesignerStore.getState().block.shapes[0] as SquareShape;
+      expect(shape.type).toBe('square');
+      expect(shape.span).toEqual(originalShape.span);
+    });
+
+    it('does nothing for non-existent shape', () => {
+      useBlockDesignerStore.getState().addSquare({ row: 0, col: 0 });
+
+      // Should not throw
+      expect(() => useBlockDesignerStore.getState().rotateShape('non-existent-id')).not.toThrow();
+    });
+  });
+
+  describe('flipShapeHorizontal', () => {
+    describe('HST horizontal flip', () => {
+      it('flips HST variant horizontally nw <-> ne', () => {
+        const id = useBlockDesignerStore.getState().addHst({ row: 0, col: 0 }, 'nw');
+
+        useBlockDesignerStore.getState().flipShapeHorizontal(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('ne');
+
+        useBlockDesignerStore.getState().flipShapeHorizontal(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('nw');
+      });
+
+      it('flips sw <-> se horizontally', () => {
+        const id = useBlockDesignerStore.getState().addHst({ row: 0, col: 0 }, 'sw');
+
+        useBlockDesignerStore.getState().flipShapeHorizontal(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('se');
+
+        useBlockDesignerStore.getState().flipShapeHorizontal(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('sw');
+      });
+    });
+
+    describe('Flying Geese horizontal flip', () => {
+      it('flips left <-> right', () => {
+        const id = useBlockDesignerStore.getState().addFlyingGeese({ row: 0, col: 0 }, 'left');
+
+        useBlockDesignerStore.getState().flipShapeHorizontal(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('right');
+
+        useBlockDesignerStore.getState().flipShapeHorizontal(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('left');
+      });
+
+      it('does not change up/down directions', () => {
+        const id = useBlockDesignerStore.getState().addFlyingGeese({ row: 0, col: 0 }, 'up');
+
+        useBlockDesignerStore.getState().flipShapeHorizontal(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('up');
+      });
+    });
+  });
+
+  describe('flipShapeVertical', () => {
+    describe('HST vertical flip', () => {
+      it('flips HST variant vertically nw <-> sw', () => {
+        const id = useBlockDesignerStore.getState().addHst({ row: 0, col: 0 }, 'nw');
+
+        useBlockDesignerStore.getState().flipShapeVertical(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('sw');
+
+        useBlockDesignerStore.getState().flipShapeVertical(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('nw');
+      });
+
+      it('flips ne <-> se vertically', () => {
+        const id = useBlockDesignerStore.getState().addHst({ row: 0, col: 0 }, 'ne');
+
+        useBlockDesignerStore.getState().flipShapeVertical(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('se');
+
+        useBlockDesignerStore.getState().flipShapeVertical(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('ne');
+      });
+    });
+
+    describe('Flying Geese vertical flip', () => {
+      it('flips up <-> down', () => {
+        const id = useBlockDesignerStore.getState().addFlyingGeese({ row: 0, col: 0 }, 'up');
+
+        useBlockDesignerStore.getState().flipShapeVertical(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('down');
+
+        useBlockDesignerStore.getState().flipShapeVertical(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('up');
+      });
+
+      it('does not change left/right directions', () => {
+        const id = useBlockDesignerStore.getState().addFlyingGeese({ row: 0, col: 0 }, 'right');
+
+        useBlockDesignerStore.getState().flipShapeVertical(id);
+        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('right');
+      });
+    });
+  });
 });

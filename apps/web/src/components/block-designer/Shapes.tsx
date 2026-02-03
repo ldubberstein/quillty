@@ -1,7 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import type { HstVariant } from '@quillty/core';
+import { useClickOutsideDismiss } from '@/hooks/useClickOutsideDismiss';
+import { useEscapeDismiss } from '@/hooks/useEscapeDismiss';
 
 /**
  * Shape selection types
@@ -132,36 +134,8 @@ const SHAPE_OPTIONS: ShapeOption[] = [
 export function Shapes({ position, onSelectShape, onDismiss }: ShapesProps) {
   const shapesRef = useRef<HTMLDivElement>(null);
 
-  // Handle click outside to dismiss
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (shapesRef.current && !shapesRef.current.contains(event.target as Node)) {
-        onDismiss();
-      }
-    }
-
-    // Use a small delay to prevent immediate dismissal from the same click
-    const timeoutId = setTimeout(() => {
-      document.addEventListener('mousedown', handleClickOutside);
-    }, 0);
-
-    return () => {
-      clearTimeout(timeoutId);
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [onDismiss]);
-
-  // Handle escape key to dismiss
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        onDismiss();
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onDismiss]);
+  useClickOutsideDismiss(shapesRef, onDismiss);
+  useEscapeDismiss(onDismiss);
 
   const handleShapeClick = useCallback(
     (selection: ShapeSelection) => {
