@@ -17,8 +17,8 @@ interface FlyingGeeseRendererProps {
   palette: Palette;
   /** Whether this shape is selected */
   isSelected?: boolean;
-  /** Callback when shape is clicked */
-  onClick?: () => void;
+  /** Callback when a triangle is clicked. isSecondary=true for sky triangles. */
+  onClick?: (isSecondary: boolean) => void;
 }
 
 /**
@@ -61,14 +61,36 @@ export function FlyingGeeseRenderer({
   const sky1Points = triangleToFlatPoints(triangles.sky1);
   const sky2Points = triangleToFlatPoints(triangles.sky2);
 
+  // Click handlers for individual triangles
+  const handleGooseClick = onClick ? () => onClick(false) : undefined;
+  const handleSkyClick = onClick ? () => onClick(true) : undefined;
+
   return (
-    <Group x={x + padding} y={y + padding} onClick={onClick} onTap={onClick}>
+    <Group x={x + padding} y={y + padding}>
       {/* Sky triangles (background) - rendered first */}
-      <Line points={sky1Points} fill={skyColor} closed />
-      <Line points={sky2Points} fill={skyColor} closed />
+      <Line
+        points={sky1Points}
+        fill={skyColor}
+        closed
+        onClick={handleSkyClick}
+        onTap={handleSkyClick}
+      />
+      <Line
+        points={sky2Points}
+        fill={skyColor}
+        closed
+        onClick={handleSkyClick}
+        onTap={handleSkyClick}
+      />
 
       {/* Goose triangle (foreground) - rendered on top */}
-      <Line points={goosePoints} fill={gooseColor} closed />
+      <Line
+        points={goosePoints}
+        fill={gooseColor}
+        closed
+        onClick={handleGooseClick}
+        onTap={handleGooseClick}
+      />
 
       {/* Selection overlay */}
       {isSelected && (

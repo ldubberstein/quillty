@@ -166,18 +166,29 @@ describe('HstRenderer', () => {
   });
 
   describe('click handling', () => {
-    it('calls onClick when clicked', () => {
+    it('calls onClick with isSecondary=false when primary triangle is clicked', () => {
       const handleClick = vi.fn();
       render(<HstRenderer {...defaultProps} onClick={handleClick} />);
-      const group = screen.getByTestId('konva-group');
-      fireEvent.click(group);
-      expect(handleClick).toHaveBeenCalled();
+      // Primary triangle is rendered second (on top)
+      const lines = screen.getAllByTestId('konva-line');
+      fireEvent.click(lines[1]); // Primary triangle
+      expect(handleClick).toHaveBeenCalledWith(false);
+    });
+
+    it('calls onClick with isSecondary=true when secondary triangle is clicked', () => {
+      const handleClick = vi.fn();
+      render(<HstRenderer {...defaultProps} onClick={handleClick} />);
+      // Secondary triangle is rendered first
+      const lines = screen.getAllByTestId('konva-line');
+      fireEvent.click(lines[0]); // Secondary triangle
+      expect(handleClick).toHaveBeenCalledWith(true);
     });
 
     it('does not throw when onClick is not provided', () => {
       render(<HstRenderer {...defaultProps} />);
-      const group = screen.getByTestId('konva-group');
-      expect(() => fireEvent.click(group)).not.toThrow();
+      const lines = screen.getAllByTestId('konva-line');
+      expect(() => fireEvent.click(lines[0])).not.toThrow();
+      expect(() => fireEvent.click(lines[1])).not.toThrow();
     });
   });
 });

@@ -186,18 +186,38 @@ describe('FlyingGeeseRenderer', () => {
   });
 
   describe('click handling', () => {
-    it('calls onClick when clicked', () => {
+    it('calls onClick with isSecondary=false when goose triangle is clicked', () => {
       const handleClick = vi.fn();
       render(<FlyingGeeseRenderer {...defaultProps} onClick={handleClick} />);
-      const group = screen.getByTestId('konva-group');
-      fireEvent.click(group);
-      expect(handleClick).toHaveBeenCalled();
+      // Goose triangle is rendered last (on top), after 2 sky triangles
+      const lines = screen.getAllByTestId('konva-line');
+      fireEvent.click(lines[2]); // Goose triangle
+      expect(handleClick).toHaveBeenCalledWith(false);
+    });
+
+    it('calls onClick with isSecondary=true when sky triangle is clicked', () => {
+      const handleClick = vi.fn();
+      render(<FlyingGeeseRenderer {...defaultProps} onClick={handleClick} />);
+      // Sky triangles are rendered first
+      const lines = screen.getAllByTestId('konva-line');
+      fireEvent.click(lines[0]); // First sky triangle
+      expect(handleClick).toHaveBeenCalledWith(true);
+    });
+
+    it('calls onClick with isSecondary=true when second sky triangle is clicked', () => {
+      const handleClick = vi.fn();
+      render(<FlyingGeeseRenderer {...defaultProps} onClick={handleClick} />);
+      const lines = screen.getAllByTestId('konva-line');
+      fireEvent.click(lines[1]); // Second sky triangle
+      expect(handleClick).toHaveBeenCalledWith(true);
     });
 
     it('does not throw when onClick is not provided', () => {
       render(<FlyingGeeseRenderer {...defaultProps} />);
-      const group = screen.getByTestId('konva-group');
-      expect(() => fireEvent.click(group)).not.toThrow();
+      const lines = screen.getAllByTestId('konva-line');
+      expect(() => fireEvent.click(lines[0])).not.toThrow();
+      expect(() => fireEvent.click(lines[1])).not.toThrow();
+      expect(() => fireEvent.click(lines[2])).not.toThrow();
     });
   });
 });

@@ -364,9 +364,9 @@ export function BlockCanvas() {
 
   // Handle shape click (for paint mode)
   const handleShapeClick = useCallback(
-    (shapeId: string) => {
+    (shapeId: string, isSecondary: boolean = false) => {
       if (isPaintMode && activeFabricRole) {
-        assignFabricRole(shapeId, activeFabricRole);
+        assignFabricRole(shapeId, activeFabricRole, isSecondary);
       }
       // In non-paint mode, could open edit popup (future iteration)
     },
@@ -433,7 +433,11 @@ export function BlockCanvas() {
                   offsetX={gridOffsetX}
                   offsetY={gridOffsetY}
                   palette={previewPalette}
-                  onClick={isPaintMode ? () => handleShapeClick(shape.id) : undefined}
+                  onClick={
+                    isPaintMode
+                      ? (isSecondary) => handleShapeClick(shape.id, isSecondary)
+                      : undefined
+                  }
                 />
               ))}
 
@@ -446,7 +450,11 @@ export function BlockCanvas() {
                   offsetX={gridOffsetX}
                   offsetY={gridOffsetY}
                   palette={previewPalette}
-                  onClick={isPaintMode ? () => handleShapeClick(shape.id) : undefined}
+                  onClick={
+                    isPaintMode
+                      ? (isSecondary) => handleShapeClick(shape.id, isSecondary)
+                      : undefined
+                  }
                 />
               ))}
 

@@ -17,8 +17,8 @@ interface HstRendererProps {
   palette: Palette;
   /** Whether this shape is selected */
   isSelected?: boolean;
-  /** Callback when shape is clicked */
-  onClick?: () => void;
+  /** Callback when a triangle is clicked. isSecondary=true for background triangle. */
+  onClick?: (isSecondary: boolean) => void;
 }
 
 /**
@@ -55,13 +55,29 @@ export function HstRenderer({
   const primaryPoints = triangleToFlatPoints(triangles.primary);
   const secondaryPoints = triangleToFlatPoints(triangles.secondary);
 
+  // Click handlers for individual triangles
+  const handlePrimaryClick = onClick ? () => onClick(false) : undefined;
+  const handleSecondaryClick = onClick ? () => onClick(true) : undefined;
+
   return (
-    <Group x={x + padding} y={y + padding} onClick={onClick} onTap={onClick}>
+    <Group x={x + padding} y={y + padding}>
       {/* Secondary triangle (background) - rendered first */}
-      <Line points={secondaryPoints} fill={secondaryColor} closed />
+      <Line
+        points={secondaryPoints}
+        fill={secondaryColor}
+        closed
+        onClick={handleSecondaryClick}
+        onTap={handleSecondaryClick}
+      />
 
       {/* Primary triangle (foreground) - rendered on top */}
-      <Line points={primaryPoints} fill={primaryColor} closed />
+      <Line
+        points={primaryPoints}
+        fill={primaryColor}
+        closed
+        onClick={handlePrimaryClick}
+        onTap={handlePrimaryClick}
+      />
 
       {/* Selection overlay */}
       {isSelected && (
