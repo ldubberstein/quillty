@@ -3,12 +3,9 @@ import { vi } from 'vitest';
 
 // Mock next/dynamic for SSR-disabled components
 vi.mock('next/dynamic', () => ({
-  default: (loader: () => Promise<{ default: React.ComponentType }>) => {
-    // Return a simple component that renders the dynamically loaded component
-    const DynamicComponent = (props: Record<string, unknown>) => {
-      const Component = vi.fn(() => null);
-      return Component(props);
-    };
+  default: () => {
+    // Return a simple component that renders nothing (mocked dynamic component)
+    const DynamicComponent = () => null;
     DynamicComponent.displayName = 'DynamicComponent';
     return DynamicComponent;
   },
