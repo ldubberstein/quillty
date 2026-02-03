@@ -98,6 +98,18 @@ export {
   FABRIC_ROLE_IDS,
 } from './constants';
 
-// Legacy class (will be replaced by Zustand store in iteration 1.2)
-// Temporarily commented out due to type mismatch with new shape-centric model
+// Store
+export {
+  useBlockDesignerStore,
+  useBlock,
+  useSelectedShape,
+  usePalette,
+  useRoleColor,
+  useDesignerMode,
+  useIsPaintMode,
+  useFlyingGeesePlacement,
+  type BlockDesignerStore,
+} from './store';
+
+// Legacy class (deprecated - use useBlockDesignerStore instead)
 // export { BlockDesigner } from './BlockDesigner';
