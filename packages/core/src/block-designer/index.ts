@@ -111,5 +111,15 @@ export {
   type BlockDesignerStore,
 } from './store';
 
+// Geometry
+export {
+  getHstTriangles,
+  triangleToFlatPoints,
+  HST_VARIANT_INFO,
+  type Point,
+  type Triangle,
+  type HstTriangles,
+} from './geometry';
+
 // Legacy class (deprecated - use useBlockDesignerStore instead)
 // export { BlockDesigner } from './BlockDesigner';

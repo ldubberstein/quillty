@@ -11,6 +11,7 @@ import { BlockCanvas } from './BlockCanvas';
 
 // Mock the store with all required actions
 const mockAddSquare = vi.fn();
+const mockAddHst = vi.fn();
 const mockIsCellOccupied = vi.fn(() => false);
 const mockClearSelection = vi.fn();
 
@@ -29,6 +30,7 @@ vi.mock('@quillty/core', () => ({
       },
       selectedShapeId: null,
       addSquare: mockAddSquare,
+      addHst: mockAddHst,
       isCellOccupied: mockIsCellOccupied,
       clearSelection: mockClearSelection,
     };

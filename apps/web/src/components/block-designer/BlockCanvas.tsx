@@ -5,10 +5,11 @@ import { Stage, Layer, Rect } from 'react-konva';
 import type Konva from 'konva';
 import { GridLines } from './GridLines';
 import { ZoomControls } from './ZoomControls';
-import { ShapePicker } from './ShapePicker';
+import { ShapePicker, type ShapeSelection } from './ShapePicker';
 import { SquareRenderer } from './SquareRenderer';
+import { HstRenderer } from './HstRenderer';
 import { useBlockDesignerStore } from '@quillty/core';
-import type { GridPosition, SquareShape } from '@quillty/core';
+import type { GridPosition, SquareShape, HstShape } from '@quillty/core';
 
 /** Canvas sizing constants */
 const CANVAS_PADDING = 40;
@@ -30,6 +31,7 @@ export function BlockCanvas() {
   // Get block and actions from store
   const block = useBlockDesignerStore((state) => state.block);
   const addSquare = useBlockDesignerStore((state) => state.addSquare);
+  const addHst = useBlockDesignerStore((state) => state.addHst);
   const isCellOccupied = useBlockDesignerStore((state) => state.isCellOccupied);
   const clearSelection = useBlockDesignerStore((state) => state.clearSelection);
 
@@ -300,16 +302,18 @@ export function BlockCanvas() {
 
   // Handle shape selection from picker
   const handleSelectShape = useCallback(
-    (shapeType: 'square') => {
+    (selection: ShapeSelection) => {
       if (!pickerState) return;
 
-      if (shapeType === 'square') {
+      if (selection.type === 'square') {
         addSquare(pickerState.gridPosition, 'feature');
+      } else if (selection.type === 'hst') {
+        addHst(pickerState.gridPosition, selection.variant, 'feature', 'background');
       }
 
       setPickerState(null);
     },
-    [pickerState, addSquare]
+    [pickerState, addSquare, addHst]
   );
 
   // Handle picker dismissal
@@ -319,6 +323,7 @@ export function BlockCanvas() {
 
   // Filter shapes by type
   const squareShapes = shapes.filter((s): s is SquareShape => s.type === 'square');
+  const hstShapes = shapes.filter((s): s is HstShape => s.type === 'hst');
 
   // Don't render Stage until we have dimensions
   const hasValidDimensions = dimensions.width > 0 && dimensions.height > 0;
@@ -356,6 +361,18 @@ export function BlockCanvas() {
               {/* Render square shapes */}
               {squareShapes.map((shape) => (
                 <SquareRenderer
+                  key={shape.id}
+                  shape={shape}
+                  cellSize={cellSize}
+                  offsetX={gridOffsetX}
+                  offsetY={gridOffsetY}
+                  palette={previewPalette}
+                />
+              ))}
+
+              {/* Render HST shapes */}
+              {hstShapes.map((shape) => (
+                <HstRenderer
                   key={shape.id}
                   shape={shape}
                   cellSize={cellSize}

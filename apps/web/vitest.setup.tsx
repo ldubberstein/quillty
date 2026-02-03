@@ -40,8 +40,18 @@ vi.mock('react-konva', () => ({
   Layer: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="konva-layer">{children}</div>
   ),
-  Group: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="konva-group">{children}</div>
+  Group: ({
+    children,
+    onClick,
+    ...props
+  }: {
+    children: React.ReactNode;
+    onClick?: () => void;
+    [key: string]: unknown;
+  }) => (
+    <div data-testid="konva-group" onClick={onClick} {...props}>
+      {children}
+    </div>
   ),
   Rect: (props: Record<string, unknown>) => <div data-testid="konva-rect" {...props} />,
   Line: (props: Record<string, unknown>) => <div data-testid="konva-line" {...props} />,

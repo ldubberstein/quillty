@@ -1,14 +1,23 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
+import type { HstVariant } from '@quillty/core';
+
+/**
+ * Shape selection types
+ */
+export type ShapeSelection =
+  | { type: 'square' }
+  | { type: 'hst'; variant: HstVariant };
 
 /**
  * Shape option for the picker
  */
 interface ShapeOption {
-  id: 'square';
+  id: string;
   label: string;
   icon: React.ReactNode;
+  selection: ShapeSelection;
 }
 
 /**
@@ -23,19 +32,72 @@ interface ShapePickerProps {
   /** Screen position where picker should appear */
   position: PickerPosition;
   /** Callback when a shape is selected */
-  onSelectShape: (shapeType: 'square') => void;
+  onSelectShape: (selection: ShapeSelection) => void;
   /** Callback when picker is dismissed */
   onDismiss: () => void;
 }
 
-/** Shape options for MVP (just Square for iteration 1.4) */
+/** Shape options for MVP - Square and 4 HST variants */
 const SHAPE_OPTIONS: ShapeOption[] = [
   {
     id: 'square',
     label: 'Square',
+    selection: { type: 'square' },
     icon: (
       <svg viewBox="0 0 24 24" className="w-6 h-6" fill="currentColor">
         <rect x="3" y="3" width="18" height="18" rx="2" />
+      </svg>
+    ),
+  },
+  {
+    id: 'hst-nw',
+    label: '◸',
+    selection: { type: 'hst', variant: 'nw' },
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-6 h-6">
+        {/* Primary triangle (top-left) - dark */}
+        <polygon points="3,3 21,3 3,21" fill="currentColor" />
+        {/* Secondary triangle (bottom-right) - light */}
+        <polygon points="21,3 21,21 3,21" fill="#E5E7EB" />
+      </svg>
+    ),
+  },
+  {
+    id: 'hst-ne',
+    label: '◹',
+    selection: { type: 'hst', variant: 'ne' },
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-6 h-6">
+        {/* Primary triangle (top-right) - dark */}
+        <polygon points="3,3 21,3 21,21" fill="currentColor" />
+        {/* Secondary triangle (bottom-left) - light */}
+        <polygon points="3,3 21,21 3,21" fill="#E5E7EB" />
+      </svg>
+    ),
+  },
+  {
+    id: 'hst-sw',
+    label: '◺',
+    selection: { type: 'hst', variant: 'sw' },
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-6 h-6">
+        {/* Primary triangle (bottom-left) - dark */}
+        <polygon points="3,3 3,21 21,21" fill="currentColor" />
+        {/* Secondary triangle (top-right) - light */}
+        <polygon points="3,3 21,3 21,21" fill="#E5E7EB" />
+      </svg>
+    ),
+  },
+  {
+    id: 'hst-se',
+    label: '◿',
+    selection: { type: 'hst', variant: 'se' },
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-6 h-6">
+        {/* Primary triangle (bottom-right) - dark */}
+        <polygon points="21,3 21,21 3,21" fill="currentColor" />
+        {/* Secondary triangle (top-left) - light */}
+        <polygon points="3,3 21,3 3,21" fill="#E5E7EB" />
       </svg>
     ),
   },
@@ -82,8 +144,8 @@ export function ShapePicker({ position, onSelectShape, onDismiss }: ShapePickerP
   }, [onDismiss]);
 
   const handleShapeClick = useCallback(
-    (shapeType: 'square') => {
-      onSelectShape(shapeType);
+    (selection: ShapeSelection) => {
+      onSelectShape(selection);
     },
     [onSelectShape]
   );
@@ -121,7 +183,7 @@ export function ShapePicker({ position, onSelectShape, onDismiss }: ShapePickerP
         {SHAPE_OPTIONS.map((option) => (
           <button
             key={option.id}
-            onClick={() => handleShapeClick(option.id)}
+            onClick={() => handleShapeClick(option.selection)}
             className="flex flex-col items-center justify-center w-14 h-14 rounded-md hover:bg-gray-100 focus:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
             role="menuitem"
             aria-label={`Add ${option.label}`}
