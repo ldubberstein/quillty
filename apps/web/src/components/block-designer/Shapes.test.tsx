@@ -1,12 +1,12 @@
 /**
- * ShapePicker Component Tests
+ * Shapes Component Tests
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { ShapePicker } from './ShapePicker';
+import { Shapes } from './Shapes';
 
-describe('ShapePicker', () => {
+describe('Shapes', () => {
   const defaultProps = {
     position: { x: 100, y: 100 },
     onSelectShape: vi.fn(),
@@ -18,28 +18,28 @@ describe('ShapePicker', () => {
   });
 
   describe('rendering', () => {
-    it('renders the picker container', () => {
-      render(<ShapePicker {...defaultProps} />);
+    it('renders the shapes container', () => {
+      render(<Shapes {...defaultProps} />);
       expect(screen.getByRole('menu')).toBeInTheDocument();
     });
 
     it('renders with correct aria-label', () => {
-      render(<ShapePicker {...defaultProps} />);
-      expect(screen.getByRole('menu', { name: /shape picker/i })).toBeInTheDocument();
+      render(<Shapes {...defaultProps} />);
+      expect(screen.getByRole('menu', { name: /shapes/i })).toBeInTheDocument();
     });
 
     it('renders the Square option', () => {
-      render(<ShapePicker {...defaultProps} />);
+      render(<Shapes {...defaultProps} />);
       expect(screen.getByRole('menuitem', { name: /add square/i })).toBeInTheDocument();
     });
 
     it('displays Square label text', () => {
-      render(<ShapePicker {...defaultProps} />);
+      render(<Shapes {...defaultProps} />);
       expect(screen.getByText('Square')).toBeInTheDocument();
     });
 
     it('renders all 4 HST variant options', () => {
-      render(<ShapePicker {...defaultProps} />);
+      render(<Shapes {...defaultProps} />);
       expect(screen.getByRole('menuitem', { name: /add ◸/i })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: /add ◹/i })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: /add ◺/i })).toBeInTheDocument();
@@ -47,7 +47,7 @@ describe('ShapePicker', () => {
     });
 
     it('displays HST variant labels', () => {
-      render(<ShapePicker {...defaultProps} />);
+      render(<Shapes {...defaultProps} />);
       expect(screen.getByText('◸')).toBeInTheDocument();
       expect(screen.getByText('◹')).toBeInTheDocument();
       expect(screen.getByText('◺')).toBeInTheDocument();
@@ -55,20 +55,20 @@ describe('ShapePicker', () => {
     });
 
     it('renders 6 total shape options (1 square + 4 HST + 1 Flying Geese)', () => {
-      render(<ShapePicker {...defaultProps} />);
+      render(<Shapes {...defaultProps} />);
       const menuItems = screen.getAllByRole('menuitem');
       expect(menuItems).toHaveLength(6);
     });
 
     it('renders the Flying Geese option', () => {
-      render(<ShapePicker {...defaultProps} />);
+      render(<Shapes {...defaultProps} />);
       expect(screen.getByRole('menuitem', { name: /add geese/i })).toBeInTheDocument();
     });
   });
 
   describe('positioning', () => {
     it('applies left and top styles based on position', () => {
-      render(<ShapePicker {...defaultProps} position={{ x: 200, y: 150 }} />);
+      render(<Shapes {...defaultProps} position={{ x: 200, y: 150 }} />);
       const picker = screen.getByRole('menu');
       // Check that style attributes exist
       expect(picker.style.left).toBeDefined();
@@ -78,42 +78,42 @@ describe('ShapePicker', () => {
 
   describe('interactions', () => {
     it('calls onSelectShape with square selection when Square is clicked', () => {
-      render(<ShapePicker {...defaultProps} />);
+      render(<Shapes {...defaultProps} />);
       const squareButton = screen.getByRole('menuitem', { name: /add square/i });
       fireEvent.click(squareButton);
       expect(defaultProps.onSelectShape).toHaveBeenCalledWith({ type: 'square' });
     });
 
     it('calls onSelectShape with HST nw selection when ◸ is clicked', () => {
-      render(<ShapePicker {...defaultProps} />);
+      render(<Shapes {...defaultProps} />);
       const hstButton = screen.getByRole('menuitem', { name: /add ◸/i });
       fireEvent.click(hstButton);
       expect(defaultProps.onSelectShape).toHaveBeenCalledWith({ type: 'hst', variant: 'nw' });
     });
 
     it('calls onSelectShape with HST ne selection when ◹ is clicked', () => {
-      render(<ShapePicker {...defaultProps} />);
+      render(<Shapes {...defaultProps} />);
       const hstButton = screen.getByRole('menuitem', { name: /add ◹/i });
       fireEvent.click(hstButton);
       expect(defaultProps.onSelectShape).toHaveBeenCalledWith({ type: 'hst', variant: 'ne' });
     });
 
     it('calls onSelectShape with HST sw selection when ◺ is clicked', () => {
-      render(<ShapePicker {...defaultProps} />);
+      render(<Shapes {...defaultProps} />);
       const hstButton = screen.getByRole('menuitem', { name: /add ◺/i });
       fireEvent.click(hstButton);
       expect(defaultProps.onSelectShape).toHaveBeenCalledWith({ type: 'hst', variant: 'sw' });
     });
 
     it('calls onSelectShape with HST se selection when ◿ is clicked', () => {
-      render(<ShapePicker {...defaultProps} />);
+      render(<Shapes {...defaultProps} />);
       const hstButton = screen.getByRole('menuitem', { name: /add ◿/i });
       fireEvent.click(hstButton);
       expect(defaultProps.onSelectShape).toHaveBeenCalledWith({ type: 'hst', variant: 'se' });
     });
 
     it('calls onDismiss when Escape key is pressed', () => {
-      render(<ShapePicker {...defaultProps} />);
+      render(<Shapes {...defaultProps} />);
       fireEvent.keyDown(document, { key: 'Escape' });
       expect(defaultProps.onDismiss).toHaveBeenCalled();
     });
@@ -122,7 +122,7 @@ describe('ShapePicker', () => {
       render(
         <div>
           <div data-testid="outside">Outside</div>
-          <ShapePicker {...defaultProps} />
+          <Shapes {...defaultProps} />
         </div>
       );
 
@@ -136,25 +136,25 @@ describe('ShapePicker', () => {
 
   describe('accessibility', () => {
     it('has correct role for the container', () => {
-      render(<ShapePicker {...defaultProps} />);
+      render(<Shapes {...defaultProps} />);
       expect(screen.getByRole('menu')).toBeInTheDocument();
     });
 
     it('has correct role for all menu items', () => {
-      render(<ShapePicker {...defaultProps} />);
+      render(<Shapes {...defaultProps} />);
       const menuItems = screen.getAllByRole('menuitem');
       expect(menuItems).toHaveLength(6);
     });
 
     it('Square button is focusable', () => {
-      render(<ShapePicker {...defaultProps} />);
+      render(<Shapes {...defaultProps} />);
       const squareButton = screen.getByRole('menuitem', { name: /add square/i });
       squareButton.focus();
       expect(document.activeElement).toBe(squareButton);
     });
 
     it('HST buttons are focusable', () => {
-      render(<ShapePicker {...defaultProps} />);
+      render(<Shapes {...defaultProps} />);
       const hstButton = screen.getByRole('menuitem', { name: /add ◸/i });
       hstButton.focus();
       expect(document.activeElement).toBe(hstButton);

@@ -5,7 +5,7 @@ import { Stage, Layer, Rect } from 'react-konva';
 import type Konva from 'konva';
 import { GridLines } from './GridLines';
 import { ZoomControls } from './ZoomControls';
-import { ShapePicker, type ShapeSelection } from './ShapePicker';
+import { Shapes, type ShapeSelection } from './Shapes';
 import { SquareRenderer } from './SquareRenderer';
 import { HstRenderer } from './HstRenderer';
 import { FlyingGeeseRenderer } from './FlyingGeeseRenderer';
@@ -544,9 +544,9 @@ export function BlockCanvas() {
             </div>
           )}
 
-          {/* Shape picker popup */}
+          {/* Shapes popup */}
           {pickerState && (
-            <ShapePicker
+            <Shapes
               position={pickerState.screenPosition}
               onSelectShape={handleSelectShape}
               onDismiss={handleDismissPicker}

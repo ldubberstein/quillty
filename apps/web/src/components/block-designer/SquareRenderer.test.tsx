@@ -131,11 +131,11 @@ describe('SquareRenderer', () => {
   });
 
   describe('selection state', () => {
-    it('does not show selection stroke by default', () => {
+    it('shows outline stroke by default (for visibility)', () => {
       render(<SquareRenderer {...defaultProps} />);
       const rect = screen.getByTestId('konva-rect');
-      // When not selected, stroke is undefined (no attribute)
-      expect(rect).not.toHaveAttribute('stroke');
+      // When not selected, shows gray outline for visibility
+      expect(rect).toHaveAttribute('stroke', '#D1D5DB');
     });
 
     it('shows selection styles when isSelected is true', () => {

@@ -27,9 +27,12 @@ describe('FlyingGeeseRenderer', () => {
       type: 'flying_geese',
       position: { row: 0, col: 0 },
       span: isHorizontal ? { rows: 1, cols: 2 } : { rows: 2, cols: 1 },
-      fabricRole: 'feature',
       direction,
-      secondaryFabricRole: 'background',
+      partFabricRoles: {
+        goose: 'feature',
+        sky1: 'background',
+        sky2: 'background',
+      },
     };
   };
 
@@ -86,26 +89,48 @@ describe('FlyingGeeseRenderer', () => {
     it('uses custom fabric roles', () => {
       const shape: FlyingGeeseShape = {
         ...createMockShape('right'),
-        fabricRole: 'accent1',
-        secondaryFabricRole: 'accent2',
+        partFabricRoles: {
+          goose: 'accent1',
+          sky1: 'accent2',
+          sky2: 'accent2',
+        },
       };
       render(<FlyingGeeseRenderer {...defaultProps} shape={shape} />);
       const lines = screen.getAllByTestId('konva-line');
-      expect(lines[0]).toHaveAttribute('fill', '#FAA307'); // accent2 sky
-      expect(lines[1]).toHaveAttribute('fill', '#FAA307'); // accent2 sky
+      expect(lines[0]).toHaveAttribute('fill', '#FAA307'); // accent2 sky1
+      expect(lines[1]).toHaveAttribute('fill', '#FAA307'); // accent2 sky2
       expect(lines[2]).toHaveAttribute('fill', '#E85D04'); // accent1 goose
+    });
+
+    it('supports independent sky colors', () => {
+      const shape: FlyingGeeseShape = {
+        ...createMockShape('right'),
+        partFabricRoles: {
+          goose: 'feature',
+          sky1: 'accent1',
+          sky2: 'accent2',
+        },
+      };
+      render(<FlyingGeeseRenderer {...defaultProps} shape={shape} />);
+      const lines = screen.getAllByTestId('konva-line');
+      expect(lines[0]).toHaveAttribute('fill', '#E85D04'); // accent1 sky1
+      expect(lines[1]).toHaveAttribute('fill', '#FAA307'); // accent2 sky2
+      expect(lines[2]).toHaveAttribute('fill', '#1E3A5F'); // feature goose
     });
 
     it('uses fallback colors when roles not found', () => {
       const shape: FlyingGeeseShape = {
         ...createMockShape('right'),
-        fabricRole: 'nonexistent',
-        secondaryFabricRole: 'alsoNonexistent',
+        partFabricRoles: {
+          goose: 'nonexistent',
+          sky1: 'alsoNonexistent',
+          sky2: 'stillNonexistent',
+        },
       };
       render(<FlyingGeeseRenderer {...defaultProps} shape={shape} />);
       const lines = screen.getAllByTestId('konva-line');
-      expect(lines[0]).toHaveAttribute('fill', '#FFFFFF'); // fallback for sky
-      expect(lines[1]).toHaveAttribute('fill', '#FFFFFF'); // fallback for sky
+      expect(lines[0]).toHaveAttribute('fill', '#FFFFFF'); // fallback for sky1
+      expect(lines[1]).toHaveAttribute('fill', '#FFFFFF'); // fallback for sky2
       expect(lines[2]).toHaveAttribute('fill', '#CCCCCC'); // fallback for goose
     });
   });
@@ -186,30 +211,30 @@ describe('FlyingGeeseRenderer', () => {
   });
 
   describe('click handling', () => {
-    it('calls onClick with isSecondary=false when goose triangle is clicked', () => {
+    it('calls onClick with "goose" when goose triangle is clicked', () => {
       const handleClick = vi.fn();
       render(<FlyingGeeseRenderer {...defaultProps} onClick={handleClick} />);
       // Goose triangle is rendered last (on top), after 2 sky triangles
       const lines = screen.getAllByTestId('konva-line');
       fireEvent.click(lines[2]); // Goose triangle
-      expect(handleClick).toHaveBeenCalledWith(false);
+      expect(handleClick).toHaveBeenCalledWith('goose');
     });
 
-    it('calls onClick with isSecondary=true when sky triangle is clicked', () => {
+    it('calls onClick with "sky1" when first sky triangle is clicked', () => {
       const handleClick = vi.fn();
       render(<FlyingGeeseRenderer {...defaultProps} onClick={handleClick} />);
       // Sky triangles are rendered first
       const lines = screen.getAllByTestId('konva-line');
       fireEvent.click(lines[0]); // First sky triangle
-      expect(handleClick).toHaveBeenCalledWith(true);
+      expect(handleClick).toHaveBeenCalledWith('sky1');
     });
 
-    it('calls onClick with isSecondary=true when second sky triangle is clicked', () => {
+    it('calls onClick with "sky2" when second sky triangle is clicked', () => {
       const handleClick = vi.fn();
       render(<FlyingGeeseRenderer {...defaultProps} onClick={handleClick} />);
       const lines = screen.getAllByTestId('konva-line');
       fireEvent.click(lines[1]); // Second sky triangle
-      expect(handleClick).toHaveBeenCalledWith(true);
+      expect(handleClick).toHaveBeenCalledWith('sky2');
     });
 
     it('does not throw when onClick is not provided', () => {

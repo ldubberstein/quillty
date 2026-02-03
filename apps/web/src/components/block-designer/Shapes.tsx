@@ -23,16 +23,16 @@ interface ShapeOption {
 }
 
 /**
- * Shape picker position (screen coordinates)
+ * Shapes position (screen coordinates)
  */
-interface PickerPosition {
+interface ShapesPosition {
   x: number;
   y: number;
 }
 
-interface ShapePickerProps {
+interface ShapesProps {
   /** Screen position where picker should appear */
-  position: PickerPosition;
+  position: ShapesPosition;
   /** Callback when a shape is selected */
   onSelectShape: (selection: ShapeSelection) => void;
   /** Callback when picker is dismissed */
@@ -123,18 +123,19 @@ const SHAPE_OPTIONS: ShapeOption[] = [
 ];
 
 /**
- * ShapePicker - Popup for selecting which shape to place
+ * Shapes - Popup for selecting which shape to place
  *
  * Appears near the tap point when user taps an empty cell.
- * For iteration 1.4, only shows "Square" option.
+ * Designed to support a large catalog of placeable shapes.
+ * Initial MVP includes Square, 4 HST variants, and Flying Geese.
  */
-export function ShapePicker({ position, onSelectShape, onDismiss }: ShapePickerProps) {
-  const pickerRef = useRef<HTMLDivElement>(null);
+export function Shapes({ position, onSelectShape, onDismiss }: ShapesProps) {
+  const shapesRef = useRef<HTMLDivElement>(null);
 
   // Handle click outside to dismiss
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+      if (shapesRef.current && !shapesRef.current.contains(event.target as Node)) {
         onDismiss();
       }
     }
@@ -178,7 +179,7 @@ export function ShapePicker({ position, onSelectShape, onDismiss }: ShapePickerP
 
   return (
     <div
-      ref={pickerRef}
+      ref={shapesRef}
       className="absolute z-50 bg-white rounded-lg shadow-lg border border-gray-200 p-2"
       style={{
         left: adjustedPosition.x,
@@ -187,7 +188,7 @@ export function ShapePicker({ position, onSelectShape, onDismiss }: ShapePickerP
         marginTop: '-8px',
       }}
       role="menu"
-      aria-label="Shape picker"
+      aria-label="Shapes"
     >
       {/* Arrow pointing down */}
       <div

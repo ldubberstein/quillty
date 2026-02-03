@@ -166,22 +166,22 @@ describe('HstRenderer', () => {
   });
 
   describe('click handling', () => {
-    it('calls onClick with isSecondary=false when primary triangle is clicked', () => {
+    it('calls onClick with "primary" when primary triangle is clicked', () => {
       const handleClick = vi.fn();
       render(<HstRenderer {...defaultProps} onClick={handleClick} />);
       // Primary triangle is rendered second (on top)
       const lines = screen.getAllByTestId('konva-line');
       fireEvent.click(lines[1]); // Primary triangle
-      expect(handleClick).toHaveBeenCalledWith(false);
+      expect(handleClick).toHaveBeenCalledWith('primary');
     });
 
-    it('calls onClick with isSecondary=true when secondary triangle is clicked', () => {
+    it('calls onClick with "secondary" when secondary triangle is clicked', () => {
       const handleClick = vi.fn();
       render(<HstRenderer {...defaultProps} onClick={handleClick} />);
       // Secondary triangle is rendered first
       const lines = screen.getAllByTestId('konva-line');
       fireEvent.click(lines[0]); // Secondary triangle
-      expect(handleClick).toHaveBeenCalledWith(true);
+      expect(handleClick).toHaveBeenCalledWith('secondary');
     });
 
     it('does not throw when onClick is not provided', () => {
