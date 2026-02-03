@@ -54,10 +54,15 @@ describe('ShapePicker', () => {
       expect(screen.getByText('◿')).toBeInTheDocument();
     });
 
-    it('renders 5 total shape options (1 square + 4 HST)', () => {
+    it('renders 6 total shape options (1 square + 4 HST + 1 Flying Geese)', () => {
       render(<ShapePicker {...defaultProps} />);
       const menuItems = screen.getAllByRole('menuitem');
-      expect(menuItems).toHaveLength(5);
+      expect(menuItems).toHaveLength(6);
+    });
+
+    it('renders the Flying Geese option', () => {
+      render(<ShapePicker {...defaultProps} />);
+      expect(screen.getByRole('menuitem', { name: /add geese/i })).toBeInTheDocument();
     });
   });
 
@@ -138,7 +143,7 @@ describe('ShapePicker', () => {
     it('has correct role for all menu items', () => {
       render(<ShapePicker {...defaultProps} />);
       const menuItems = screen.getAllByRole('menuitem');
-      expect(menuItems).toHaveLength(5);
+      expect(menuItems).toHaveLength(6);
     });
 
     it('Square button is focusable', () => {

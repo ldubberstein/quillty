@@ -1,7 +1,8 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as renderer from 'react-test-renderer';
-import { FeedCard, FeedItemType } from './FeedCard';
+import { FeedCard } from './FeedCard';
+import type { FeedItemType } from './FeedCard';
 
 // Mock React Native components
 vi.mock('react-native', () => ({

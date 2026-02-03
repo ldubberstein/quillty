@@ -12,3 +12,9 @@ export {
   type Triangle,
   type HstTriangles,
 } from './hst';
+
+export {
+  getFlyingGeeseTriangles,
+  FLYING_GEESE_DIRECTION_INFO,
+  type FlyingGeeseTriangles,
+} from './flyingGeese';

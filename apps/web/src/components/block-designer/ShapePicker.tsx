@@ -8,7 +8,8 @@ import type { HstVariant } from '@quillty/core';
  */
 export type ShapeSelection =
   | { type: 'square' }
-  | { type: 'hst'; variant: HstVariant };
+  | { type: 'hst'; variant: HstVariant }
+  | { type: 'flying_geese' };
 
 /**
  * Shape option for the picker
@@ -18,6 +19,7 @@ interface ShapeOption {
   label: string;
   icon: React.ReactNode;
   selection: ShapeSelection;
+  wide?: boolean; // If true, button is 2x width (for shapes like Flying Geese)
 }
 
 /**
@@ -44,7 +46,7 @@ const SHAPE_OPTIONS: ShapeOption[] = [
     label: 'Square',
     selection: { type: 'square' },
     icon: (
-      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="currentColor">
+      <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor">
         <rect x="3" y="3" width="18" height="18" rx="2" />
       </svg>
     ),
@@ -54,7 +56,7 @@ const SHAPE_OPTIONS: ShapeOption[] = [
     label: '◸',
     selection: { type: 'hst', variant: 'nw' },
     icon: (
-      <svg viewBox="0 0 24 24" className="w-6 h-6">
+      <svg viewBox="0 0 24 24" className="w-8 h-8">
         {/* Primary triangle (top-left) - dark */}
         <polygon points="3,3 21,3 3,21" fill="currentColor" />
         {/* Secondary triangle (bottom-right) - light */}
@@ -67,7 +69,7 @@ const SHAPE_OPTIONS: ShapeOption[] = [
     label: '◹',
     selection: { type: 'hst', variant: 'ne' },
     icon: (
-      <svg viewBox="0 0 24 24" className="w-6 h-6">
+      <svg viewBox="0 0 24 24" className="w-8 h-8">
         {/* Primary triangle (top-right) - dark */}
         <polygon points="3,3 21,3 21,21" fill="currentColor" />
         {/* Secondary triangle (bottom-left) - light */}
@@ -80,7 +82,7 @@ const SHAPE_OPTIONS: ShapeOption[] = [
     label: '◺',
     selection: { type: 'hst', variant: 'sw' },
     icon: (
-      <svg viewBox="0 0 24 24" className="w-6 h-6">
+      <svg viewBox="0 0 24 24" className="w-8 h-8">
         {/* Primary triangle (bottom-left) - dark */}
         <polygon points="3,3 3,21 21,21" fill="currentColor" />
         {/* Secondary triangle (top-right) - light */}
@@ -93,11 +95,28 @@ const SHAPE_OPTIONS: ShapeOption[] = [
     label: '◿',
     selection: { type: 'hst', variant: 'se' },
     icon: (
-      <svg viewBox="0 0 24 24" className="w-6 h-6">
+      <svg viewBox="0 0 24 24" className="w-8 h-8">
         {/* Primary triangle (bottom-right) - dark */}
         <polygon points="21,3 21,21 3,21" fill="currentColor" />
         {/* Secondary triangle (top-left) - light */}
         <polygon points="3,3 21,3 3,21" fill="#E5E7EB" />
+      </svg>
+    ),
+  },
+  {
+    id: 'flying-geese',
+    label: 'Geese',
+    selection: { type: 'flying_geese' },
+    wide: true, // Flying Geese button is 2x1 to match shape
+    icon: (
+      <svg viewBox="0 0 48 24" className="w-12 h-6">
+        {/* Flying Geese icon - horizontal 2x1 orientation */}
+        {/* Center goose triangle pointing right */}
+        <polygon points="3,3 45,12 3,21" fill="currentColor" />
+        {/* Top sky triangle */}
+        <polygon points="3,3 45,3 45,12" fill="#E5E7EB" />
+        {/* Bottom sky triangle */}
+        <polygon points="3,21 45,12 45,21" fill="#E5E7EB" />
       </svg>
     ),
   },
@@ -151,9 +170,10 @@ export function ShapePicker({ position, onSelectShape, onDismiss }: ShapePickerP
   );
 
   // Calculate position to keep picker within viewport
+  // Picker is wider now (~450px with 6 buttons) so increase margin
   const adjustedPosition = {
-    x: Math.min(position.x, window.innerWidth - 150),
-    y: Math.min(position.y, window.innerHeight - 100),
+    x: Math.min(position.x, window.innerWidth - 250),
+    y: Math.min(position.y, window.innerHeight - 120),
   };
 
   return (
@@ -179,12 +199,14 @@ export function ShapePicker({ position, onSelectShape, onDismiss }: ShapePickerP
         }}
       />
 
-      <div className="flex gap-1">
+      <div className="flex gap-2">
         {SHAPE_OPTIONS.map((option) => (
           <button
             key={option.id}
             onClick={() => handleShapeClick(option.selection)}
-            className="flex flex-col items-center justify-center w-14 h-14 rounded-md hover:bg-gray-100 focus:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            className={`flex flex-col items-center justify-center rounded-md hover:bg-gray-100 focus:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+              option.wide ? 'w-28 h-16' : 'w-16 h-16'
+            }`}
             role="menuitem"
             aria-label={`Add ${option.label}`}
           >

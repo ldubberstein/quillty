@@ -116,9 +116,12 @@ export {
   getHstTriangles,
   triangleToFlatPoints,
   HST_VARIANT_INFO,
+  getFlyingGeeseTriangles,
+  FLYING_GEESE_DIRECTION_INFO,
   type Point,
   type Triangle,
   type HstTriangles,
+  type FlyingGeeseTriangles,
 } from './geometry';
 
 // Legacy class (deprecated - use useBlockDesignerStore instead)
