@@ -13,6 +13,7 @@ import type {
   SquareShape,
   HstShape,
   FlyingGeeseShape,
+  FlyingGeesePartId,
   GridSize,
   GridPosition,
   FabricRoleId,
@@ -106,8 +107,7 @@ interface BlockDesignerActions {
   addFlyingGeese: (
     position: GridPosition,
     direction: FlyingGeeseDirection,
-    fabricRole?: FabricRoleId,
-    secondaryFabricRole?: FabricRoleId
+    partFabricRoles?: Partial<FlyingGeeseShape['partFabricRoles']>
   ) => UUID;
   /** Remove a shape by ID */
   removeShape: (shapeId: UUID) => void;
@@ -123,8 +123,8 @@ interface BlockDesignerActions {
   // Paint mode
   /** Set the active fabric role for paint mode */
   setActiveFabricRole: (roleId: FabricRoleId | null) => void;
-  /** Assign a fabric role to a shape */
-  assignFabricRole: (shapeId: UUID, roleId: FabricRoleId, isSecondary?: boolean) => void;
+  /** Assign a fabric role to a shape (partId for multi-part shapes like HST or Flying Geese) */
+  assignFabricRole: (shapeId: UUID, roleId: FabricRoleId, partId?: string) => void;
 
   // Palette
   /** Change a palette role's color */
@@ -213,7 +213,7 @@ export const useBlockDesignerStore = create<BlockDesignerStore>()(
       return id;
     },
 
-    addHst: (position, variant, fabricRole = 'feature', secondaryFabricRole = 'background') => {
+    addHst: (position, variant, fabricRole = 'background', secondaryFabricRole = 'background') => {
       const id = generateUUID();
       set((state) => {
         const shape: HstShape = {
@@ -231,7 +231,7 @@ export const useBlockDesignerStore = create<BlockDesignerStore>()(
       return id;
     },
 
-    addFlyingGeese: (position, direction, fabricRole = 'feature', secondaryFabricRole = 'background') => {
+    addFlyingGeese: (position, direction, partFabricRoles) => {
       const id = generateUUID();
       set((state) => {
         const isHorizontal = direction === 'left' || direction === 'right';
@@ -240,9 +240,12 @@ export const useBlockDesignerStore = create<BlockDesignerStore>()(
           type: 'flying_geese',
           position,
           span: isHorizontal ? { rows: 1, cols: 2 } : { rows: 2, cols: 1 },
-          fabricRole,
           direction,
-          secondaryFabricRole,
+          partFabricRoles: {
+            goose: partFabricRoles?.goose ?? 'background',
+            sky1: partFabricRoles?.sky1 ?? 'background',
+            sky2: partFabricRoles?.sky2 ?? 'background',
+          },
         };
         state.block.shapes.push(shape);
         state.block.updatedAt = getCurrentTimestamp();
@@ -303,13 +306,30 @@ export const useBlockDesignerStore = create<BlockDesignerStore>()(
       });
     },
 
-    assignFabricRole: (shapeId, roleId, isSecondary = false) => {
+    assignFabricRole: (shapeId, roleId, partId) => {
       set((state) => {
         const shape = state.block.shapes.find((s) => s.id === shapeId);
         if (shape) {
-          if (isSecondary && 'secondaryFabricRole' in shape) {
-            (shape as HstShape | FlyingGeeseShape).secondaryFabricRole = roleId;
+          if (shape.type === 'flying_geese') {
+            // Flying Geese uses partFabricRoles map
+            const fgShape = shape as FlyingGeeseShape;
+            const validPartIds: FlyingGeesePartId[] = ['goose', 'sky1', 'sky2'];
+            if (partId && validPartIds.includes(partId as FlyingGeesePartId)) {
+              fgShape.partFabricRoles[partId as FlyingGeesePartId] = roleId;
+            } else {
+              // Default to goose if no partId specified
+              fgShape.partFabricRoles.goose = roleId;
+            }
+          } else if (shape.type === 'hst') {
+            // HST uses primary/secondary partIds
+            const hstShape = shape as HstShape;
+            if (partId === 'secondary') {
+              hstShape.secondaryFabricRole = roleId;
+            } else {
+              hstShape.fabricRole = roleId;
+            }
           } else {
+            // Square and other single-part shapes
             shape.fabricRole = roleId;
           }
           state.block.updatedAt = getCurrentTimestamp();

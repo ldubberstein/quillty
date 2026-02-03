@@ -5,6 +5,7 @@
 | Version | Date | Status |
 |---------|------|--------|
 | 1.0 | 2026-02-02 | Draft — Awaiting Approval |
+| 1.1 | 2026-02-03 | Updated per user testing feedback: shapes default to background color, paint mode is primary coloring method, Shapes component designed for large library |
 
 ---
 
@@ -163,14 +164,16 @@ Per PRD_BLOCK_PATTERN_DESIGNER.md §9 decisions:
 ### Iteration 1.4: Shape Placement (Squares)
 
 **Scope:**
-- Tap empty cell → show shape picker popup near tap point
-- Shape picker shows only "Square" option initially
-- Select Square → place SquareShape in cell with background role
+- Tap empty cell → show "Shapes" popup near tap point
+- Shapes popup shows only "Square" option initially
+- Select Square → place SquareShape in cell (defaults to background fabric role)
+- **No color selection during placement** — all shapes default to background color
 - Render filled squares on canvas using Konva Rect
 - Tapping occupied cell does NOT trigger picker (edit mode later)
+- Design Shapes component to scale to large catalog (grid layout, future categorization/search)
 
 **Files:**
-- `apps/web/src/components/block-designer/ShapePicker.tsx` (new)
+- `apps/web/src/components/block-designer/Shapes.tsx` (new — designed for extensibility)
 - `apps/web/src/components/block-designer/SquareRenderer.tsx` (new)
 - `apps/web/src/components/block-designer/BlockCanvas.tsx` (update)
 - `packages/core/src/block-designer/store.ts` (update addShape)
@@ -179,17 +182,18 @@ Per PRD_BLOCK_PATTERN_DESIGNER.md §9 decisions:
 - Iteration 1.3 (canvas)
 
 **Test Cases (UI):**
-- [ ] Tap empty cell at (0,0) — shape picker appears near tap point
-- [ ] Select "Square" — cell fills with background color (#FFFFFF or visible default)
-- [ ] Tap another empty cell — picker appears again
-- [ ] Place square at (1,1) — second square renders
-- [ ] Tap outside grid — picker dismisses, nothing placed
-- [ ] Tap already-filled cell — picker does NOT appear
+- [ ] Tap empty cell at (0,0) — Shapes popup appears near tap point
+- [ ] Select "Square" — cell fills with background color (no color picker shown)
+- [ ] Tap another empty cell — Shapes popup appears again
+- [ ] Place square at (1,1) — second square renders with background color
+- [ ] Tap outside grid — popup dismisses, nothing placed
+- [ ] Tap already-filled cell — Shapes popup does NOT appear
 - [ ] No console errors
 
 **Acceptance Criteria:**
 - Squares can be placed in any empty cell
-- Picker appears near tap location (not fixed position)
+- Shapes popup appears near tap location (not fixed position)
+- All placed shapes default to background fabric role (colored via Paint Mode later)
 - Multiple squares can be placed
 
 ---
@@ -197,61 +201,65 @@ Per PRD_BLOCK_PATTERN_DESIGNER.md §9 decisions:
 ### Iteration 1.5: Shape Placement (HST Variants)
 
 **Scope:**
-- Add 4 HST options to shape picker: ◸ ◹ ◺ ◿
+- Add 4 HST options to Shapes popup: ◸ ◹ ◺ ◿
 - Each option pre-renders the correct triangle orientation
 - Select HST variant → place HstShape with correct `variant`
-- Render HSTs using Konva Line (polygon) with two colors
-- Primary triangle uses `fabric_role`, secondary uses `secondary_fabric_role`
+- **No color selection during placement** — both `fabric_role` AND `secondary_fabric_role` default to 'background'
+- HST will initially appear as solid background color (both halves same color until painted)
+- Render HSTs using Konva Line (polygon) — colors assigned via Paint Mode (Iteration 1.7)
 
 **Files:**
-- `apps/web/src/components/block-designer/ShapePicker.tsx` (update)
+- `apps/web/src/components/block-designer/Shapes.tsx` (update)
 - `apps/web/src/components/block-designer/HstRenderer.tsx` (new)
 - `packages/core/src/block-designer/geometry/hst.ts` (new — path calculations)
 
 **Dependencies:**
-- Iteration 1.4 (shape picker)
+- Iteration 1.4 (Shapes popup)
 
 **Test Cases (UI):**
-- [ ] Tap empty cell — picker shows Square + 4 HST variants
+- [ ] Tap empty cell — Shapes popup shows Square + 4 HST variants
 - [ ] Select "◹" (NE) — HST renders with diagonal from top-right to bottom-left
 - [ ] Select "◸" (NW) — HST renders with diagonal from top-left to bottom-right
 - [ ] Select "◺" (SW) — HST renders with bottom-left filled
 - [ ] Select "◿" (SE) — HST renders with bottom-right filled
-- [ ] Each HST shows two distinct colors (primary + secondary)
+- [ ] HST placed with both halves showing background color (appears solid until painted)
 - [ ] HSTs and Squares can coexist on canvas
+- [ ] No color picker shown during placement
 
 **Acceptance Criteria:**
 - All 4 HST variants render correctly
 - Diagonal direction matches the picker icon
-- Two-color fill is visible
+- Both fabric roles default to 'background' (coloring happens via Paint Mode)
 
 ---
 
 ### Iteration 1.6: Shape Placement (Flying Geese)
 
 **Scope:**
-- Add "Flying Geese" to shape picker
+- Add "Flying Geese" to Shapes popup
 - Implement two-tap placement flow:
   1. First tap selects starting cell, highlights valid adjacent cells
   2. Second tap on adjacent cell completes placement (horizontal or vertical)
   3. Tap on non-adjacent/same cell cancels
 - Flying Geese spans 2 cells (1×2 or 2×1)
-- Render center triangle + two side triangles
+- **No color selection during placement** — both `fabric_role` AND `secondary_fabric_role` default to 'background'
+- Render center triangle + two side triangles (all background color until painted)
 
 **Files:**
-- `apps/web/src/components/block-designer/ShapePicker.tsx` (update)
+- `apps/web/src/components/block-designer/Shapes.tsx` (update)
 - `apps/web/src/components/block-designer/FlyingGeeseRenderer.tsx` (new)
 - `apps/web/src/components/block-designer/BlockCanvas.tsx` (update for two-tap mode)
 - `packages/core/src/block-designer/geometry/flyingGeese.ts` (new)
 - `packages/core/src/block-designer/store.ts` (add placement mode state)
 
 **Dependencies:**
-- Iteration 1.5 (shape picker)
+- Iteration 1.5 (Shapes popup)
 
 **Test Cases (UI):**
 - [ ] Tap empty cell, select "Flying Geese" — first cell highlights, adjacent cells glow
 - [ ] Tap cell to the right — horizontal Flying Geese placed spanning both cells
 - [ ] Tap cell below — vertical Flying Geese placed spanning both cells
+- [ ] Flying Geese placed with all parts showing background color (until painted)
 - [ ] Tap same cell again — cancels placement, returns to normal mode
 - [ ] Tap non-adjacent cell — cancels placement
 - [ ] Flying Geese at grid edge — only valid adjacent cells highlighted
@@ -261,6 +269,7 @@ Per PRD_BLOCK_PATTERN_DESIGNER.md §9 decisions:
 - Two-tap flow works correctly
 - Flying Geese spans 2 cells visually
 - Invalid placements are prevented with feedback
+- All fabric roles default to 'background' (coloring happens via Paint Mode)
 
 ---
 
@@ -270,15 +279,17 @@ Per PRD_BLOCK_PATTERN_DESIGNER.md §9 decisions:
 - Create Fabric Panel sidebar with 4 roles: Background, Feature, Accent 1, Accent 2
 - Each role shows a color swatch
 - Tap role → enters "paint mode" (role becomes active)
+- **This is THE primary method for coloring shapes** — shape placement does not include color selection
 - In paint mode, tap any shape → assigns active role to shape
+- **Multi-part shapes (HST, Flying Geese):** Tap near the specific triangle half to paint that half. System detects which half is closer to the tap point and assigns the active fabric role to that half only.
 - Tap role's color swatch → opens color picker to change role color
 - All shapes with that role update immediately
 
 **Files:**
 - `apps/web/src/components/block-designer/FabricPanel.tsx` (new)
 - `apps/web/src/components/block-designer/ColorPicker.tsx` (new)
-- `apps/web/src/components/block-designer/BlockCanvas.tsx` (update tap handling)
-- `packages/core/src/block-designer/store.ts` (add setRoleColor action)
+- `apps/web/src/components/block-designer/BlockCanvas.tsx` (update tap handling for paint mode)
+- `packages/core/src/block-designer/store.ts` (add setRoleColor action, paintShapePart action)
 
 **Dependencies:**
 - Iteration 1.6 (shapes placed)
@@ -289,14 +300,19 @@ Per PRD_BLOCK_PATTERN_DESIGNER.md §9 decisions:
 - [ ] Tap "Feature" role — role highlights as active
 - [ ] Tap a square on canvas — square changes to Feature color
 - [ ] Tap another square — also changes to Feature color (still in paint mode)
+- [ ] **HST painting:** Tap near top-left half of HST → that half gets Feature color
+- [ ] **HST painting:** Tap near bottom-right half of same HST → that half gets Feature color
+- [ ] **Flying Geese painting:** Tap center triangle → center gets active role
+- [ ] **Flying Geese painting:** Tap side triangles → sides get active role
 - [ ] Tap Feature's color swatch — color picker opens
-- [ ] Select red (#FF0000) — Feature color updates, all Feature shapes turn red
+- [ ] Select red (#FF0000) — Feature color updates, all Feature shapes/parts turn red
 - [ ] Tap outside panel to deselect role — exits paint mode
 
 **Acceptance Criteria:**
-- Paint mode works for assigning roles
+- Paint mode is the primary way to color shapes (no color selection during placement)
+- Multi-part shapes can be painted by tapping near the specific part
 - Color picker changes role color globally
-- All shapes with role update in real-time
+- All shapes/parts with that role update in real-time
 
 ---
 

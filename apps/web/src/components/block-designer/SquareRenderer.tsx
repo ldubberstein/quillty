@@ -47,6 +47,9 @@ export function SquareRenderer({
   const padding = 1;
   const size = cellSize - padding * 2;
 
+  // Light gray outline to make shapes visible even when same color as background
+  const outlineColor = '#D1D5DB';
+
   return (
     <Rect
       x={x + padding}
@@ -54,8 +57,8 @@ export function SquareRenderer({
       width={size}
       height={size}
       fill={fillColor}
-      stroke={isSelected ? '#3B82F6' : undefined}
-      strokeWidth={isSelected ? 3 : 0}
+      stroke={isSelected ? '#3B82F6' : outlineColor}
+      strokeWidth={isSelected ? 3 : 1}
       onClick={onClick}
       onTap={onClick}
       // Make the shape feel interactive

@@ -125,12 +125,24 @@ const FlyingGeeseSpanSchema = z.union([
   z.object({ rows: z.literal(2), cols: z.literal(1) }),
 ]);
 
-/** Flying Geese shape schema */
-export const FlyingGeeseShapeSchema = BaseShapeSchema.extend({
+/** Flying Geese part ID schema */
+export const FlyingGeesePartIdSchema = z.enum(['goose', 'sky1', 'sky2']);
+
+/** Flying Geese part roles schema - fabric role for each of the 3 triangles */
+export const FlyingGeesePartRolesSchema = z.object({
+  goose: FabricRoleIdSchema,
+  sky1: FabricRoleIdSchema,
+  sky2: FabricRoleIdSchema,
+});
+
+/** Flying Geese shape schema - uses partFabricRoles for independent coloring */
+export const FlyingGeeseShapeSchema = z.object({
+  id: UUIDSchema,
   type: z.literal('flying_geese'),
+  position: GridPositionSchema,
   span: FlyingGeeseSpanSchema,
   direction: FlyingGeeseDirectionSchema,
-  secondaryFabricRole: FabricRoleIdSchema,
+  partFabricRoles: FlyingGeesePartRolesSchema,
 });
 
 /** Union schema for all shapes */
@@ -190,8 +202,7 @@ export const CreateHstInputSchema = z.object({
 export const CreateFlyingGeeseInputSchema = z.object({
   position: GridPositionSchema,
   direction: FlyingGeeseDirectionSchema,
-  fabricRole: FabricRoleIdSchema,
-  secondaryFabricRole: FabricRoleIdSchema,
+  partFabricRoles: FlyingGeesePartRolesSchema,
 });
 
 // =============================================================================

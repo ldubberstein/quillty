@@ -130,15 +130,33 @@ export interface HstShape extends BaseShape {
   secondaryFabricRole: FabricRoleId;
 }
 
-/** Flying Geese - 2:1 ratio spanning 2 cells */
-export interface FlyingGeeseShape extends BaseShape {
+/**
+ * Flying Geese part names for fabric role assignment
+ * - goose: Center triangle (the "goose")
+ * - sky1: First side triangle
+ * - sky2: Second side triangle
+ */
+export type FlyingGeesePartId = 'goose' | 'sky1' | 'sky2';
+
+/** Fabric roles for each part of a Flying Geese shape */
+export interface FlyingGeesePartRoles {
+  /** Center triangle (the "goose") */
+  goose: FabricRoleId;
+  /** First side triangle */
+  sky1: FabricRoleId;
+  /** Second side triangle */
+  sky2: FabricRoleId;
+}
+
+/** Flying Geese - 2:1 ratio spanning 2 cells with 3 independently colorable parts */
+export interface FlyingGeeseShape extends Omit<BaseShape, 'fabricRole'> {
   type: 'flying_geese';
   /** Either horizontal (1×2) or vertical (2×1) */
   span: { rows: 1; cols: 2 } | { rows: 2; cols: 1 };
   /** Direction the center "goose" triangle points */
   direction: FlyingGeeseDirection;
-  /** Fabric role for the side triangles (sky) */
-  secondaryFabricRole: FabricRoleId;
+  /** Fabric roles for each part - enables independent coloring of all 3 triangles */
+  partFabricRoles: FlyingGeesePartRoles;
 }
 
 /** Union type for all MVP shapes */
@@ -210,8 +228,8 @@ export interface CreateHstInput {
 export interface CreateFlyingGeeseInput {
   position: GridPosition;
   direction: FlyingGeeseDirection;
-  fabricRole: FabricRoleId;
-  secondaryFabricRole: FabricRoleId;
+  /** Fabric roles for each part (goose, sky1, sky2) */
+  partFabricRoles: FlyingGeesePartRoles;
 }
 
 /** Union of all shape creation inputs */

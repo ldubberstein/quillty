@@ -335,10 +335,12 @@ export function BlockCanvas() {
       if (!pickerState) return;
 
       if (selection.type === 'square') {
-        addSquare(pickerState.gridPosition, 'feature');
+        // All shapes default to background fabric role (coloring via Paint Mode)
+        addSquare(pickerState.gridPosition, 'background');
         setPickerState(null);
       } else if (selection.type === 'hst') {
-        addHst(pickerState.gridPosition, selection.variant, 'feature', 'background');
+        // Both fabric roles default to background (coloring via Paint Mode)
+        addHst(pickerState.gridPosition, selection.variant, 'background', 'background');
         setPickerState(null);
       } else if (selection.type === 'flying_geese') {
         // Check if there are valid adjacent cells
@@ -364,9 +366,9 @@ export function BlockCanvas() {
 
   // Handle shape click (for paint mode)
   const handleShapeClick = useCallback(
-    (shapeId: string, isSecondary: boolean = false) => {
+    (shapeId: string, partId?: string) => {
       if (isPaintMode && activeFabricRole) {
-        assignFabricRole(shapeId, activeFabricRole, isSecondary);
+        assignFabricRole(shapeId, activeFabricRole, partId);
       }
       // In non-paint mode, could open edit popup (future iteration)
     },
@@ -435,7 +437,7 @@ export function BlockCanvas() {
                   palette={previewPalette}
                   onClick={
                     isPaintMode
-                      ? (isSecondary) => handleShapeClick(shape.id, isSecondary)
+                      ? (partId) => handleShapeClick(shape.id, partId)
                       : undefined
                   }
                 />
@@ -452,7 +454,7 @@ export function BlockCanvas() {
                   palette={previewPalette}
                   onClick={
                     isPaintMode
-                      ? (isSecondary) => handleShapeClick(shape.id, isSecondary)
+                      ? (partId) => handleShapeClick(shape.id, partId)
                       : undefined
                   }
                 />

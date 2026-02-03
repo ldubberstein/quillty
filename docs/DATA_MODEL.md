@@ -7,6 +7,7 @@
 | 1.0 | 2026-02-02 | Initial data model design |
 | 1.1 | 2026-02-02 | Added thumbnail generation strategy (§9) |
 | 1.2 | 2026-02-02 | Added undo/redo state management (§10) |
+| 1.3 | 2026-02-03 | Added default value notes: all shapes default to 'background' fabric role |
 
 ---
 
@@ -237,17 +238,23 @@ interface BaseShape {
 }
 
 // Square shape (simplest)
+// NOTE: When creating new shapes, default fabric_role to 'background'.
+// User colors shapes via paint mode after placement.
 interface SquareShape extends BaseShape {
   type: 'square';
   span: { rows: 1, cols: 1 };  // Always 1×1
+  // fabric_role inherited from BaseShape (default: 'background')
 }
 
 // Half-square triangle
+// NOTE: When creating new HST shapes, default both fabric roles to 'background'.
+// User colors shapes via paint mode after placement.
 interface HstShape extends BaseShape {
   type: 'hst';
   span: { rows: 1, cols: 1 };
   variant: HstVariant;                    // Which corner is filled
-  secondary_fabric_role: FabricRoleId;    // Other half of triangle
+  fabric_role: FabricRoleId;              // Primary triangle (default: 'background')
+  secondary_fabric_role: FabricRoleId;    // Other half of triangle (default: 'background')
 }
 
 // Quarter-square triangle (4 triangles in 1 cell)
@@ -259,11 +266,14 @@ interface QstShape extends BaseShape {
 }
 
 // Flying Geese (2:1 ratio)
+// NOTE: When creating new Flying Geese shapes, default both fabric roles to 'background'.
+// User colors shapes via paint mode after placement.
 interface FlyingGeeseShape extends BaseShape {
   type: 'flying_geese';
   span: { rows: 1, cols: 2 } | { rows: 2, cols: 1 };  // H or V
   direction: FlyingGeeseDirection;
-  secondary_fabric_role: FabricRoleId;    // Background triangles
+  fabric_role: FabricRoleId;              // Center triangle (default: 'background')
+  secondary_fabric_role: FabricRoleId;    // Side triangles (default: 'background')
 }
 
 // Union type for all shapes

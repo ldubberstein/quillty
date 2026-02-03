@@ -16,6 +16,8 @@ export type {
   ShapeType,
   HstVariant,
   FlyingGeeseDirection,
+  FlyingGeesePartId,
+  FlyingGeesePartRoles,
   // Grid & position
   GridPosition,
   Span,
@@ -55,6 +57,8 @@ export {
   ShapeTypeSchema,
   HstVariantSchema,
   FlyingGeeseDirectionSchema,
+  FlyingGeesePartIdSchema,
+  FlyingGeesePartRolesSchema,
   // Grid & position schemas
   GridPositionSchema,
   SpanSchema,

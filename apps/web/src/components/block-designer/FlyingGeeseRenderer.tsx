@@ -2,7 +2,7 @@
 
 import { Group, Line } from 'react-konva';
 import { getFlyingGeeseTriangles, triangleToFlatPoints } from '@quillty/core';
-import type { FlyingGeeseShape, Palette } from '@quillty/core';
+import type { FlyingGeeseShape, FlyingGeesePartId, Palette } from '@quillty/core';
 
 interface FlyingGeeseRendererProps {
   /** The Flying Geese shape to render */
@@ -17,8 +17,8 @@ interface FlyingGeeseRendererProps {
   palette: Palette;
   /** Whether this shape is selected */
   isSelected?: boolean;
-  /** Callback when a triangle is clicked. isSecondary=true for sky triangles. */
-  onClick?: (isSecondary: boolean) => void;
+  /** Callback when a triangle part is clicked */
+  onClick?: (partId: FlyingGeesePartId) => void;
 }
 
 /**
@@ -37,11 +37,13 @@ export function FlyingGeeseRenderer({
   isSelected = false,
   onClick,
 }: FlyingGeeseRendererProps) {
-  // Get colors from palette for both fabric roles
-  const gooseRole = palette.roles.find((r) => r.id === shape.fabricRole);
-  const skyRole = palette.roles.find((r) => r.id === shape.secondaryFabricRole);
+  // Get colors from palette for each part's fabric role
+  const gooseRole = palette.roles.find((r) => r.id === shape.partFabricRoles.goose);
+  const sky1Role = palette.roles.find((r) => r.id === shape.partFabricRoles.sky1);
+  const sky2Role = palette.roles.find((r) => r.id === shape.partFabricRoles.sky2);
   const gooseColor = gooseRole?.color ?? '#CCCCCC';
-  const skyColor = skyRole?.color ?? '#FFFFFF';
+  const sky1Color = sky1Role?.color ?? '#FFFFFF';
+  const sky2Color = sky2Role?.color ?? '#FFFFFF';
 
   // Calculate pixel position
   const x = offsetX + shape.position.col * cellSize;
@@ -61,32 +63,42 @@ export function FlyingGeeseRenderer({
   const sky1Points = triangleToFlatPoints(triangles.sky1);
   const sky2Points = triangleToFlatPoints(triangles.sky2);
 
-  // Click handlers for individual triangles
-  const handleGooseClick = onClick ? () => onClick(false) : undefined;
-  const handleSkyClick = onClick ? () => onClick(true) : undefined;
+  // Click handlers for individual triangles (each part independently)
+  const handleGooseClick = onClick ? () => onClick('goose') : undefined;
+  const handleSky1Click = onClick ? () => onClick('sky1') : undefined;
+  const handleSky2Click = onClick ? () => onClick('sky2') : undefined;
+
+  // Light gray outline to make shapes visible even when same color as background
+  const outlineColor = '#D1D5DB';
 
   return (
     <Group x={x + padding} y={y + padding}>
-      {/* Sky triangles (background) - rendered first */}
+      {/* Sky triangles - each independently colorable */}
       <Line
         points={sky1Points}
-        fill={skyColor}
+        fill={sky1Color}
+        stroke={outlineColor}
+        strokeWidth={1}
         closed
-        onClick={handleSkyClick}
-        onTap={handleSkyClick}
+        onClick={handleSky1Click}
+        onTap={handleSky1Click}
       />
       <Line
         points={sky2Points}
-        fill={skyColor}
+        fill={sky2Color}
+        stroke={outlineColor}
+        strokeWidth={1}
         closed
-        onClick={handleSkyClick}
-        onTap={handleSkyClick}
+        onClick={handleSky2Click}
+        onTap={handleSky2Click}
       />
 
       {/* Goose triangle (foreground) - rendered on top */}
       <Line
         points={goosePoints}
         fill={gooseColor}
+        stroke={outlineColor}
+        strokeWidth={1}
         closed
         onClick={handleGooseClick}
         onTap={handleGooseClick}

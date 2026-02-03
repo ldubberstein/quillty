@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useBlockDesignerStore } from './store';
 import { DEFAULT_GRID_SIZE, DEFAULT_PALETTE } from './constants';
-import type { Block, GridPosition, HstVariant, FlyingGeeseDirection } from './types';
+import type { Block, GridPosition, HstVariant, FlyingGeeseDirection, SquareShape, HstShape, FlyingGeeseShape } from './types';
 
 // Helper to reset store state before each test
 function resetStore() {
@@ -200,14 +200,16 @@ describe('BlockDesignerStore', () => {
       const store = useBlockDesignerStore.getState();
       store.addSquare({ row: 0, col: 0 });
 
-      expect(useBlockDesignerStore.getState().block.shapes[0].fabricRole).toBe('background');
+      const shape = useBlockDesignerStore.getState().block.shapes[0] as SquareShape;
+      expect(shape.fabricRole).toBe('background');
     });
 
     it('accepts custom fabric role', () => {
       const store = useBlockDesignerStore.getState();
       store.addSquare({ row: 0, col: 0 }, 'accent1');
 
-      expect(useBlockDesignerStore.getState().block.shapes[0].fabricRole).toBe('accent1');
+      const shape = useBlockDesignerStore.getState().block.shapes[0] as SquareShape;
+      expect(shape.fabricRole).toBe('accent1');
     });
 
     it('sets span to 1x1', () => {
@@ -246,26 +248,22 @@ describe('BlockDesignerStore', () => {
       }
     });
 
-    it('uses default fabric roles', () => {
+    it('uses default fabric roles (both background)', () => {
       const store = useBlockDesignerStore.getState();
       store.addHst({ row: 0, col: 0 }, 'nw');
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0];
-      expect(shape.fabricRole).toBe('feature');
-      if (shape.type === 'hst') {
-        expect(shape.secondaryFabricRole).toBe('background');
-      }
+      const shape = useBlockDesignerStore.getState().block.shapes[0] as HstShape;
+      expect(shape.fabricRole).toBe('background');
+      expect(shape.secondaryFabricRole).toBe('background');
     });
 
     it('accepts custom fabric roles', () => {
       const store = useBlockDesignerStore.getState();
       store.addHst({ row: 0, col: 0 }, 'nw', 'accent1', 'accent2');
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0];
+      const shape = useBlockDesignerStore.getState().block.shapes[0] as HstShape;
       expect(shape.fabricRole).toBe('accent1');
-      if (shape.type === 'hst') {
-        expect(shape.secondaryFabricRole).toBe('accent2');
-      }
+      expect(shape.secondaryFabricRole).toBe('accent2');
     });
   });
 
@@ -301,15 +299,14 @@ describe('BlockDesignerStore', () => {
       }
     );
 
-    it('uses default fabric roles', () => {
+    it('uses default fabric roles (all background)', () => {
       const store = useBlockDesignerStore.getState();
       store.addFlyingGeese({ row: 0, col: 0 }, 'up');
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0];
-      expect(shape.fabricRole).toBe('feature');
-      if (shape.type === 'flying_geese') {
-        expect(shape.secondaryFabricRole).toBe('background');
-      }
+      const shape = useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape;
+      expect(shape.partFabricRoles.goose).toBe('background');
+      expect(shape.partFabricRoles.sky1).toBe('background');
+      expect(shape.partFabricRoles.sky2).toBe('background');
     });
   });
 
@@ -354,7 +351,8 @@ describe('BlockDesignerStore', () => {
 
       store.updateShape(id, { fabricRole: 'accent1' });
 
-      expect(useBlockDesignerStore.getState().block.shapes[0].fabricRole).toBe('accent1');
+      const shape = useBlockDesignerStore.getState().block.shapes[0] as SquareShape;
+      expect(shape.fabricRole).toBe('accent1');
     });
 
     it('updates position', () => {
@@ -372,7 +370,8 @@ describe('BlockDesignerStore', () => {
 
       store.updateShape('non-existent-id', { fabricRole: 'accent1' });
 
-      expect(useBlockDesignerStore.getState().block.shapes[0].fabricRole).toBe('background');
+      const shape = useBlockDesignerStore.getState().block.shapes[0] as SquareShape;
+      expect(shape.fabricRole).toBe('background');
     });
   });
 
@@ -465,37 +464,64 @@ describe('BlockDesignerStore', () => {
   });
 
   describe('assignFabricRole', () => {
-    it('assigns fabric role to a shape', () => {
+    it('assigns fabric role to a square shape', () => {
       const store = useBlockDesignerStore.getState();
       const id = store.addSquare({ row: 0, col: 0 }, 'background');
 
       store.assignFabricRole(id, 'accent2');
 
-      expect(useBlockDesignerStore.getState().block.shapes[0].fabricRole).toBe('accent2');
+      const shape = useBlockDesignerStore.getState().block.shapes[0] as SquareShape;
+      expect(shape.fabricRole).toBe('accent2');
+    });
+
+    it('assigns primary fabric role to HST', () => {
+      const store = useBlockDesignerStore.getState();
+      const id = store.addHst({ row: 0, col: 0 }, 'nw');
+
+      store.assignFabricRole(id, 'accent1', 'primary');
+
+      const shape = useBlockDesignerStore.getState().block.shapes[0] as HstShape;
+      expect(shape.fabricRole).toBe('accent1');
     });
 
     it('assigns secondary fabric role to HST', () => {
       const store = useBlockDesignerStore.getState();
       const id = store.addHst({ row: 0, col: 0 }, 'nw');
 
-      store.assignFabricRole(id, 'accent1', true);
+      store.assignFabricRole(id, 'accent1', 'secondary');
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0];
-      if (shape.type === 'hst') {
-        expect(shape.secondaryFabricRole).toBe('accent1');
-      }
+      const shape = useBlockDesignerStore.getState().block.shapes[0] as HstShape;
+      expect(shape.secondaryFabricRole).toBe('accent1');
     });
 
-    it('assigns secondary fabric role to Flying Geese', () => {
+    it('assigns goose fabric role to Flying Geese', () => {
       const store = useBlockDesignerStore.getState();
       const id = store.addFlyingGeese({ row: 0, col: 0 }, 'up');
 
-      store.assignFabricRole(id, 'accent2', true);
+      store.assignFabricRole(id, 'accent1', 'goose');
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0];
-      if (shape.type === 'flying_geese') {
-        expect(shape.secondaryFabricRole).toBe('accent2');
-      }
+      const shape = useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape;
+      expect(shape.partFabricRoles.goose).toBe('accent1');
+    });
+
+    it('assigns sky1 fabric role to Flying Geese', () => {
+      const store = useBlockDesignerStore.getState();
+      const id = store.addFlyingGeese({ row: 0, col: 0 }, 'up');
+
+      store.assignFabricRole(id, 'accent2', 'sky1');
+
+      const shape = useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape;
+      expect(shape.partFabricRoles.sky1).toBe('accent2');
+    });
+
+    it('assigns sky2 fabric role to Flying Geese', () => {
+      const store = useBlockDesignerStore.getState();
+      const id = store.addFlyingGeese({ row: 0, col: 0 }, 'up');
+
+      store.assignFabricRole(id, 'feature', 'sky2');
+
+      const shape = useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape;
+      expect(shape.partFabricRoles.sky2).toBe('feature');
     });
   });
 

@@ -15,6 +15,7 @@
 | 0.9 | 2026-02-02 | Refined fabric assignment: paint mode, pattern owns palette, block library shows pattern colors |
 | 1.0 | 2026-02-02 | Figma/Canva UI review: floating toolbar, larger touch targets, zoom controls, responsive panels |
 | 1.1 | 2026-02-02 | Added edge cases and error states handling |
+| 1.2 | 2026-02-03 | User testing feedback: shapes default to background, paint mode is primary coloring, Shapes component, tap-near-half painting |
 
 ---
 
@@ -698,10 +699,11 @@ ENTRY POINTS:
 **Step 2: Shape Editing**
 | Screen | User Action | System Response |
 |--------|-------------|-----------------|
-| Block Canvas | Taps an empty cell | Contextual popup appears near tap with shape options |
-| Shape Picker | Shows options | Square, HST◸, HST◹, HST◺, HST◿, Flying Geese |
-| Shape Picker | Taps HST◹ | Places half-square triangle in cell, diagonal top-right |
-| Block Canvas | Taps existing piece | Edit popup: Change Shape, Rotate 90°, Flip, Delete, Assign Fabric |
+| Block Canvas | Taps an empty cell | "Shapes" popup appears near tap with shape options |
+| Shapes | Shows options | Square, HST◸, HST◹, HST◺, HST◿, Flying Geese |
+| Shapes | Taps HST◹ | Places half-square triangle in cell, **defaults to background color** (no color picker) |
+| Block Canvas | Shape placed | All fabric roles default to 'background' — coloring happens via Paint Mode |
+| Block Canvas | Taps existing piece | Edit popup: Change Shape, Rotate 90°, Flip, Delete |
 | Block Canvas | Long-press piece | Enters "move mode" - can drag to swap positions |
 
 **Step 2b: Flying Geese Placement (Two-Tap)**
@@ -713,13 +715,17 @@ ENTRY POINTS:
 | Block Canvas | Taps non-adjacent or same cell | Cancels placement, returns to normal mode |
 
 **Step 3: Fabric Assignment (Paint Mode)**
+
+*Note: All shapes default to background color when placed. Paint mode is the primary method for assigning fabric roles/colors.*
+
 | Screen | User Action | System Response |
 |--------|-------------|-----------------|
 | Block Canvas | Taps "Fabrics" button | Opens Fabric Panel |
 | Fabric Panel | Sees 4 roles: Background, Feature, Accent 1, Accent 2 | Each role has a color swatch (preview colors for Block Designer) |
-| Fabric Panel | Taps a role (e.g., "Background") | Role becomes "active" (highlighted) |
+| Fabric Panel | Taps a role (e.g., "Feature") | Role becomes "active" (highlighted) |
 | Block Canvas | Taps any piece | Piece assigned to active role, fills with role's color |
 | Block Canvas | Taps more pieces | All assigned to same active role (paint mode) |
+| Block Canvas | **HST/Multi-part:** Taps near triangle half | System detects which half is closer to tap point, assigns active role to that half only |
 | Fabric Panel | Taps role's color swatch | Color picker opens |
 | Color Picker | Selects new color | Role color updates, all pieces with that role update |
 
@@ -1026,6 +1032,9 @@ _Decisions made during PRD development._
 | Zoom controls | None / Pinch only / Full controls | **Full zoom controls** | [−] [%] [+] [Fit] in corner. Pinch-to-zoom + scroll wheel. Critical for precision and vision accessibility. | 2026-02-02 |
 | Onboarding | Modal tour / Inline hints / None | **Inline contextual hints (Canva pattern)** | Non-blocking tooltips appear at key moments. Dismissable, remembered per-user. | 2026-02-02 |
 | Accessibility | Best effort / WCAG AA | **WCAG AA compliance** | 4.5:1 text contrast, 3:1 UI contrast, focus indicators, ARIA labels, reduced-motion support. | 2026-02-02 |
+| Shape placement colors | Color picker during placement / Default to background | **Default to background** | User testing feedback: blocks are simpler than patterns. Color during placement is unnecessary complexity. Paint mode handles all coloring. Faster shape placement workflow. | 2026-02-03 |
+| Shape library naming | ShapePicker / Shapes / Shape Library | **Shapes** | Cleaner terminology. Designed for large library of placeable shapes with future expansion. | 2026-02-03 |
+| Paint mode multi-part shapes | Tap near half / Sub-menu / Cycle | **Tap near triangle half** | Intuitive — tap the specific part you want to paint. Whichever triangle half is closer to the tap point gets the active fabric role. | 2026-02-03 |
 
 ---
 
