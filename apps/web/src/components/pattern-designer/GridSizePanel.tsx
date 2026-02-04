@@ -73,7 +73,7 @@ export function GridSizePanel() {
   }, [setPreviewingGridResize]);
 
   return (
-    <div className="p-3 border-t border-gray-200">
+    <div className="p-3 border-t border-gray-200 overflow-hidden">
       <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
         Grid Size
       </h3>
@@ -85,15 +85,15 @@ export function GridSizePanel() {
       )}
 
       {/* Row stepper */}
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm text-gray-600">Rows</span>
-        <div className="flex items-center gap-1">
+      <div className="flex items-center mb-3">
+        <span className="text-sm text-gray-600 w-[62px] shrink-0">Rows</span>
+        <div className="flex items-center">
           <button
             onClick={handleRemoveRow}
             onMouseEnter={() => canRemoveRow && setPreviewingGridResize('remove-row')}
             onMouseLeave={clearPreview}
             disabled={!canRemoveRow}
-            className="w-7 h-7 flex items-center justify-center rounded bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="w-6 h-6 flex items-center justify-center rounded bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             title={`Remove ${gridResizePosition === 'start' ? 'top' : 'bottom'} row`}
             aria-label="Remove row"
           >
@@ -101,7 +101,7 @@ export function GridSizePanel() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
             </svg>
           </button>
-          <span className="w-10 text-center text-sm font-medium text-gray-800 tabular-nums">
+          <span className="w-7 text-center text-sm font-medium text-gray-800 tabular-nums">
             {gridSize.rows}
           </span>
           <button
@@ -109,7 +109,7 @@ export function GridSizePanel() {
             onMouseEnter={() => canAddRow && setPreviewingGridResize('add-row')}
             onMouseLeave={clearPreview}
             disabled={!canAddRow}
-            className="w-7 h-7 flex items-center justify-center rounded bg-blue-50 text-blue-600 hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="w-6 h-6 flex items-center justify-center rounded bg-blue-50 text-blue-600 hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             title={`Add row at ${gridResizePosition === 'start' ? 'top' : 'bottom'}`}
             aria-label="Add row"
           >
@@ -121,15 +121,15 @@ export function GridSizePanel() {
       </div>
 
       {/* Column stepper */}
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-sm text-gray-600">Columns</span>
-        <div className="flex items-center gap-1">
+      <div className="flex items-center mb-4">
+        <span className="text-sm text-gray-600 w-[62px] shrink-0">Columns</span>
+        <div className="flex items-center">
           <button
             onClick={handleRemoveColumn}
             onMouseEnter={() => canRemoveColumn && setPreviewingGridResize('remove-col')}
             onMouseLeave={clearPreview}
             disabled={!canRemoveColumn}
-            className="w-7 h-7 flex items-center justify-center rounded bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="w-6 h-6 flex items-center justify-center rounded bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             title={`Remove ${gridResizePosition === 'start' ? 'left' : 'right'} column`}
             aria-label="Remove column"
           >
@@ -137,7 +137,7 @@ export function GridSizePanel() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
             </svg>
           </button>
-          <span className="w-10 text-center text-sm font-medium text-gray-800 tabular-nums">
+          <span className="w-7 text-center text-sm font-medium text-gray-800 tabular-nums">
             {gridSize.cols}
           </span>
           <button
@@ -145,7 +145,7 @@ export function GridSizePanel() {
             onMouseEnter={() => canAddColumn && setPreviewingGridResize('add-col')}
             onMouseLeave={clearPreview}
             disabled={!canAddColumn}
-            className="w-7 h-7 flex items-center justify-center rounded bg-blue-50 text-blue-600 hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="w-6 h-6 flex items-center justify-center rounded bg-blue-50 text-blue-600 hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             title={`Add column at ${gridResizePosition === 'start' ? 'left' : 'right'}`}
             aria-label="Add column"
           >
