@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
-import { GET, PATCH, DELETE } from './route';
+import { GET } from './route';
+// TODO: Add tests for PATCH and DELETE endpoints
 
 // Use vi.hoisted to define mocks
 const { mockCacheGet, mockCacheSet, mockInvalidateBlockCache } = vi.hoisted(() => ({

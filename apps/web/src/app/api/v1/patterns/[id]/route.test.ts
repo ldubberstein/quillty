@@ -117,7 +117,7 @@ describe('GET /api/v1/patterns/[id]', () => {
 
     const request = createRequest();
     const response = await GET(request, params);
-    const body = await response.json();
+    await response.json();
 
     expect(response.status).toBe(404);
   });
@@ -142,7 +142,7 @@ describe('GET /api/v1/patterns/[id]', () => {
 
     const request = createRequest();
     const response = await GET(request, params);
-    const body = await response.json();
+    await response.json();
 
     expect(response.status).toBe(200);
     expect(response.headers.get('X-Cache')).toBe('HIT');
@@ -190,7 +190,7 @@ describe('PATCH /api/v1/patterns/[id]', () => {
 
     const request = createRequest({ title: 'Updated Title' });
     const response = await PATCH(request, params);
-    const body = await response.json();
+    await response.json();
 
     expect(response.status).toBe(404);
   });
@@ -235,7 +235,7 @@ describe('PATCH /api/v1/patterns/[id]', () => {
 
     const request = createRequest({ title: 'Updated Title' });
     const response = await PATCH(request, params);
-    const body = await response.json();
+    await response.json();
 
     expect(response.status).toBe(401);
   });
@@ -271,7 +271,7 @@ describe('DELETE /api/v1/patterns/[id]', () => {
 
     const request = createRequest();
     const response = await DELETE(request, params);
-    const body = await response.json();
+    await response.json();
 
     expect(response.status).toBe(404);
   });
@@ -284,7 +284,7 @@ describe('DELETE /api/v1/patterns/[id]', () => {
 
     const request = createRequest();
     const response = await DELETE(request, params);
-    const body = await response.json();
+    await response.json();
 
     expect(response.status).toBe(403);
   });

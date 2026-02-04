@@ -134,11 +134,12 @@ export interface BlockInstanceUpdate {
   flipVertical?: boolean;
 }
 
-/** Block with its design data (for rendering in pattern) */
-export interface BlockWithDesign extends Block {
-  // Block already has shapes and previewPalette
-  // This type is for when we need the full block data for rendering
-}
+/**
+ * Block with its design data (for rendering in pattern)
+ * Type alias for Block - Block already has shapes and previewPalette.
+ * This type exists for semantic clarity when working with full block data for rendering.
+ */
+export type BlockWithDesign = Block;
 
 // =============================================================================
 // Pattern Designer State Types

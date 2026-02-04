@@ -9,7 +9,7 @@ import {
   rateLimited,
   badRequest,
 } from '../../../_lib/errors';
-import { invalidateFollowCache, invalidateUserCache } from '../../../_lib/cache';
+import { invalidateFollowCache } from '../../../_lib/cache';
 
 interface RouteParams {
   params: Promise<{ username: string }>;

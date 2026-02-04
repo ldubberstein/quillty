@@ -266,7 +266,7 @@ describe('DELETE /api/v1/blocks/[id]/like', () => {
 
     const request = createRequest();
     const response = await DELETE(request, params);
-    const body = await response.json();
+    await response.json();
 
     expect(response.status).toBe(401);
   });

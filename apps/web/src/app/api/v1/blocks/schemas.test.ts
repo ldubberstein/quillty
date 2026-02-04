@@ -48,7 +48,8 @@ describe('Block API Schemas', () => {
     });
 
     it('should accept design data without version', () => {
-      const { version, ...dataWithoutVersion } = validDesignData;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { version: _version, ...dataWithoutVersion } = validDesignData;
       const result = BlockDesignDataSchema.parse(dataWithoutVersion);
       expect(result.version).toBeUndefined();
     });
@@ -64,7 +65,8 @@ describe('Block API Schemas', () => {
     });
 
     it('should reject missing previewPalette', () => {
-      const { previewPalette, ...invalidData } = validDesignData;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { previewPalette: _previewPalette, ...invalidData } = validDesignData;
       expect(() => BlockDesignDataSchema.parse(invalidData)).toThrow();
     });
 

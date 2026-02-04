@@ -1,0 +1,346 @@
+'use client';
+
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Stage, Layer, Rect } from 'react-konva';
+import type Konva from 'konva';
+import { EmptySlot } from './EmptySlot';
+import { ZoomControls } from '../block-designer/ZoomControls';
+import { usePatternDesignerStore, useGridSize, useSelectedLibraryBlockId } from '@quillty/core';
+import type { GridPosition } from '@quillty/core';
+
+/** Canvas sizing constants */
+const CANVAS_PADDING = 40;
+const MIN_CELL_SIZE = 60;
+const MAX_CELL_SIZE = 120;
+
+export function PatternCanvas() {
+  const stageRef = useRef<Konva.Stage>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Get state and actions from store
+  const gridSize = useGridSize();
+  const selectedLibraryBlockId = useSelectedLibraryBlockId();
+  const mode = usePatternDesignerStore((state) => state.mode);
+  const addBlockInstance = usePatternDesignerStore((state) => state.addBlockInstance);
+  const isPositionOccupied = usePatternDesignerStore((state) => state.isPositionOccupied);
+  const clearSelections = usePatternDesignerStore((state) => state.clearSelections);
+
+  const { rows, cols } = gridSize;
+  const isPlacingBlock = mode === 'placing_block' && selectedLibraryBlockId !== null;
+
+  // Canvas state
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  // Calculate cell size based on available space
+  // Use both rows and cols to ensure grid fits
+  const availableWidth = dimensions.width - CANVAS_PADDING * 2;
+  const availableHeight = dimensions.height - CANVAS_PADDING * 2;
+  const cellSizeByWidth = availableWidth / cols;
+  const cellSizeByHeight = availableHeight / rows;
+  const naturalCellSize = Math.min(cellSizeByWidth, cellSizeByHeight);
+  const cellSize = Math.max(MIN_CELL_SIZE, Math.min(MAX_CELL_SIZE, naturalCellSize));
+
+  // Grid dimensions in pixels
+  const gridPixelWidth = cellSize * cols;
+  const gridPixelHeight = cellSize * rows;
+
+  // Center the grid
+  const gridOffsetX = (dimensions.width - gridPixelWidth) / 2;
+  const gridOffsetY = (dimensions.height - gridPixelHeight) / 2;
+
+  // Calculate dynamic zoom limits
+  const minScale = dimensions.height > 0
+    ? Math.max(0.1, Math.min(
+        (dimensions.height * 0.5) / gridPixelHeight,
+        (dimensions.width * 0.5) / gridPixelWidth
+      ))
+    : 0.25;
+  const maxScale = 3;
+
+  // Helper to constrain position after zoom
+  const constrainPosition = useCallback(
+    (pos: { x: number; y: number }, currentScale: number) => {
+      const scaledGridWidth = gridPixelWidth * currentScale;
+      const scaledGridHeight = gridPixelHeight * currentScale;
+      const scaledOffsetX = gridOffsetX * currentScale;
+      const scaledOffsetY = gridOffsetY * currentScale;
+
+      const gridLeft = scaledOffsetX + pos.x;
+      const gridRight = gridLeft + scaledGridWidth;
+      const gridTop = scaledOffsetY + pos.y;
+      const gridBottom = gridTop + scaledGridHeight;
+
+      const minVisible = Math.min(Math.min(scaledGridWidth, scaledGridHeight) * 0.2, 100);
+
+      let newX = pos.x;
+      let newY = pos.y;
+
+      if (gridRight < minVisible) {
+        newX = minVisible - (scaledOffsetX + scaledGridWidth);
+      }
+      if (gridLeft > dimensions.width - minVisible) {
+        newX = dimensions.width - minVisible - scaledOffsetX;
+      }
+      if (gridBottom < minVisible) {
+        newY = minVisible - (scaledOffsetY + scaledGridHeight);
+      }
+      if (gridTop > dimensions.height - minVisible) {
+        newY = dimensions.height - minVisible - scaledOffsetY;
+      }
+
+      return { x: newX, y: newY };
+    },
+    [gridPixelWidth, gridPixelHeight, gridOffsetX, gridOffsetY, dimensions.width, dimensions.height]
+  );
+
+  // Update dimensions on resize
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setDimensions({
+          width: rect.width,
+          height: rect.height,
+        });
+      }
+    };
+
+    updateDimensions();
+
+    const resizeObserver = new ResizeObserver(updateDimensions);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    window.addEventListener('resize', updateDimensions);
+    return () => {
+      window.removeEventListener('resize', updateDimensions);
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  // Zoom handlers
+  const handleZoomIn = useCallback(() => {
+    setScale((s) => {
+      const newScale = Math.min(s + 0.25, maxScale);
+      setPosition((pos) => constrainPosition(pos, newScale));
+      return newScale;
+    });
+  }, [maxScale, constrainPosition]);
+
+  const handleZoomOut = useCallback(() => {
+    setScale((s) => {
+      const newScale = Math.max(s - 0.25, minScale);
+      setPosition((pos) => constrainPosition(pos, newScale));
+      return newScale;
+    });
+  }, [minScale, constrainPosition]);
+
+  const handleZoomFit = useCallback(() => {
+    setScale(1);
+    setPosition({ x: 0, y: 0 });
+  }, []);
+
+  const handleZoomChange = useCallback((newScale: number) => {
+    const clampedScale = Math.max(minScale, Math.min(maxScale, newScale));
+    setScale(clampedScale);
+    setPosition((pos) => constrainPosition(pos, clampedScale));
+  }, [minScale, maxScale, constrainPosition]);
+
+  // Handle wheel zoom
+  const handleWheel = useCallback((e: Konva.KonvaEventObject<WheelEvent>) => {
+    e.evt.preventDefault();
+
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const oldScale = scale;
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return;
+
+    const mousePointTo = {
+      x: (pointer.x - position.x) / oldScale,
+      y: (pointer.y - position.y) / oldScale,
+    };
+
+    const scaleBy = 1.1;
+    const direction = e.evt.deltaY > 0 ? -1 : 1;
+    const newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
+    const clampedScale = Math.max(minScale, Math.min(maxScale, newScale));
+
+    const newPos = {
+      x: pointer.x - mousePointTo.x * clampedScale,
+      y: pointer.y - mousePointTo.y * clampedScale,
+    };
+
+    const constrainedPos = constrainPosition(newPos, clampedScale);
+
+    setScale(clampedScale);
+    setPosition(constrainedPos);
+  }, [scale, position, minScale, maxScale, constrainPosition]);
+
+  // Handle drag
+  const handleDragEnd = useCallback((e: Konva.KonvaEventObject<DragEvent>) => {
+    setPosition({
+      x: e.target.x(),
+      y: e.target.y(),
+    });
+  }, []);
+
+  // Drag bounds
+  const dragBoundFunc = useCallback(
+    (pos: { x: number; y: number }) => {
+      const scaledGridWidth = gridPixelWidth * scale;
+      const scaledGridHeight = gridPixelHeight * scale;
+      const gridLeft = gridOffsetX * scale + pos.x;
+      const gridRight = gridLeft + scaledGridWidth;
+      const gridTop = gridOffsetY * scale + pos.y;
+      const gridBottom = gridTop + scaledGridHeight;
+
+      const minVisible = Math.min(Math.min(scaledGridWidth, scaledGridHeight) * 0.2, 100);
+
+      let newX = pos.x;
+      let newY = pos.y;
+
+      if (gridRight < minVisible) {
+        newX = minVisible - (gridOffsetX * scale + scaledGridWidth);
+      }
+      if (gridLeft > dimensions.width - minVisible) {
+        newX = dimensions.width - minVisible - gridOffsetX * scale;
+      }
+      if (gridBottom < minVisible) {
+        newY = minVisible - (gridOffsetY * scale + scaledGridHeight);
+      }
+      if (gridTop > dimensions.height - minVisible) {
+        newY = dimensions.height - minVisible - gridOffsetY * scale;
+      }
+
+      return { x: newX, y: newY };
+    },
+    [scale, gridPixelWidth, gridPixelHeight, gridOffsetX, gridOffsetY, dimensions.width, dimensions.height]
+  );
+
+  // Handle slot click
+  const handleSlotClick = useCallback(
+    (row: number, col: number) => {
+      const position: GridPosition = { row, col };
+
+      // If we're in placing mode and have a selected library block
+      if (isPlacingBlock && selectedLibraryBlockId) {
+        addBlockInstance(selectedLibraryBlockId, position);
+        return;
+      }
+
+      // If clicking an occupied slot, we'd select it (future iteration)
+      if (isPositionOccupied(position)) {
+        // TODO: Iteration 2.5 - select block instance
+        return;
+      }
+    },
+    [isPlacingBlock, selectedLibraryBlockId, addBlockInstance, isPositionOccupied]
+  );
+
+  // Handle click on background (outside grid)
+  const handleBackgroundClick = useCallback(() => {
+    clearSelections();
+  }, [clearSelections]);
+
+  // Build the grid of slots
+  const slots: { row: number; col: number; isOccupied: boolean }[] = [];
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      slots.push({
+        row,
+        col,
+        isOccupied: isPositionOccupied({ row, col }),
+      });
+    }
+  }
+
+  // Don't render Stage until we have dimensions
+  const hasValidDimensions = dimensions.width > 0 && dimensions.height > 0;
+
+  return (
+    <div ref={containerRef} className="relative w-full h-full bg-gray-100 overflow-hidden">
+      {!hasValidDimensions && (
+        <div className="w-full h-full flex items-center justify-center">
+          <div className="text-gray-500">Initializing canvas...</div>
+        </div>
+      )}
+      {hasValidDimensions && (
+        <>
+          <Stage
+            ref={stageRef}
+            width={dimensions.width}
+            height={dimensions.height}
+            scaleX={scale}
+            scaleY={scale}
+            x={position.x}
+            y={position.y}
+            draggable
+            dragBoundFunc={dragBoundFunc}
+            onWheel={handleWheel}
+            onDragEnd={handleDragEnd}
+          >
+            <Layer>
+              {/* Background rect to capture clicks outside the grid */}
+              <Rect
+                x={0}
+                y={0}
+                width={dimensions.width / scale}
+                height={dimensions.height / scale}
+                fill="transparent"
+                onClick={handleBackgroundClick}
+                onTap={handleBackgroundClick}
+              />
+
+              {/* Render empty slots */}
+              {slots.map(({ row, col, isOccupied }) =>
+                !isOccupied ? (
+                  <EmptySlot
+                    key={`slot-${row}-${col}`}
+                    row={row}
+                    col={col}
+                    cellSize={cellSize}
+                    offsetX={gridOffsetX}
+                    offsetY={gridOffsetY}
+                    isHighlighted={isPlacingBlock}
+                    onClick={handleSlotClick}
+                  />
+                ) : null
+              )}
+
+              {/* TODO: Iteration 2.3+ - Render placed block instances */}
+              {/* Block instances will be rendered here with BlockRenderer component */}
+            </Layer>
+          </Stage>
+
+          <ZoomControls
+            scale={scale}
+            minScale={minScale}
+            maxScale={maxScale}
+            onZoomIn={handleZoomIn}
+            onZoomOut={handleZoomOut}
+            onZoomFit={handleZoomFit}
+            onZoomChange={handleZoomChange}
+          />
+
+          {/* Placement mode indicator */}
+          {isPlacingBlock && (
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium">
+              Tap a slot to place the selected block
+              <button
+                onClick={clearSelections}
+                className="ml-3 text-blue-100 hover:text-white underline"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}

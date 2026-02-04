@@ -13,8 +13,6 @@ import type {
   Rotation,
   PatternDesignerMode,
   QuiltGridSize,
-  PatternDifficulty,
-  PatternCategory,
   UUID,
   GridPosition,
   FabricRoleId,
