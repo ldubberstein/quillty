@@ -4,3 +4,4 @@ export { PatternCanvas } from './PatternCanvas';
 export { PatternGridLines } from './PatternGridLines';
 export { BlockThumbnail } from './BlockThumbnail';
 export { BlockLibraryPanel } from './BlockLibraryPanel';
+export { BlockInstanceRenderer } from './BlockInstanceRenderer';

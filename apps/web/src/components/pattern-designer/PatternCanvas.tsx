@@ -5,14 +5,46 @@ import { Stage, Layer, Rect } from 'react-konva';
 import type Konva from 'konva';
 import { EmptySlot } from './EmptySlot';
 import { PatternGridLines } from './PatternGridLines';
+import { BlockInstanceRenderer } from './BlockInstanceRenderer';
 import { ZoomControls } from '../block-designer/ZoomControls';
-import { usePatternDesignerStore, useGridSize, useSelectedLibraryBlockId } from '@quillty/core';
-import type { GridPosition } from '@quillty/core';
+import {
+  usePatternDesignerStore,
+  useGridSize,
+  useSelectedLibraryBlockId,
+  usePatternPalette,
+} from '@quillty/core';
+import type { GridPosition, Shape } from '@quillty/core';
 
 /** Canvas sizing constants */
 const CANVAS_PADDING = 40;
 const MIN_CELL_SIZE = 60;
 const MAX_CELL_SIZE = 120;
+
+/**
+ * Helper to extract shapes from a block
+ * Handles both direct shapes array and API format with design_data JSON
+ */
+function getBlockShapes(block: { shapes?: Shape[]; design_data?: unknown }): Shape[] {
+  // Direct shapes array (from core Block type)
+  if (block.shapes && Array.isArray(block.shapes)) {
+    return block.shapes;
+  }
+
+  // API format: design_data is a JSON object with shapes
+  if (block.design_data) {
+    try {
+      const designData =
+        typeof block.design_data === 'string'
+          ? JSON.parse(block.design_data)
+          : block.design_data;
+      return designData.shapes ?? [];
+    } catch {
+      return [];
+    }
+  }
+
+  return [];
+}
 
 export function PatternCanvas() {
   const stageRef = useRef<Konva.Stage>(null);
@@ -21,10 +53,15 @@ export function PatternCanvas() {
   // Get state and actions from store
   const gridSize = useGridSize();
   const selectedLibraryBlockId = useSelectedLibraryBlockId();
+  const palette = usePatternPalette();
   const mode = usePatternDesignerStore((state) => state.mode);
+  const blockInstances = usePatternDesignerStore((state) => state.pattern.blockInstances);
+  const blockCache = usePatternDesignerStore((state) => state.blockCache);
+  const selectedBlockInstanceId = usePatternDesignerStore((state) => state.selectedBlockInstanceId);
   const addBlockInstance = usePatternDesignerStore((state) => state.addBlockInstance);
   const isPositionOccupied = usePatternDesignerStore((state) => state.isPositionOccupied);
   const clearSelections = usePatternDesignerStore((state) => state.clearSelections);
+  const selectBlockInstance = usePatternDesignerStore((state) => state.selectBlockInstance);
 
   const { rows, cols } = gridSize;
   const isPlacingBlock = mode === 'placing_block' && selectedLibraryBlockId !== null;
@@ -322,8 +359,30 @@ export function PatternCanvas() {
                 ) : null
               )}
 
-              {/* TODO: Iteration 2.3+ - Render placed block instances */}
-              {/* Block instances will be rendered here with BlockRenderer component */}
+              {/* Render placed block instances */}
+              {blockInstances.map((instance) => {
+                const block = blockCache[instance.blockId];
+                if (!block) return null;
+
+                // Extract shapes from block (handles API format with design_data)
+                const shapes = getBlockShapes(block);
+                if (shapes.length === 0) return null;
+
+                return (
+                  <BlockInstanceRenderer
+                    key={instance.id}
+                    instance={instance}
+                    shapes={shapes}
+                    blockGridSize={block.gridSize || 3}
+                    palette={palette}
+                    cellSize={cellSize}
+                    offsetX={gridOffsetX}
+                    offsetY={gridOffsetY}
+                    isSelected={selectedBlockInstanceId === instance.id}
+                    onClick={selectBlockInstance}
+                  />
+                );
+              })}
             </Layer>
           </Stage>
 

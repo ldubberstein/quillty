@@ -42,6 +42,8 @@ export function BlockLibraryPanel() {
   const selectedLibraryBlockId = useSelectedLibraryBlockId();
   const selectLibraryBlock = usePatternDesignerStore((state) => state.selectLibraryBlock);
   const cacheBlock = usePatternDesignerStore((state) => state.cacheBlock);
+  const fillEmpty = usePatternDesignerStore((state) => state.fillEmpty);
+  const clearSelections = usePatternDesignerStore((state) => state.clearSelections);
 
   // Fetch user's published blocks
   const { data: blocksResponse, isLoading, error } = useMyPublishedBlocks();
@@ -55,6 +57,14 @@ export function BlockLibraryPanel() {
     },
     [selectLibraryBlock, cacheBlock]
   );
+
+  const handleFillEmpty = useCallback(() => {
+    fillEmpty();
+  }, [fillEmpty]);
+
+  const handleCancelSelection = useCallback(() => {
+    clearSelections();
+  }, [clearSelections]);
 
   // Parse design_data from block (stored as JSON in database)
   const getBlockShapes = (block: Block): Shape[] => {
@@ -179,12 +189,26 @@ export function BlockLibraryPanel() {
         )}
       </div>
 
-      {/* Selected block indicator */}
+      {/* Selected block actions */}
       {selectedLibraryBlockId && (
-        <div className="border-t border-gray-100 px-3 py-2 bg-blue-50">
+        <div className="border-t border-gray-100 px-3 py-2 bg-blue-50 space-y-2">
           <p className="text-xs text-blue-700 text-center">
-            Click a slot to place
+            Click slots to place
           </p>
+          <div className="flex gap-2">
+            <button
+              onClick={handleFillEmpty}
+              className="flex-1 px-2 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+            >
+              Fill Empty
+            </button>
+            <button
+              onClick={handleCancelSelection}
+              className="px-2 py-1.5 text-xs font-medium text-gray-600 bg-white hover:bg-gray-100 rounded border border-gray-200 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
     </div>
