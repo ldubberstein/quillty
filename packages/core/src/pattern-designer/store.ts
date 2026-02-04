@@ -16,6 +16,9 @@ import type {
   UUID,
   GridPosition,
   FabricRoleId,
+  Border,
+  BorderConfig,
+  BorderCornerStyle,
 } from './types';
 import {
   MIN_GRID_SIZE,
@@ -23,6 +26,8 @@ import {
   DEFAULT_GRID_ROWS,
   DEFAULT_GRID_COLS,
   DEFAULT_BLOCK_SIZE_INCHES,
+  MAX_BORDERS,
+  DEFAULT_BORDER_WIDTH_INCHES,
 } from './types';
 import { DEFAULT_PALETTE } from '../block-designer/constants';
 import type { Block } from '../block-designer/types';
@@ -72,6 +77,7 @@ function createEmptyPattern(
     physicalSize: calculatePhysicalSize(gridSize, DEFAULT_BLOCK_SIZE_INCHES),
     palette: { ...DEFAULT_PALETTE, roles: [...DEFAULT_PALETTE.roles] },
     blockInstances: [],
+    borderConfig: null,
     status: 'draft',
     isPremium: false,
     priceCents: null,
@@ -95,6 +101,9 @@ interface PatternDesignerState {
 
   /** ID of the block selected in the library for placement (null if none) */
   selectedLibraryBlockId: UUID | null;
+
+  /** ID of the currently selected border for editing (null if none) */
+  selectedBorderId: UUID | null;
 
   /** Cache of loaded blocks (for rendering) */
   blockCache: Record<UUID, Block>;
@@ -197,6 +206,20 @@ interface PatternDesignerActions {
   setPreviewingFillEmpty: (preview: boolean) => void;
   /** Set which grid resize action is being previewed */
   setPreviewingGridResize: (preview: 'add-row' | 'remove-row' | 'add-col' | 'remove-col' | null) => void;
+
+  // Border management
+  /** Enable or disable borders */
+  setBordersEnabled: (enabled: boolean) => void;
+  /** Add a new border (returns the new border's ID) */
+  addBorder: (widthInches?: number) => UUID;
+  /** Remove a border by ID */
+  removeBorder: (borderId: UUID) => void;
+  /** Update a border's properties */
+  updateBorder: (borderId: UUID, updates: Partial<Omit<Border, 'id'>>) => void;
+  /** Select a border for editing */
+  selectBorder: (borderId: UUID | null) => void;
+  /** Reorder borders (drag and drop) */
+  reorderBorders: (fromIndex: number, toIndex: number) => void;
 }
 
 export type PatternDesignerStore = PatternDesignerState & PatternDesignerActions;
@@ -211,6 +234,7 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
     pattern: createEmptyPattern(),
     selectedBlockInstanceId: null,
     selectedLibraryBlockId: null,
+    selectedBorderId: null,
     blockCache: {},
     mode: 'idle',
     isDirty: false,
@@ -224,6 +248,7 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
         state.pattern = createEmptyPattern(gridSize, creatorId);
         state.selectedBlockInstanceId = null;
         state.selectedLibraryBlockId = null;
+        state.selectedBorderId = null;
         state.mode = 'idle';
         state.isDirty = false;
         // Keep block cache - might reuse blocks
@@ -232,9 +257,14 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
 
     loadPattern: (pattern) => {
       set((state) => {
-        state.pattern = pattern;
+        // Ensure borderConfig exists (for backwards compatibility)
+        state.pattern = {
+          ...pattern,
+          borderConfig: pattern.borderConfig ?? null,
+        };
         state.selectedBlockInstanceId = null;
         state.selectedLibraryBlockId = null;
+        state.selectedBorderId = null;
         state.mode = 'idle';
         state.isDirty = false;
       });
@@ -667,6 +697,122 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
         state.previewingGridResize = preview;
       });
     },
+
+    // Border management
+    setBordersEnabled: (enabled) => {
+      set((state) => {
+        if (enabled) {
+          // Enable borders - create config if it doesn't exist
+          if (!state.pattern.borderConfig) {
+            state.pattern.borderConfig = {
+              enabled: true,
+              borders: [],
+            };
+          } else {
+            state.pattern.borderConfig.enabled = true;
+          }
+        } else {
+          // Disable borders
+          if (state.pattern.borderConfig) {
+            state.pattern.borderConfig.enabled = false;
+          }
+          state.selectedBorderId = null;
+        }
+        state.pattern.updatedAt = getCurrentTimestamp();
+        state.isDirty = true;
+      });
+    },
+
+    addBorder: (widthInches = DEFAULT_BORDER_WIDTH_INCHES) => {
+      const id = generateUUID();
+      set((state) => {
+        // Ensure borderConfig exists
+        if (!state.pattern.borderConfig) {
+          state.pattern.borderConfig = {
+            enabled: true,
+            borders: [],
+          };
+        }
+
+        // Check max borders limit
+        if (state.pattern.borderConfig.borders.length >= MAX_BORDERS) {
+          return;
+        }
+
+        // Create new border with defaults
+        const newBorder: Border = {
+          id,
+          widthInches,
+          style: 'plain',
+          fabricRole: 'accent1',
+          cornerStyle: 'butted',
+        };
+
+        state.pattern.borderConfig.borders.push(newBorder);
+        state.pattern.borderConfig.enabled = true;
+        state.selectedBorderId = id;
+        state.pattern.updatedAt = getCurrentTimestamp();
+        state.isDirty = true;
+      });
+      return id;
+    },
+
+    removeBorder: (borderId) => {
+      set((state) => {
+        if (!state.pattern.borderConfig) return;
+
+        const index = state.pattern.borderConfig.borders.findIndex((b) => b.id === borderId);
+        if (index !== -1) {
+          state.pattern.borderConfig.borders.splice(index, 1);
+          state.pattern.updatedAt = getCurrentTimestamp();
+          state.isDirty = true;
+
+          // Clear selection if removed border was selected
+          if (state.selectedBorderId === borderId) {
+            state.selectedBorderId = null;
+          }
+        }
+      });
+    },
+
+    updateBorder: (borderId, updates) => {
+      set((state) => {
+        if (!state.pattern.borderConfig) return;
+
+        const border = state.pattern.borderConfig.borders.find((b) => b.id === borderId);
+        if (border) {
+          Object.assign(border, updates);
+          state.pattern.updatedAt = getCurrentTimestamp();
+          state.isDirty = true;
+        }
+      });
+    },
+
+    selectBorder: (borderId) => {
+      set((state) => {
+        state.selectedBorderId = borderId;
+        // Clear block selections when selecting a border
+        if (borderId !== null) {
+          state.selectedBlockInstanceId = null;
+          state.selectedLibraryBlockId = null;
+        }
+      });
+    },
+
+    reorderBorders: (fromIndex, toIndex) => {
+      set((state) => {
+        if (!state.pattern.borderConfig) return;
+
+        const borders = state.pattern.borderConfig.borders;
+        if (fromIndex < 0 || fromIndex >= borders.length) return;
+        if (toIndex < 0 || toIndex >= borders.length) return;
+
+        const [removed] = borders.splice(fromIndex, 1);
+        borders.splice(toIndex, 0, removed);
+        state.pattern.updatedAt = getCurrentTimestamp();
+        state.isDirty = true;
+      });
+    },
   }))
 );
 
@@ -769,3 +915,84 @@ export const useCanPublish = () => {
 
 /** Get the pattern ID (empty string if not yet saved) */
 export const usePatternId = () => usePatternDesignerStore((state) => state.pattern.id);
+
+// =============================================================================
+// Border Selector Hooks
+// =============================================================================
+
+/** Empty borders array constant to avoid creating new references */
+const EMPTY_BORDERS: Border[] = [];
+
+/** Get the border configuration */
+export const useBorderConfig = () =>
+  usePatternDesignerStore((state) => state.pattern.borderConfig);
+
+/** Check if borders are enabled */
+export const useBordersEnabled = () =>
+  usePatternDesignerStore((state) => state.pattern.borderConfig?.enabled ?? false);
+
+/** Get all borders */
+export const useBorders = () =>
+  usePatternDesignerStore((state) => state.pattern.borderConfig?.borders ?? EMPTY_BORDERS);
+
+/** Get the selected border ID */
+export const useSelectedBorderId = () =>
+  usePatternDesignerStore((state) => state.selectedBorderId);
+
+/** Get the selected border */
+export const useSelectedBorder = () => {
+  return usePatternDesignerStore((state) => {
+    const id = state.selectedBorderId;
+    if (!id || !state.pattern.borderConfig) return null;
+    return state.pattern.borderConfig.borders.find((b) => b.id === id) ?? null;
+  });
+};
+
+/** Get total border width (sum of all borders, one side only) */
+export const useTotalBorderWidth = () => {
+  return usePatternDesignerStore((state) => {
+    const borders = state.pattern.borderConfig?.borders;
+    if (!borders || borders.length === 0) return 0;
+    return borders.reduce((sum, b) => sum + b.widthInches, 0);
+  });
+};
+
+/** Get final quilt size width including borders */
+export const useFinalQuiltWidth = () => {
+  return usePatternDesignerStore((state) => {
+    const { physicalSize, borderConfig } = state.pattern;
+    if (!borderConfig?.enabled || borderConfig.borders.length === 0) {
+      return physicalSize.widthInches;
+    }
+    const totalBorderWidth = borderConfig.borders.reduce((sum, b) => sum + b.widthInches, 0);
+    return physicalSize.widthInches + totalBorderWidth * 2;
+  });
+};
+
+/** Get final quilt size height including borders */
+export const useFinalQuiltHeight = () => {
+  return usePatternDesignerStore((state) => {
+    const { physicalSize, borderConfig } = state.pattern;
+    if (!borderConfig?.enabled || borderConfig.borders.length === 0) {
+      return physicalSize.heightInches;
+    }
+    const totalBorderWidth = borderConfig.borders.reduce((sum, b) => sum + b.widthInches, 0);
+    return physicalSize.heightInches + totalBorderWidth * 2;
+  });
+};
+
+/** Get final quilt size including borders (returns object - use with caution in render) */
+export const useFinalQuiltSize = () => {
+  const width = useFinalQuiltWidth();
+  const height = useFinalQuiltHeight();
+  const blockSize = usePatternDesignerStore((state) => state.pattern.physicalSize.blockSizeInches);
+  return { widthInches: width, heightInches: height, blockSizeInches: blockSize };
+};
+
+/** Check if can add more borders */
+export const useCanAddBorder = () => {
+  return usePatternDesignerStore((state) => {
+    const borders = state.pattern.borderConfig?.borders;
+    return !borders || borders.length < MAX_BORDERS;
+  });
+};

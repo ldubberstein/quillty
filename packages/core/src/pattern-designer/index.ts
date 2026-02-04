@@ -18,6 +18,12 @@ export type {
   BlockWithDesign,
   PatternDesignerMode,
   ResizeDirection,
+  // Border types
+  BorderCornerStyle,
+  BorderStyle,
+  PiecedBorderConfig,
+  Border,
+  BorderConfig,
 } from './types';
 
 // Constants
@@ -28,6 +34,11 @@ export {
   DEFAULT_BLOCK_SIZE_INCHES,
   DEFAULT_GRID_ROWS,
   DEFAULT_GRID_COLS,
+  // Border constants
+  MAX_BORDERS,
+  DEFAULT_BORDER_WIDTH_INCHES,
+  MIN_BORDER_WIDTH_INCHES,
+  MAX_BORDER_WIDTH_INCHES,
 } from './types';
 
 // Schemas (pattern-specific only - common schemas like UUIDSchema, RotationSchema exported from block-designer)
@@ -75,6 +86,17 @@ export {
   useEmptySlotCount,
   useCanPublish,
   usePatternId,
+  // Border selector hooks
+  useBorderConfig,
+  useBordersEnabled,
+  useBorders,
+  useSelectedBorderId,
+  useSelectedBorder,
+  useTotalBorderWidth,
+  useFinalQuiltWidth,
+  useFinalQuiltHeight,
+  useFinalQuiltSize,
+  useCanAddBorder,
 } from './store';
 
 export type { PatternDesignerStore } from './store';

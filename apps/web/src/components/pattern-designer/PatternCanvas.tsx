@@ -6,6 +6,7 @@ import type Konva from 'konva';
 import { EmptySlot } from './EmptySlot';
 import { PatternGridLines } from './PatternGridLines';
 import { BlockInstanceRenderer } from './BlockInstanceRenderer';
+import { BorderRenderer } from './BorderRenderer';
 import { ZoomControls } from '../block-designer/ZoomControls';
 import { FloatingToolbar } from '../block-designer/FloatingToolbar';
 import {
@@ -15,6 +16,8 @@ import {
   usePatternPalette,
   usePreviewingGridResize,
   useGridResizePosition,
+  useBorderConfig,
+  useTotalBorderWidth,
 } from '@quillty/core';
 import type { GridPosition, Shape, BlockInstance } from '@quillty/core';
 
@@ -64,6 +67,9 @@ export function PatternCanvas() {
   const isPreviewingFillEmpty = usePatternDesignerStore((state) => state.isPreviewingFillEmpty);
   const previewingGridResize = usePreviewingGridResize();
   const gridResizePosition = useGridResizePosition();
+  const borderConfig = useBorderConfig();
+  const totalBorderWidth = useTotalBorderWidth();
+  const physicalSize = usePatternDesignerStore((state) => state.pattern.physicalSize);
   const addBlockInstance = usePatternDesignerStore((state) => state.addBlockInstance);
   const isPositionOccupied = usePatternDesignerStore((state) => state.isPositionOccupied);
   const clearSelections = usePatternDesignerStore((state) => state.clearSelections);
@@ -84,12 +90,18 @@ export function PatternCanvas() {
   // Hover state for ghost preview
   const [hoveredSlot, setHoveredSlot] = useState<{ row: number; col: number } | null>(null);
 
-  // Calculate cell size based on available space
-  // Use both rows and cols to ensure grid fits
+  // Calculate cell size based on available space, accounting for borders
+  // Border size in grid units = totalBorderWidth (inches) / blockSizeInches
+  // This tells us how many "cells" worth of space borders need on each side
+  const borderGridUnits = borderConfig?.enabled
+    ? (totalBorderWidth / physicalSize.blockSizeInches) * 2
+    : 0;
+
   const availableWidth = dimensions.width - CANVAS_PADDING * 2;
   const availableHeight = dimensions.height - CANVAS_PADDING * 2;
-  const cellSizeByWidth = availableWidth / cols;
-  const cellSizeByHeight = availableHeight / rows;
+  // Account for border space when calculating cell size
+  const cellSizeByWidth = availableWidth / (cols + borderGridUnits);
+  const cellSizeByHeight = availableHeight / (rows + borderGridUnits);
   const naturalCellSize = Math.min(cellSizeByWidth, cellSizeByHeight);
   const cellSize = Math.max(MIN_CELL_SIZE, Math.min(MAX_CELL_SIZE, naturalCellSize));
 
@@ -97,9 +109,23 @@ export function PatternCanvas() {
   const gridPixelWidth = cellSize * cols;
   const gridPixelHeight = cellSize * rows;
 
-  // Center the grid
-  const gridOffsetX = (dimensions.width - gridPixelWidth) / 2;
-  const gridOffsetY = (dimensions.height - gridPixelHeight) / 2;
+  // Calculate pixels per inch based on cell size and block size
+  const pixelsPerInch = cellSize / physicalSize.blockSizeInches;
+
+  // Calculate border size in pixels
+  const borderPixels = borderConfig?.enabled ? totalBorderWidth * pixelsPerInch : 0;
+
+  // Total canvas content dimensions (grid + borders)
+  const totalContentWidth = gridPixelWidth + borderPixels * 2;
+  const totalContentHeight = gridPixelHeight + borderPixels * 2;
+
+  // Center the entire content (grid + borders)
+  const contentOffsetX = (dimensions.width - totalContentWidth) / 2;
+  const contentOffsetY = (dimensions.height - totalContentHeight) / 2;
+
+  // Grid offset is content offset plus border width
+  const gridOffsetX = contentOffsetX + borderPixels;
+  const gridOffsetY = contentOffsetY + borderPixels;
 
   // Calculate dynamic zoom limits
   const minScale = dimensions.height > 0
@@ -416,6 +442,19 @@ export function PatternCanvas() {
                 onClick={handleBackgroundClick}
                 onTap={handleBackgroundClick}
               />
+
+              {/* Borders (rendered behind the quilt grid) */}
+              {borderConfig?.enabled && (
+                <BorderRenderer
+                  borderConfig={borderConfig}
+                  palette={palette}
+                  quiltWidth={gridPixelWidth}
+                  quiltHeight={gridPixelHeight}
+                  offsetX={gridOffsetX}
+                  offsetY={gridOffsetY}
+                  pixelsPerInch={pixelsPerInch}
+                />
+              )}
 
               {/* Grid seam lines (like sewn quilt seams) */}
               <PatternGridLines

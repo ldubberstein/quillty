@@ -8,6 +8,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { PalettePanel } from './PalettePanel';
+import { SidebarProvider } from './SidebarContext';
 import type { FabricRoleId } from '@quillty/core';
 
 // Mock store functions
@@ -35,6 +36,15 @@ vi.mock('@quillty/core', () => ({
   usePatternPalette: vi.fn(() => mockPalette),
 }));
 
+// Helper to render with SidebarProvider
+const renderWithSidebar = (defaultPanel: 'colors' | 'borders' | 'grid' | null = 'colors') => {
+  return render(
+    <SidebarProvider defaultPanel={defaultPanel}>
+      <PalettePanel />
+    </SidebarProvider>
+  );
+};
+
 describe('PalettePanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -53,41 +63,81 @@ describe('PalettePanel', () => {
 
   describe('rendering', () => {
     it('renders the panel with Colors heading', () => {
-      render(<PalettePanel />);
+      renderWithSidebar();
       expect(screen.getByText('Colors')).toBeInTheDocument();
     });
 
-    it('renders all 4 fabric roles', () => {
-      render(<PalettePanel />);
+    it('renders all 4 fabric roles when expanded', () => {
+      renderWithSidebar('colors');
       expect(screen.getByText('Background')).toBeInTheDocument();
       expect(screen.getByText('Feature')).toBeInTheDocument();
       expect(screen.getByText('Accent 1')).toBeInTheDocument();
       expect(screen.getByText('Accent 2')).toBeInTheDocument();
     });
 
-    it('renders color swatches for each role', () => {
-      render(<PalettePanel />);
+    it('renders color swatches for each role when expanded', () => {
+      renderWithSidebar('colors');
       const colorButtons = screen.getAllByRole('button', { name: /change.*color/i });
       expect(colorButtons).toHaveLength(4);
     });
 
-    it('displays hex color values for each role', () => {
-      render(<PalettePanel />);
+    it('displays hex color values for each role when expanded', () => {
+      renderWithSidebar('colors');
       expect(screen.getByText('#FFFFFF')).toBeInTheDocument();
       expect(screen.getByText('#1E3A5F')).toBeInTheDocument();
       expect(screen.getByText('#E85D04')).toBeInTheDocument();
       expect(screen.getByText('#FAA307')).toBeInTheDocument();
     });
 
-    it('displays instruction text', () => {
-      render(<PalettePanel />);
+    it('displays instruction text when expanded', () => {
+      renderWithSidebar('colors');
       expect(screen.getByText('Tap a swatch to change colors')).toBeInTheDocument();
+    });
+  });
+
+  describe('collapsible behavior', () => {
+    it('shows collapsed summary when not expanded', () => {
+      renderWithSidebar('borders'); // Another panel expanded
+
+      // Should not show expanded content
+      expect(screen.queryByText('Background')).not.toBeInTheDocument();
+      expect(screen.queryByText('Tap a swatch to change colors')).not.toBeInTheDocument();
+
+      // Should show mini color swatches in summary (4 small divs)
+      const header = screen.getByText('Colors').closest('button');
+      expect(header).toBeInTheDocument();
+    });
+
+    it('expands when header is clicked', () => {
+      renderWithSidebar('borders'); // Start with borders expanded
+
+      // Click colors header to expand it
+      const colorsHeader = screen.getByText('Colors').closest('button');
+      fireEvent.click(colorsHeader!);
+
+      // Now should show expanded content
+      expect(screen.getByText('Background')).toBeInTheDocument();
+      expect(screen.getByText('Tap a swatch to change colors')).toBeInTheDocument();
+    });
+
+    it('collapses when header is clicked while expanded', () => {
+      renderWithSidebar('colors'); // Start expanded
+
+      // Verify expanded
+      expect(screen.getByText('Background')).toBeInTheDocument();
+
+      // Click header to collapse
+      const colorsHeader = screen.getByText('Colors').closest('button');
+      fireEvent.click(colorsHeader!);
+
+      // Should be collapsed now
+      expect(screen.queryByText('Background')).not.toBeInTheDocument();
     });
   });
 
   describe('color picker', () => {
     it('opens color input when clicking color swatch', () => {
-      render(<PalettePanel />);
+      renderWithSidebar('colors');
       const backgroundColorBtn = screen.getByRole('button', { name: /change background color/i });
       fireEvent.click(backgroundColorBtn);
 
@@ -97,7 +147,7 @@ describe('PalettePanel', () => {
     });
 
     it('calls setRoleColor when color is changed', () => {
-      render(<PalettePanel />);
+      renderWithSidebar('colors');
 
       // Click to open color picker
       const backgroundColorBtn = screen.getByRole('button', { name: /change background color/i });
@@ -112,7 +162,7 @@ describe('PalettePanel', () => {
     });
 
     it('calls setRoleColor for each role when its color changes', () => {
-      render(<PalettePanel />);
+      renderWithSidebar('colors');
 
       // Test feature role
       const featureColorBtn = screen.getByRole('button', { name: /change feature color/i });
@@ -123,7 +173,7 @@ describe('PalettePanel', () => {
     });
 
     it('renders hidden color input after clicking color swatch', () => {
-      render(<PalettePanel />);
+      renderWithSidebar('colors');
 
       // Initially no color input visible
       expect(document.querySelector('input[type="color"]')).toBeNull();
@@ -139,16 +189,16 @@ describe('PalettePanel', () => {
   });
 
   describe('accessibility', () => {
-    it('color swatch buttons have descriptive aria-labels', () => {
-      render(<PalettePanel />);
+    it('color swatch buttons have descriptive aria-labels when expanded', () => {
+      renderWithSidebar('colors');
       expect(screen.getByRole('button', { name: /change background color/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /change feature color/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /change accent 1 color/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /change accent 2 color/i })).toBeInTheDocument();
     });
 
-    it('color swatch buttons are focusable', () => {
-      render(<PalettePanel />);
+    it('color swatch buttons are focusable when expanded', () => {
+      renderWithSidebar('colors');
 
       const colorButtons = screen.getAllByRole('button', { name: /change.*color/i });
       colorButtons.forEach((button) => {
@@ -159,8 +209,8 @@ describe('PalettePanel', () => {
   });
 
   describe('visual styling', () => {
-    it('renders color swatches with correct background colors', () => {
-      render(<PalettePanel />);
+    it('renders color swatches with correct background colors when expanded', () => {
+      renderWithSidebar('colors');
 
       const backgroundColorBtn = screen.getByRole('button', { name: /change background color/i });
       expect(backgroundColorBtn).toHaveStyle({ backgroundColor: '#FFFFFF' });

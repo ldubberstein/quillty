@@ -17,12 +17,25 @@ export interface ApiPatternWithCreator extends Pattern {
   } | null;
 }
 
+/** Border configuration for pattern design data */
+export interface DesignDataBorderConfig {
+  enabled: boolean;
+  borders: Array<{
+    id: string;
+    widthInches: number;
+    style: 'plain' | 'pieced';
+    fabricRole: string;
+    cornerStyle: 'butted' | 'mitered' | 'cornerstone';
+    cornerstoneFabricRole?: string;
+  }>;
+}
+
 /** Input for creating a pattern via API */
 export interface CreatePatternApiInput {
   title: string;
   description?: string | null;
   designData: {
-    version?: 1;
+    version?: 1 | 2;
     gridSize: { rows: number; cols: number };
     blockInstances: unknown[];
     palette: {
@@ -32,6 +45,7 @@ export interface CreatePatternApiInput {
         color: string;
       }>;
     };
+    borderConfig?: DesignDataBorderConfig | null;
   };
   difficulty?: 'beginner' | 'intermediate' | 'advanced';
   category?: string | null;

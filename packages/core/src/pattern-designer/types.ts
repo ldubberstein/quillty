@@ -5,7 +5,7 @@
  * Patterns own a palette and contain block instances (references to blocks with transforms)
  */
 
-import type { UUID, Timestamp, Palette, GridPosition, Block } from '../block-designer/types';
+import type { UUID, Timestamp, Palette, GridPosition, Block, FabricRoleId } from '../block-designer/types';
 
 // Re-export commonly used types from block-designer
 export type { UUID, Timestamp, Palette, GridPosition, FabricRole, FabricRoleId, HexColor } from '../block-designer/types';
@@ -42,6 +42,65 @@ export type PatternCategory = 'traditional' | 'modern' | 'art' | 'seasonal' | 'o
 
 /** Rotation in degrees (90° increments) */
 export type Rotation = 0 | 90 | 180 | 270;
+
+// =============================================================================
+// Border Types
+// =============================================================================
+
+/** Corner treatment style for borders */
+export type BorderCornerStyle = 'butted' | 'mitered' | 'cornerstone';
+
+/** Border style - plain (solid fabric) or pieced (uses blocks) */
+export type BorderStyle = 'plain' | 'pieced';
+
+/**
+ * Configuration for pieced borders (Phase 3)
+ * References blocks from the library to use as border units
+ */
+export interface PiecedBorderConfig {
+  /** Block ID to use as border unit */
+  blockId: UUID;
+  /** How many times the block repeats per side */
+  repeatCount: number;
+  /** Rotation applied to border units */
+  unitRotation: Rotation;
+  /** Direction the units "point" for directional patterns */
+  direction: 'clockwise' | 'counterclockwise';
+  /** Optional different block for corners */
+  cornerBlockId?: UUID;
+}
+
+/**
+ * A single border layer
+ * Borders are rendered from innermost to outermost
+ */
+export interface Border {
+  /** Unique ID within pattern */
+  id: UUID;
+  /** Border width in inches */
+  widthInches: number;
+  /** Style: plain (solid fabric) or pieced (uses blocks) */
+  style: BorderStyle;
+  /** Fabric role for plain borders */
+  fabricRole: FabricRoleId;
+  /** Corner treatment */
+  cornerStyle: BorderCornerStyle;
+  /** Cornerstone fabric role (only when cornerStyle === 'cornerstone') */
+  cornerstoneFabricRole?: FabricRoleId;
+  /** For pieced borders (Phase 3): block reference configuration */
+  piecedConfig?: PiecedBorderConfig;
+}
+
+/**
+ * Border configuration for a pattern
+ * Contains all borders (inner to outer order)
+ */
+export interface BorderConfig {
+  /** Whether borders are enabled */
+  enabled: boolean;
+  /** Array of borders from innermost to outermost */
+  borders: Border[];
+}
 
 /**
  * A block placed in a pattern at a specific position with transforms
@@ -94,6 +153,9 @@ export interface Pattern {
 
   /** Block placements (references to blocks with transforms) */
   blockInstances: BlockInstance[];
+
+  /** Border configuration (null = no borders) */
+  borderConfig: BorderConfig | null;
 
   /** Publishing status */
   status: PatternStatus;
@@ -175,3 +237,15 @@ export const DEFAULT_BLOCK_SIZE_INCHES = 12;
 /** Default grid dimensions */
 export const DEFAULT_GRID_ROWS = 4;
 export const DEFAULT_GRID_COLS = 4;
+
+/** Maximum number of borders allowed */
+export const MAX_BORDERS = 4;
+
+/** Default border width in inches */
+export const DEFAULT_BORDER_WIDTH_INCHES = 3;
+
+/** Minimum border width in inches */
+export const MIN_BORDER_WIDTH_INCHES = 0.5;
+
+/** Maximum border width in inches */
+export const MAX_BORDER_WIDTH_INCHES = 12;

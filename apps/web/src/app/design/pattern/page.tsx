@@ -8,6 +8,7 @@ import { usePatternDesignerStore, useGridSize, useIsDirty, useCanPublish, useEmp
 import { useAuth, useCreatePattern, useUpdatePattern } from '@quillty/api';
 import { SizePicker } from '@/components/pattern-designer/SizePicker';
 import { PublishModal } from '@/components/pattern-designer/PublishModal';
+import { SidebarProvider } from '@/components/pattern-designer/SidebarContext';
 
 // Dynamic imports for components that use Konva
 const PatternCanvas = dynamic(
@@ -36,6 +37,12 @@ const PalettePanel = dynamic(
 // GridSizePanel for grid resize controls
 const GridSizePanel = dynamic(
   () => import('@/components/pattern-designer/GridSizePanel').then((mod) => mod.GridSizePanel),
+  { ssr: false }
+);
+
+// BorderPanel for border configuration
+const BorderPanel = dynamic(
+  () => import('@/components/pattern-designer/BorderPanel').then((mod) => mod.BorderPanel),
   { ssr: false }
 );
 
@@ -110,10 +117,11 @@ export default function PatternDesignerPage() {
       title: pattern.title || 'Untitled Pattern',
       description: pattern.description,
       designData: {
-        version: 1 as const,
+        version: 2 as const,
         gridSize: pattern.gridSize,
         blockInstances: pattern.blockInstances,
         palette: pattern.palette,
+        borderConfig: pattern.borderConfig,
       },
       difficulty: pattern.difficulty,
       category: pattern.category,
@@ -363,10 +371,13 @@ export default function PatternDesignerPage() {
           <PatternCanvas />
         </div>
 
-        {/* Right Sidebar - Colors/Palette + Grid Size */}
-        <aside className="w-44 bg-white border-l border-gray-200 flex-shrink-0 overflow-y-auto">
-          <PalettePanel />
-          <GridSizePanel />
+        {/* Right Sidebar - Colors/Palette + Borders + Grid Size */}
+        <aside className="w-48 bg-white border-l border-gray-200 flex-shrink-0 overflow-y-auto">
+          <SidebarProvider defaultPanel="colors">
+            <PalettePanel />
+            <BorderPanel />
+            <GridSizePanel />
+          </SidebarProvider>
         </aside>
       </main>
 

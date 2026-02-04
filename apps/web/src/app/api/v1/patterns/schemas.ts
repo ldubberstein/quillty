@@ -33,11 +33,28 @@ export const PaletteSchema = z.object({
   roles: z.array(PaletteRoleSchema),
 });
 
+/** Border schema for pattern borders */
+export const BorderSchema = z.object({
+  id: z.string(),
+  widthInches: z.number().positive().max(24),
+  style: z.enum(['plain', 'pieced']),
+  fabricRole: z.string(),
+  cornerStyle: z.enum(['butted', 'mitered', 'cornerstone']),
+  cornerstoneFabricRole: z.string().optional(),
+});
+
+/** Border configuration schema */
+export const BorderConfigSchema = z.object({
+  enabled: z.boolean(),
+  borders: z.array(BorderSchema).max(4),
+});
+
 export const PatternDesignDataSchema = z.object({
-  version: z.literal(1).optional(),
+  version: z.union([z.literal(1), z.literal(2)]).optional(),
   gridSize: GridSizeSchema,
   blockInstances: z.array(BlockInstanceSchema),
   palette: PaletteSchema,
+  borderConfig: BorderConfigSchema.nullable().optional(),
 });
 
 export const CreatePatternInputSchema = z.object({
