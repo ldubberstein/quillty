@@ -97,7 +97,7 @@ interface PatternDesignerState {
   selectedLibraryBlockId: UUID | null;
 
   /** Cache of loaded blocks (for rendering) */
-  blockCache: Map<UUID, Block>;
+  blockCache: Record<UUID, Block>;
 
   /** Current designer mode */
   mode: PatternDesignerMode;
@@ -190,7 +190,7 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
     pattern: createEmptyPattern(),
     selectedBlockInstanceId: null,
     selectedLibraryBlockId: null,
-    blockCache: new Map(),
+    blockCache: {},
     mode: 'idle',
     isDirty: false,
 
@@ -510,17 +510,17 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
     // Block cache
     cacheBlock: (block) => {
       set((state) => {
-        state.blockCache.set(block.id, block);
+        state.blockCache[block.id] = block;
       });
     },
 
     getCachedBlock: (blockId) => {
-      return get().blockCache.get(blockId);
+      return get().blockCache[blockId];
     },
 
     clearBlockCache: () => {
       set((state) => {
-        state.blockCache.clear();
+        state.blockCache = {};
       });
     },
 
