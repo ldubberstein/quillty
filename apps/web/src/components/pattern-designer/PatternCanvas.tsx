@@ -6,6 +6,7 @@ import type Konva from 'konva';
 import { EmptySlot } from './EmptySlot';
 import { PatternGridLines } from './PatternGridLines';
 import { BlockInstanceRenderer } from './BlockInstanceRenderer';
+import { GridResizeControls } from './GridResizeControls';
 import { ZoomControls } from '../block-designer/ZoomControls';
 import { FloatingToolbar } from '../block-designer/FloatingToolbar';
 import {
@@ -527,6 +528,14 @@ export function PatternCanvas() {
             onZoomOut={handleZoomOut}
             onZoomFit={handleZoomFit}
             onZoomChange={handleZoomChange}
+          />
+
+          {/* Grid resize controls (hover-reveal buttons on edges) */}
+          <GridResizeControls
+            gridLeft={gridOffsetX * scale + position.x}
+            gridTop={gridOffsetY * scale + position.y}
+            gridWidth={gridPixelWidth * scale}
+            gridHeight={gridPixelHeight * scale}
           />
 
           {/* Placement mode indicator */}
