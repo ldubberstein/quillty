@@ -111,7 +111,7 @@ export default function PatternDesignerPage() {
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
+      <header className="flex items-center justify-between px-4 py-2 bg-white border-b border-gray-200">
         <div className="flex items-center gap-4">
           <button
             onClick={handleBack}
@@ -134,7 +134,6 @@ export default function PatternDesignerPage() {
           </button>
           <h1 className="text-lg font-semibold text-gray-900">Pattern Designer</h1>
           <div className="w-px h-6 bg-gray-200" />
-          {/* Grid size indicator */}
           <span className="text-sm text-gray-500">
             {gridSize.rows}×{gridSize.cols} grid
           </span>
@@ -146,9 +145,6 @@ export default function PatternDesignerPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* TODO: Iteration 2.6 - Palette button */}
-          {/* TODO: Iteration 2.7 - Grid resize controls */}
-          {/* TODO: Iteration 2.8 - Save/Publish controls */}
           <button
             disabled
             className="px-4 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed"
@@ -159,25 +155,34 @@ export default function PatternDesignerPage() {
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main className="flex-1 min-h-0 flex flex-col relative">
-        {/* Canvas */}
-        <div className="flex-1 min-h-0 relative">
+      {/* Main Content: Two-sidebar layout (Figma pattern) */}
+      <main className="flex-1 flex min-h-0">
+        {/* Left Sidebar - Block Library */}
+        <aside className="w-52 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto">
+          <BlockLibraryPanel />
+        </aside>
+
+        {/* Center - Canvas (maximized for square-ish quilts) */}
+        <div className="flex-1 min-w-0 relative">
           <PatternCanvas />
+          {/* Mode indicator overlay */}
+          {mode === 'placing_block' && (
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
+              Click a slot to place the selected block
+            </div>
+          )}
         </div>
 
-        {/* Block Library Panel */}
-        <BlockLibraryPanel />
+        {/* Right Sidebar - Colors/Tools (placeholder for now) */}
+        <aside className="w-44 bg-white border-l border-gray-200 flex-shrink-0 overflow-y-auto p-3">
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+            Colors
+          </h3>
+          <p className="text-xs text-gray-400">
+            Palette controls coming in iteration 2.6
+          </p>
+        </aside>
       </main>
-
-      {/* Footer hint */}
-      <footer className="px-4 py-2 bg-white border-t border-gray-200">
-        <p className="text-sm text-gray-500 text-center">
-          {mode === 'placing_block'
-            ? 'Tap a slot to place the selected block'
-            : 'Select a block from the library below to start placing'}
-        </p>
-      </footer>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 export { SizePicker } from './SizePicker';
 export { EmptySlot } from './EmptySlot';
 export { PatternCanvas } from './PatternCanvas';
+export { PatternGridLines } from './PatternGridLines';
 export { BlockThumbnail } from './BlockThumbnail';
 export { BlockLibraryPanel } from './BlockLibraryPanel';

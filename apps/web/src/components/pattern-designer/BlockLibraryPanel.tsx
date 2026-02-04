@@ -23,11 +23,18 @@ interface Tab {
 const TABS: Tab[] = [
   { id: 'my-blocks', label: 'My Blocks' },
   { id: 'saved', label: 'Saved' },
-  { id: 'platform', label: 'Platform' },
+  { id: 'platform', label: 'Browse' },
 ];
 
+/**
+ * BlockLibraryPanel - Vertical sidebar for selecting blocks to place
+ *
+ * Follows the Figma/Canva pattern:
+ * - Left sidebar with assets (blocks) to drag/click onto canvas
+ * - Tabs for different block sources
+ * - Blocks shown in a grid layout
+ */
 export function BlockLibraryPanel() {
-  const [isExpanded, setIsExpanded] = useState(true);
   const [activeTab, setActiveTab] = useState<TabId>('my-blocks');
 
   // Get pattern palette for rendering thumbnails
@@ -39,10 +46,6 @@ export function BlockLibraryPanel() {
   // Fetch user's published blocks
   const { data: blocksResponse, isLoading, error } = useMyPublishedBlocks();
   const blocks = blocksResponse?.data ?? [];
-
-  const toggleExpanded = useCallback(() => {
-    setIsExpanded((prev) => !prev);
-  }, []);
 
   const handleSelectBlock = useCallback(
     (block: Block) => {
@@ -68,122 +71,120 @@ export function BlockLibraryPanel() {
   };
 
   return (
-    <div
-      className={`bg-white border-t border-gray-200 transition-all duration-200 ${
-        isExpanded ? 'h-44' : 'h-10'
-      }`}
-    >
+    <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 h-10 border-b border-gray-100">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={toggleExpanded}
-            className="text-gray-500 hover:text-gray-700 transition-colors"
-            aria-label={isExpanded ? 'Collapse library' : 'Expand library'}
-          >
-            <svg
-              className={`w-5 h-5 transition-transform ${isExpanded ? '' : 'rotate-180'}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
-          <span className="text-sm font-medium text-gray-700">Block Library</span>
-        </div>
+      <div className="px-3 py-2 border-b border-gray-100">
+        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+          Blocks
+        </h3>
+      </div>
 
-        {/* Tabs */}
-        {isExpanded && (
-          <div className="flex gap-1">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                  activeTab === tab.id
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        )}
+      {/* Tabs */}
+      <div className="flex border-b border-gray-100">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex-1 px-2 py-2 text-xs font-medium transition-colors ${
+              activeTab === tab.id
+                ? 'text-blue-600 border-b-2 border-blue-600 -mb-px'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {/* Content */}
-      {isExpanded && (
-        <div className="h-[calc(100%-2.5rem)] overflow-hidden">
-          {activeTab === 'my-blocks' && (
-            <div className="h-full px-4 py-3 overflow-x-auto">
-              {isLoading && (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-sm text-gray-500">Loading blocks...</div>
-                </div>
-              )}
+      <div className="flex-1 overflow-y-auto p-3">
+        {activeTab === 'my-blocks' && (
+          <>
+            {isLoading && (
+              <div className="flex items-center justify-center h-32">
+                <div className="text-xs text-gray-500">Loading...</div>
+              </div>
+            )}
 
-              {error && (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-sm text-red-500">
-                    Failed to load blocks. Please sign in.
-                  </div>
-                </div>
-              )}
+            {error && (
+              <div className="text-center py-4">
+                <p className="text-xs text-gray-500 mb-2">Sign in to see your blocks</p>
+                <a
+                  href="/api/auth/signin"
+                  className="text-xs text-blue-500 hover:text-blue-600"
+                >
+                  Sign in
+                </a>
+              </div>
+            )}
 
-              {!isLoading && !error && blocks.length === 0 && (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <p className="text-sm text-gray-500 mb-2">No published blocks yet</p>
-                    <a
-                      href="/design/block"
-                      className="text-sm text-blue-500 hover:text-blue-600"
-                    >
-                      Create your first block
-                    </a>
-                  </div>
-                </div>
-              )}
+            {!isLoading && !error && blocks.length === 0 && (
+              <div className="text-center py-4">
+                <p className="text-xs text-gray-500 mb-2">No blocks yet</p>
+                <a
+                  href="/design/block"
+                  className="text-xs text-blue-500 hover:text-blue-600"
+                >
+                  Create a block
+                </a>
+              </div>
+            )}
 
-              {!isLoading && !error && blocks.length > 0 && (
-                <div className="flex gap-3 h-full items-center">
-                  {blocks.map((block) => (
-                    <div key={block.id} className="flex-shrink-0">
+            {!isLoading && !error && blocks.length > 0 && (
+              <div className="grid grid-cols-2 gap-2">
+                {blocks.map((block) => (
+                  <div
+                    key={block.id}
+                    className={`p-2 rounded-lg cursor-pointer transition-all ${
+                      selectedLibraryBlockId === block.id
+                        ? 'bg-blue-50 ring-2 ring-blue-500'
+                        : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
+                    onClick={() => handleSelectBlock(block)}
+                  >
+                    <div className="flex justify-center">
                       <BlockThumbnail
                         shapes={getBlockShapes(block)}
                         gridSize={block.grid_size || 3}
                         palette={palette}
-                        size={80}
-                        isSelected={selectedLibraryBlockId === block.id}
+                        size={70}
+                        isSelected={false}
                         onClick={() => handleSelectBlock(block)}
                       />
-                      <p className="text-xs text-gray-500 mt-1 text-center truncate max-w-[80px]">
-                        {block.name}
-                      </p>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                    <p className="text-xs text-gray-600 mt-1 text-center truncate">
+                      {block.name}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
 
-          {activeTab === 'saved' && (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-sm text-gray-400">Saved blocks coming soon</p>
-            </div>
-          )}
+        {activeTab === 'saved' && (
+          <div className="flex items-center justify-center h-32">
+            <p className="text-xs text-gray-400 text-center">
+              Save blocks from the platform to use them here
+            </p>
+          </div>
+        )}
 
-          {activeTab === 'platform' && (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-sm text-gray-400">Platform blocks coming soon</p>
-            </div>
-          )}
+        {activeTab === 'platform' && (
+          <div className="flex items-center justify-center h-32">
+            <p className="text-xs text-gray-400 text-center">
+              Browse community blocks
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Selected block indicator */}
+      {selectedLibraryBlockId && (
+        <div className="border-t border-gray-100 px-3 py-2 bg-blue-50">
+          <p className="text-xs text-blue-700 text-center">
+            Click a slot to place
+          </p>
         </div>
       )}
     </div>

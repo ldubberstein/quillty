@@ -31,84 +31,49 @@ export function EmptySlot({
 }: EmptySlotProps) {
   const x = offsetX + col * cellSize;
   const y = offsetY + row * cellSize;
-  const padding = 2;
 
   const handleClick = useCallback(() => {
     onClick?.(row, col);
   }, [onClick, row, col]);
 
-  // Diagonal lines for hatching pattern
-  const numLines = 5;
-  const lineSpacing = cellSize / numLines;
-  const lines: { points: number[] }[] = [];
-
-  for (let i = 1; i < numLines; i++) {
-    // Lines from bottom-left to top-right direction
-    lines.push({
-      points: [
-        padding + i * lineSpacing, padding,
-        padding, padding + i * lineSpacing,
-      ],
-    });
-    lines.push({
-      points: [
-        cellSize - padding, padding + (numLines - i) * lineSpacing,
-        padding + (numLines - i) * lineSpacing, cellSize - padding,
-      ],
-    });
-  }
-
   return (
     <Group x={x} y={y}>
-      {/* Background */}
+      {/* Click target - full cell, edge-to-edge (no gaps, no rounded corners) */}
       <Rect
-        x={padding}
-        y={padding}
-        width={cellSize - padding * 2}
-        height={cellSize - padding * 2}
-        fill={isHighlighted ? 'rgba(59, 130, 246, 0.1)' : '#FAFAFA'}
-        stroke={isHighlighted ? '#3B82F6' : '#E5E7EB'}
-        strokeWidth={isHighlighted ? 2 : 1}
-        dash={isHighlighted ? undefined : [4, 4]}
-        cornerRadius={4}
+        x={0}
+        y={0}
+        width={cellSize}
+        height={cellSize}
+        fill={isHighlighted ? 'rgba(59, 130, 246, 0.15)' : 'transparent'}
+        stroke={isHighlighted ? '#3B82F6' : 'transparent'}
+        strokeWidth={isHighlighted ? 2 : 0}
         onClick={handleClick}
         onTap={handleClick}
       />
 
-      {/* Hatching pattern (subtle) */}
-      {!isHighlighted &&
-        lines.map((line, i) => (
+      {/* Plus icon in center - only visible when highlighted */}
+      {isHighlighted && (
+        <Group listening={false} opacity={0.6}>
           <Line
-            key={i}
-            points={line.points}
-            stroke="#E5E7EB"
-            strokeWidth={1}
-            opacity={0.5}
-            listening={false}
+            points={[
+              cellSize / 2 - 10, cellSize / 2,
+              cellSize / 2 + 10, cellSize / 2,
+            ]}
+            stroke="#3B82F6"
+            strokeWidth={2}
+            lineCap="round"
           />
-        ))}
-
-      {/* Plus icon in center */}
-      <Group listening={false} opacity={isHighlighted ? 0.8 : 0.3}>
-        <Line
-          points={[
-            cellSize / 2 - 8, cellSize / 2,
-            cellSize / 2 + 8, cellSize / 2,
-          ]}
-          stroke={isHighlighted ? '#3B82F6' : '#9CA3AF'}
-          strokeWidth={2}
-          lineCap="round"
-        />
-        <Line
-          points={[
-            cellSize / 2, cellSize / 2 - 8,
-            cellSize / 2, cellSize / 2 + 8,
-          ]}
-          stroke={isHighlighted ? '#3B82F6' : '#9CA3AF'}
-          strokeWidth={2}
-          lineCap="round"
-        />
-      </Group>
+          <Line
+            points={[
+              cellSize / 2, cellSize / 2 - 10,
+              cellSize / 2, cellSize / 2 + 10,
+            ]}
+            stroke="#3B82F6"
+            strokeWidth={2}
+            lineCap="round"
+          />
+        </Group>
+      )}
     </Group>
   );
 }

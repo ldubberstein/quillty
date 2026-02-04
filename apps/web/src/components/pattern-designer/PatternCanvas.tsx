@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Stage, Layer, Rect } from 'react-konva';
 import type Konva from 'konva';
 import { EmptySlot } from './EmptySlot';
+import { PatternGridLines } from './PatternGridLines';
 import { ZoomControls } from '../block-designer/ZoomControls';
 import { usePatternDesignerStore, useGridSize, useSelectedLibraryBlockId } from '@quillty/core';
 import type { GridPosition } from '@quillty/core';
@@ -294,6 +295,15 @@ export function PatternCanvas() {
                 fill="transparent"
                 onClick={handleBackgroundClick}
                 onTap={handleBackgroundClick}
+              />
+
+              {/* Grid seam lines (like sewn quilt seams) */}
+              <PatternGridLines
+                rows={rows}
+                cols={cols}
+                cellSize={cellSize}
+                offsetX={gridOffsetX}
+                offsetY={gridOffsetY}
               />
 
               {/* Render empty slots */}
