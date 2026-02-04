@@ -36,15 +36,14 @@ function renderSquare(
   const color = getColor(palette, shape.fabricRole);
   const x = offsetX + shape.position.col * cellSize;
   const y = offsetY + shape.position.row * cellSize;
-  const padding = 0.5;
 
   return (
     <Rect
       key={shape.id}
-      x={x + padding}
-      y={y + padding}
-      width={cellSize - padding * 2}
-      height={cellSize - padding * 2}
+      x={x}
+      y={y}
+      width={cellSize}
+      height={cellSize}
       fill={color}
       listening={false}
     />
@@ -63,28 +62,27 @@ function renderHst(
   const secondaryColor = getColor(palette, shape.secondaryFabricRole);
   const x = offsetX + shape.position.col * cellSize;
   const y = offsetY + shape.position.row * cellSize;
-  const padding = 0.5;
 
-  // Triangle points based on variant
+  // Triangle points based on variant (no padding for seamless appearance)
   let primaryPoints: number[];
   let secondaryPoints: number[];
 
   switch (shape.variant) {
     case 'nw':
-      primaryPoints = [padding, padding, cellSize - padding, padding, padding, cellSize - padding];
-      secondaryPoints = [cellSize - padding, padding, cellSize - padding, cellSize - padding, padding, cellSize - padding];
+      primaryPoints = [0, 0, cellSize, 0, 0, cellSize];
+      secondaryPoints = [cellSize, 0, cellSize, cellSize, 0, cellSize];
       break;
     case 'ne':
-      primaryPoints = [padding, padding, cellSize - padding, padding, cellSize - padding, cellSize - padding];
-      secondaryPoints = [padding, padding, padding, cellSize - padding, cellSize - padding, cellSize - padding];
+      primaryPoints = [0, 0, cellSize, 0, cellSize, cellSize];
+      secondaryPoints = [0, 0, 0, cellSize, cellSize, cellSize];
       break;
     case 'sw':
-      primaryPoints = [padding, padding, padding, cellSize - padding, cellSize - padding, cellSize - padding];
-      secondaryPoints = [padding, padding, cellSize - padding, padding, cellSize - padding, cellSize - padding];
+      primaryPoints = [0, 0, 0, cellSize, cellSize, cellSize];
+      secondaryPoints = [0, 0, cellSize, 0, cellSize, cellSize];
       break;
     case 'se':
-      primaryPoints = [cellSize - padding, padding, cellSize - padding, cellSize - padding, padding, cellSize - padding];
-      secondaryPoints = [padding, padding, cellSize - padding, padding, padding, cellSize - padding];
+      primaryPoints = [cellSize, 0, cellSize, cellSize, 0, cellSize];
+      secondaryPoints = [0, 0, cellSize, 0, 0, cellSize];
       break;
   }
 
@@ -109,7 +107,6 @@ function renderFlyingGeese(
   const sky2Color = getColor(palette, shape.partFabricRoles.sky2);
   const x = offsetX + shape.position.col * cellSize;
   const y = offsetY + shape.position.row * cellSize;
-  const padding = 0.5;
 
   const isHorizontal = shape.span.cols === 2;
   const width = isHorizontal ? cellSize * 2 : cellSize;
@@ -119,26 +116,27 @@ function renderFlyingGeese(
   let sky1Points: number[];
   let sky2Points: number[];
 
+  // No padding for seamless appearance
   switch (shape.direction) {
     case 'up':
-      goosePoints = [width / 2, padding, padding, height - padding, width - padding, height - padding];
-      sky1Points = [padding, padding, width / 2, padding, padding, height - padding];
-      sky2Points = [width / 2, padding, width - padding, padding, width - padding, height - padding];
+      goosePoints = [width / 2, 0, 0, height, width, height];
+      sky1Points = [0, 0, width / 2, 0, 0, height];
+      sky2Points = [width / 2, 0, width, 0, width, height];
       break;
     case 'down':
-      goosePoints = [width / 2, height - padding, padding, padding, width - padding, padding];
-      sky1Points = [padding, padding, padding, height - padding, width / 2, height - padding];
-      sky2Points = [width - padding, padding, width - padding, height - padding, width / 2, height - padding];
+      goosePoints = [width / 2, height, 0, 0, width, 0];
+      sky1Points = [0, 0, 0, height, width / 2, height];
+      sky2Points = [width, 0, width, height, width / 2, height];
       break;
     case 'left':
-      goosePoints = [padding, height / 2, width - padding, padding, width - padding, height - padding];
-      sky1Points = [padding, padding, width - padding, padding, padding, height / 2];
-      sky2Points = [padding, height / 2, width - padding, height - padding, padding, height - padding];
+      goosePoints = [0, height / 2, width, 0, width, height];
+      sky1Points = [0, 0, width, 0, 0, height / 2];
+      sky2Points = [0, height / 2, width, height, 0, height];
       break;
     case 'right':
-      goosePoints = [width - padding, height / 2, padding, padding, padding, height - padding];
-      sky1Points = [padding, padding, width - padding, padding, width - padding, height / 2];
-      sky2Points = [padding, height - padding, width - padding, height - padding, width - padding, height / 2];
+      goosePoints = [width, height / 2, 0, 0, 0, height];
+      sky1Points = [0, 0, width, 0, width, height / 2];
+      sky2Points = [0, height, width, height, width, height / 2];
       break;
   }
 
