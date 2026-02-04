@@ -315,9 +315,15 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
     selectBlockInstance: (instanceId) => {
       set((state) => {
         state.selectedBlockInstanceId = instanceId;
-        // Clear library selection when selecting on canvas
+        // Clear library selection and enter editing mode when selecting on canvas
         if (instanceId !== null) {
-          state.mode = 'selecting';
+          state.selectedLibraryBlockId = null;
+          state.mode = 'editing_block';
+        } else {
+          // Deselecting - go to idle mode if no library block selected
+          if (!state.selectedLibraryBlockId) {
+            state.mode = 'idle';
+          }
         }
       });
     },

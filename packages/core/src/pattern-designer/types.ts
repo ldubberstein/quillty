@@ -149,7 +149,8 @@ export type BlockWithDesign = Block;
 export type PatternDesignerMode =
   | 'idle'           // Default mode, no active action
   | 'placing_block'  // A library block is selected and ready to place
-  | 'selecting'      // Selecting placed blocks on canvas
+  | 'selecting'      // Selecting placed blocks on canvas (deprecated, use editing_block)
+  | 'editing_block'  // A placed block is selected for editing (rotate, flip, delete)
   | 'preview';       // Preview mode (future: full quilt visualization)
 
 /** Grid resize direction */

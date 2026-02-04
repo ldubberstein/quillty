@@ -398,14 +398,25 @@ describe('PatternDesignerStore', () => {
       expect(usePatternDesignerStore.getState().selectedBlockInstanceId).toBe(instanceId);
     });
 
-    it('switches mode to selecting when selecting an instance', () => {
+    it('switches mode to editing_block when selecting an instance', () => {
       const store = usePatternDesignerStore.getState();
       store.addBlockInstance('block-123', { row: 0, col: 0 });
       const instanceId = usePatternDesignerStore.getState().pattern.blockInstances[0].id;
 
       store.selectBlockInstance(instanceId);
 
-      expect(usePatternDesignerStore.getState().mode).toBe('selecting');
+      expect(usePatternDesignerStore.getState().mode).toBe('editing_block');
+    });
+
+    it('clears library block selection when selecting an instance', () => {
+      const store = usePatternDesignerStore.getState();
+      store.selectLibraryBlock('library-block');
+      store.addBlockInstance('block-123', { row: 0, col: 0 });
+      const instanceId = usePatternDesignerStore.getState().pattern.blockInstances[0].id;
+
+      store.selectBlockInstance(instanceId);
+
+      expect(usePatternDesignerStore.getState().selectedLibraryBlockId).toBeNull();
     });
 
     it('can deselect by passing null', () => {
@@ -417,6 +428,17 @@ describe('PatternDesignerStore', () => {
       store.selectBlockInstance(null);
 
       expect(usePatternDesignerStore.getState().selectedBlockInstanceId).toBeNull();
+    });
+
+    it('returns to idle mode when deselecting with no library block', () => {
+      const store = usePatternDesignerStore.getState();
+      store.addBlockInstance('block-123', { row: 0, col: 0 });
+      const instanceId = usePatternDesignerStore.getState().pattern.blockInstances[0].id;
+      store.selectBlockInstance(instanceId);
+
+      store.selectBlockInstance(null);
+
+      expect(usePatternDesignerStore.getState().mode).toBe('idle');
     });
   });
 

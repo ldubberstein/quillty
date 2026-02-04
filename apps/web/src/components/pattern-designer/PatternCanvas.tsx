@@ -7,13 +7,14 @@ import { EmptySlot } from './EmptySlot';
 import { PatternGridLines } from './PatternGridLines';
 import { BlockInstanceRenderer } from './BlockInstanceRenderer';
 import { ZoomControls } from '../block-designer/ZoomControls';
+import { FloatingToolbar } from '../block-designer/FloatingToolbar';
 import {
   usePatternDesignerStore,
   useGridSize,
   useSelectedLibraryBlockId,
   usePatternPalette,
 } from '@quillty/core';
-import type { GridPosition, Shape } from '@quillty/core';
+import type { GridPosition, Shape, BlockInstance } from '@quillty/core';
 
 /** Canvas sizing constants */
 const CANVAS_PADDING = 40;
@@ -63,6 +64,10 @@ export function PatternCanvas() {
   const isPositionOccupied = usePatternDesignerStore((state) => state.isPositionOccupied);
   const clearSelections = usePatternDesignerStore((state) => state.clearSelections);
   const selectBlockInstance = usePatternDesignerStore((state) => state.selectBlockInstance);
+  const rotateBlockInstance = usePatternDesignerStore((state) => state.rotateBlockInstance);
+  const flipBlockInstanceHorizontal = usePatternDesignerStore((state) => state.flipBlockInstanceHorizontal);
+  const flipBlockInstanceVertical = usePatternDesignerStore((state) => state.flipBlockInstanceVertical);
+  const removeBlockInstance = usePatternDesignerStore((state) => state.removeBlockInstance);
 
   const { rows, cols } = gridSize;
   const isPlacingBlock = mode === 'placing_block' && selectedLibraryBlockId !== null;
@@ -267,21 +272,26 @@ export function PatternCanvas() {
   // Handle slot click
   const handleSlotClick = useCallback(
     (row: number, col: number) => {
-      const position: GridPosition = { row, col };
+      const pos: GridPosition = { row, col };
 
       // If we're in placing mode and have a selected library block
       if (isPlacingBlock && selectedLibraryBlockId) {
-        addBlockInstance(selectedLibraryBlockId, position);
+        addBlockInstance(selectedLibraryBlockId, pos);
         return;
       }
 
-      // If clicking an occupied slot, we'd select it (future iteration)
-      if (isPositionOccupied(position)) {
-        // TODO: Iteration 2.5 - select block instance
+      // If clicking an occupied slot, select the block instance there
+      if (isPositionOccupied(pos)) {
+        const instanceAtPos = blockInstances.find(
+          (b) => b.position.row === row && b.position.col === col
+        );
+        if (instanceAtPos) {
+          selectBlockInstance(instanceAtPos.id);
+        }
         return;
       }
     },
-    [isPlacingBlock, selectedLibraryBlockId, addBlockInstance, isPositionOccupied]
+    [isPlacingBlock, selectedLibraryBlockId, addBlockInstance, isPositionOccupied, blockInstances, selectBlockInstance]
   );
 
   // Handle click on background (outside grid)
@@ -299,6 +309,56 @@ export function PatternCanvas() {
   const handleSlotMouseLeave = useCallback(() => {
     setHoveredSlot(null);
   }, []);
+
+  // Calculate toolbar position for selected block instance
+  const getToolbarPosition = useCallback(
+    (instance: BlockInstance): { x: number; y: number } => {
+      // Calculate block center in stage coordinates
+      const blockCenterX = gridOffsetX + (instance.position.col + 0.5) * cellSize;
+      const blockTopY = gridOffsetY + instance.position.row * cellSize;
+
+      // Convert to screen coordinates
+      return {
+        x: blockCenterX * scale + position.x,
+        y: blockTopY * scale + position.y,
+      };
+    },
+    [gridOffsetX, gridOffsetY, cellSize, scale, position]
+  );
+
+  // Get the selected block instance
+  const selectedInstance = selectedBlockInstanceId
+    ? blockInstances.find((b) => b.id === selectedBlockInstanceId)
+    : null;
+
+  // Toolbar action handlers
+  const handleRotate = useCallback(() => {
+    if (selectedBlockInstanceId) {
+      rotateBlockInstance(selectedBlockInstanceId);
+    }
+  }, [selectedBlockInstanceId, rotateBlockInstance]);
+
+  const handleFlipHorizontal = useCallback(() => {
+    if (selectedBlockInstanceId) {
+      flipBlockInstanceHorizontal(selectedBlockInstanceId);
+    }
+  }, [selectedBlockInstanceId, flipBlockInstanceHorizontal]);
+
+  const handleFlipVertical = useCallback(() => {
+    if (selectedBlockInstanceId) {
+      flipBlockInstanceVertical(selectedBlockInstanceId);
+    }
+  }, [selectedBlockInstanceId, flipBlockInstanceVertical]);
+
+  const handleDelete = useCallback(() => {
+    if (selectedBlockInstanceId) {
+      removeBlockInstance(selectedBlockInstanceId);
+    }
+  }, [selectedBlockInstanceId, removeBlockInstance]);
+
+  const handleToolbarDismiss = useCallback(() => {
+    selectBlockInstance(null);
+  }, [selectBlockInstance]);
 
   // Get the selected block for ghost preview
   const selectedBlock = selectedLibraryBlockId ? blockCache[selectedLibraryBlockId] : null;
@@ -480,6 +540,20 @@ export function PatternCanvas() {
                 Cancel
               </button>
             </div>
+          )}
+
+          {/* Floating toolbar for selected block instance */}
+          {selectedInstance && mode === 'editing_block' && (
+            <FloatingToolbar
+              position={getToolbarPosition(selectedInstance)}
+              canRotate={true}
+              canFlip={true}
+              onRotate={handleRotate}
+              onFlipHorizontal={handleFlipHorizontal}
+              onFlipVertical={handleFlipVertical}
+              onDelete={handleDelete}
+              onDismiss={handleToolbarDismiss}
+            />
           )}
         </>
       )}
