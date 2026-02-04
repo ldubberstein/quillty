@@ -21,6 +21,11 @@ export {
   type BlockWithDetails,
 } from './useBlock';
 export {
+  useMyBlocks,
+  useMyPublishedBlocks,
+  useMyDraftBlocks as useMyDraftBlocksApi,
+} from './useMyBlocks';
+export {
   useAuth,
   useProfile,
   useUpdateProfile,

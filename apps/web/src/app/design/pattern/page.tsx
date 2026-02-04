@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { usePatternDesignerStore, useGridSize, useIsDirty } from '@quillty/core';
 import { SizePicker } from '@/components/pattern-designer/SizePicker';
 
-// Dynamic import for PatternCanvas (Konva requires browser APIs)
+// Dynamic imports for components that use Konva
 const PatternCanvas = dynamic(
   () => import('@/components/pattern-designer/PatternCanvas').then((mod) => mod.PatternCanvas),
   {
@@ -17,6 +17,11 @@ const PatternCanvas = dynamic(
       </div>
     ),
   }
+);
+
+const BlockLibraryPanel = dynamic(
+  () => import('@/components/pattern-designer/BlockLibraryPanel').then((mod) => mod.BlockLibraryPanel),
+  { ssr: false }
 );
 
 export default function PatternDesignerPage() {
@@ -161,13 +166,8 @@ export default function PatternDesignerPage() {
           <PatternCanvas />
         </div>
 
-        {/* TODO: Iteration 2.3 - Block Library Panel */}
-        {/* Placeholder for now */}
-        <div className="h-32 bg-white border-t border-gray-200 flex items-center justify-center">
-          <p className="text-sm text-gray-400">
-            Block Library will appear here (Iteration 2.3)
-          </p>
-        </div>
+        {/* Block Library Panel */}
+        <BlockLibraryPanel />
       </main>
 
       {/* Footer hint */}

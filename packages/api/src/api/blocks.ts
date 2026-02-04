@@ -89,3 +89,37 @@ export async function publishBlockApi(id: string): Promise<Block> {
   const response = await apiClient.post<ApiResponse<Block>>(`/blocks/${id}/publish`);
   return response.data;
 }
+
+/** Response for paginated block list */
+export interface BlockListResponse {
+  data: Block[];
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+  };
+}
+
+/** Options for fetching user blocks */
+export interface GetMyBlocksOptions {
+  status?: 'published' | 'draft';
+  limit?: number;
+  offset?: number;
+}
+
+/**
+ * Get current user's blocks via API
+ * Requires authentication
+ */
+export async function getMyBlocksApi(options: GetMyBlocksOptions = {}): Promise<BlockListResponse> {
+  const params = new URLSearchParams();
+  if (options.status) params.set('status', options.status);
+  if (options.limit) params.set('limit', options.limit.toString());
+  if (options.offset) params.set('offset', options.offset.toString());
+
+  const queryString = params.toString();
+  const url = queryString ? `/me/blocks?${queryString}` : '/me/blocks';
+
+  return apiClient.get<BlockListResponse>(url);
+}
