@@ -104,6 +104,9 @@ interface PatternDesignerState {
 
   /** Whether the pattern has unsaved changes */
   isDirty: boolean;
+
+  /** Whether we're previewing the "fill empty" action (hover state) */
+  isPreviewingFillEmpty: boolean;
 }
 
 interface PatternDesignerActions {
@@ -176,6 +179,10 @@ interface PatternDesignerActions {
   // Mode management
   /** Set the designer mode */
   setMode: (mode: PatternDesignerMode) => void;
+
+  // Preview state
+  /** Set whether we're previewing the fill empty action */
+  setPreviewingFillEmpty: (preview: boolean) => void;
 }
 
 export type PatternDesignerStore = PatternDesignerState & PatternDesignerActions;
@@ -193,6 +200,7 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
     blockCache: {},
     mode: 'idle',
     isDirty: false,
+    isPreviewingFillEmpty: false,
 
     // Pattern management
     initPattern: (gridSize, creatorId = '') => {
@@ -568,6 +576,13 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
           state.selectedBlockInstanceId = null;
           state.selectedLibraryBlockId = null;
         }
+      });
+    },
+
+    // Preview state
+    setPreviewingFillEmpty: (preview) => {
+      set((state) => {
+        state.isPreviewingFillEmpty = preview;
       });
     },
   }))

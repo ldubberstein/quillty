@@ -58,6 +58,7 @@ export function PatternCanvas() {
   const blockInstances = usePatternDesignerStore((state) => state.pattern.blockInstances);
   const blockCache = usePatternDesignerStore((state) => state.blockCache);
   const selectedBlockInstanceId = usePatternDesignerStore((state) => state.selectedBlockInstanceId);
+  const isPreviewingFillEmpty = usePatternDesignerStore((state) => state.isPreviewingFillEmpty);
   const addBlockInstance = usePatternDesignerStore((state) => state.addBlockInstance);
   const isPositionOccupied = usePatternDesignerStore((state) => state.isPositionOccupied);
   const clearSelections = usePatternDesignerStore((state) => state.clearSelections);
@@ -406,7 +407,7 @@ export function PatternCanvas() {
               })}
 
               {/* Ghost preview when hovering empty slot in placement mode */}
-              {isPlacingBlock && hoveredSlot && selectedBlock && selectedBlockShapes.length > 0 && (
+              {isPlacingBlock && hoveredSlot && !isPreviewingFillEmpty && selectedBlock && selectedBlockShapes.length > 0 && (
                 <Group opacity={0.5} listening={false}>
                   <BlockInstanceRenderer
                     instance={{
@@ -425,6 +426,34 @@ export function PatternCanvas() {
                     offsetY={gridOffsetY}
                     isSelected={false}
                   />
+                </Group>
+              )}
+
+              {/* Ghost preview for all empty slots when hovering "Fill Empty" button */}
+              {isPreviewingFillEmpty && selectedBlock && selectedBlockShapes.length > 0 && (
+                <Group opacity={0.5} listening={false}>
+                  {slots
+                    .filter(({ isOccupied }) => !isOccupied)
+                    .map(({ row, col }) => (
+                      <BlockInstanceRenderer
+                        key={`ghost-fill-${row}-${col}`}
+                        instance={{
+                          id: `ghost-fill-${row}-${col}`,
+                          blockId: selectedLibraryBlockId!,
+                          position: { row, col },
+                          rotation: 0,
+                          flipHorizontal: false,
+                          flipVertical: false,
+                        }}
+                        shapes={selectedBlockShapes}
+                        blockGridSize={selectedBlock.gridSize || 3}
+                        palette={palette}
+                        cellSize={cellSize}
+                        offsetX={gridOffsetX}
+                        offsetY={gridOffsetY}
+                        isSelected={false}
+                      />
+                    ))}
                 </Group>
               )}
             </Layer>

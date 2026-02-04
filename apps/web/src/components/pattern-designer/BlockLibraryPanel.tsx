@@ -44,6 +44,7 @@ export function BlockLibraryPanel() {
   const cacheBlock = usePatternDesignerStore((state) => state.cacheBlock);
   const fillEmpty = usePatternDesignerStore((state) => state.fillEmpty);
   const clearSelections = usePatternDesignerStore((state) => state.clearSelections);
+  const setPreviewingFillEmpty = usePatternDesignerStore((state) => state.setPreviewingFillEmpty);
 
   // Fetch user's published blocks
   const { data: blocksResponse, isLoading, error } = useMyPublishedBlocks();
@@ -59,12 +60,22 @@ export function BlockLibraryPanel() {
   );
 
   const handleFillEmpty = useCallback(() => {
+    setPreviewingFillEmpty(false);
     fillEmpty();
-  }, [fillEmpty]);
+  }, [fillEmpty, setPreviewingFillEmpty]);
 
   const handleCancelSelection = useCallback(() => {
+    setPreviewingFillEmpty(false);
     clearSelections();
-  }, [clearSelections]);
+  }, [clearSelections, setPreviewingFillEmpty]);
+
+  const handleFillEmptyMouseEnter = useCallback(() => {
+    setPreviewingFillEmpty(true);
+  }, [setPreviewingFillEmpty]);
+
+  const handleFillEmptyMouseLeave = useCallback(() => {
+    setPreviewingFillEmpty(false);
+  }, [setPreviewingFillEmpty]);
 
   // Parse design_data from block (stored as JSON in database)
   const getBlockShapes = (block: Block): Shape[] => {
@@ -198,6 +209,8 @@ export function BlockLibraryPanel() {
           <div className="flex gap-2">
             <button
               onClick={handleFillEmpty}
+              onMouseEnter={handleFillEmptyMouseEnter}
+              onMouseLeave={handleFillEmptyMouseLeave}
               className="flex-1 px-2 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors"
             >
               Fill Empty
