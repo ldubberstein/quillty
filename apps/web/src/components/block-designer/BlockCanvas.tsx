@@ -3,29 +3,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Stage, Layer, Rect } from 'react-konva';
 import type Konva from 'konva';
+import { Group } from 'react-konva';
 import { GridLines } from './GridLines';
 import { ZoomControls } from './ZoomControls';
-import { Shapes, type ShapeSelection } from './Shapes';
 import { SquareRenderer } from './SquareRenderer';
 import { HstRenderer } from './HstRenderer';
 import { FlyingGeeseRenderer } from './FlyingGeeseRenderer';
 import { FloatingToolbar } from './FloatingToolbar';
 import { PreviewGrid } from './PreviewGrid';
-import { useBlockDesignerStore } from '@quillty/core';
-import type { GridPosition, SquareShape, HstShape, FlyingGeeseShape, Shape } from '@quillty/core';
+import { EmptyCell } from './EmptyCell';
+import { useBlockDesignerStore, useSelectedShapeType, useHoveredCell, useIsPlacingShape } from '@quillty/core';
+import type { GridPosition, SquareShape, HstShape, FlyingGeeseShape, Shape, ShapeSelectionType } from '@quillty/core';
 
 /** Canvas sizing constants */
 const CANVAS_PADDING = 40;
 const MIN_CELL_SIZE = 60;
 const MAX_CELL_SIZE = 150;
-
-/** State for shape picker popup */
-interface PickerState {
-  /** Screen position where picker should appear */
-  screenPosition: { x: number; y: number };
-  /** Grid position of the tapped cell */
-  gridPosition: GridPosition;
-}
 
 export function BlockCanvas() {
   const stageRef = useRef<Konva.Stage>(null);
@@ -53,6 +46,14 @@ export function BlockCanvas() {
   const flipShapeHorizontal = useBlockDesignerStore((state) => state.flipShapeHorizontal);
   const flipShapeVertical = useBlockDesignerStore((state) => state.flipShapeVertical);
 
+  // Shape library selection
+  const selectedShapeType = useSelectedShapeType();
+  const hoveredCell = useHoveredCell();
+  const isPlacingShape = useIsPlacingShape();
+  const selectShapeForPlacement = useBlockDesignerStore((state) => state.selectShapeForPlacement);
+  const setHoveredCell = useBlockDesignerStore((state) => state.setHoveredCell);
+  const clearShapeSelection = useBlockDesignerStore((state) => state.clearShapeSelection);
+
   const { gridSize, shapes, previewPalette } = block;
   const isPaintMode = mode === 'paint_mode';
   const isPreviewMode = mode === 'preview';
@@ -61,9 +62,6 @@ export function BlockCanvas() {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
-
-  // Shape picker state
-  const [pickerState, setPickerState] = useState<PickerState | null>(null);
 
   // Calculate cell size based on available space
   const availableSize = Math.min(dimensions.width, dimensions.height) - CANVAS_PADDING * 2;
@@ -277,118 +275,76 @@ export function BlockCanvas() {
     [scale, position]
   );
 
-  // Handle click on grid area (for placing shapes)
-  const handleGridClick = useCallback(
-    (_e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
-      const stage = stageRef.current;
-      if (!stage) return;
-
-      const pointer = stage.getPointerPosition();
-      if (!pointer) return;
-
-      // Convert screen position to stage position (accounting for zoom/pan)
-      const stageX = (pointer.x - position.x) / scale;
-      const stageY = (pointer.y - position.y) / scale;
-
-      // Convert to grid position
-      const gridPos = stageToGrid(stageX, stageY);
-
-      // If clicked outside grid, dismiss picker, cancel placement, and clear selection
-      if (!gridPos) {
-        setPickerState(null);
-        if (mode === 'placing_flying_geese_second') {
-          cancelFlyingGeesePlacement();
+  // Place a shape at the given position based on the selected shape type
+  const placeShapeAt = useCallback(
+    (gridPos: GridPosition, shapeType: ShapeSelectionType) => {
+      if (shapeType.type === 'square') {
+        addSquare(gridPos, 'background');
+      } else if (shapeType.type === 'hst') {
+        addHst(gridPos, shapeType.variant, 'background', 'background');
+      } else if (shapeType.type === 'flying_geese') {
+        // Check if there are valid adjacent cells
+        const validCells = getValidAdjacentCells(gridPos);
+        if (validCells.length === 0) {
+          console.warn('Not enough space for Flying Geese here.');
+          return;
         }
-        clearSelection();
-        return;
+        // Start two-tap placement mode
+        startFlyingGeesePlacement(gridPos);
       }
+    },
+    [addSquare, addHst, getValidAdjacentCells, startFlyingGeesePlacement]
+  );
+
+  // Handle click on empty cell (for placing shapes from library)
+  const handleEmptyCellClick = useCallback(
+    (row: number, col: number) => {
+      const gridPos: GridPosition = { row, col };
 
       // If in Flying Geese placement mode, handle second tap
       if (mode === 'placing_flying_geese_second' && flyingGeesePlacement) {
-        // Check if tapped cell is a valid adjacent cell
         const isValidAdjacent = flyingGeesePlacement.validAdjacentCells.some(
-          (cell) => cell.row === gridPos.row && cell.col === gridPos.col
+          (cell) => cell.row === row && cell.col === col
         );
 
         if (isValidAdjacent) {
           completeFlyingGeesePlacement(gridPos);
         } else {
-          // Tapped same cell or non-adjacent - cancel
           cancelFlyingGeesePlacement();
         }
         return;
       }
 
-      // If cell is occupied, select the shape at that position
-      if (isCellOccupied(gridPos)) {
-        setPickerState(null);
-        const shapeAtPos = getShapeAt(gridPos);
-        if (shapeAtPos) {
-          selectShape(shapeAtPos.id);
-        }
-        return;
-      }
-
-      // Clear any selection before showing picker
-      clearSelection();
-
-      // Show shape picker near the tap point
-      // Calculate the center of the tapped cell
-      const cellCenterX = gridOffsetX + gridPos.col * cellSize + cellSize / 2;
-      const cellCenterY = gridOffsetY + gridPos.row * cellSize;
-      const screenPos = stageToScreen(cellCenterX, cellCenterY);
-
-      setPickerState({
-        screenPosition: screenPos,
-        gridPosition: gridPos,
-      });
-    },
-    [position, scale, stageToGrid, stageToScreen, isCellOccupied, getShapeAt, selectShape, clearSelection, gridOffsetX, gridOffsetY, cellSize, mode, flyingGeesePlacement, cancelFlyingGeesePlacement, completeFlyingGeesePlacement]
-  );
-
-  // Handle shape selection from picker
-  const handleSelectShape = useCallback(
-    (selection: ShapeSelection) => {
-      if (!pickerState) return;
-
-      if (selection.type === 'square') {
-        // All shapes default to background fabric role (coloring via Paint Mode)
-        addSquare(pickerState.gridPosition, 'background');
-        setPickerState(null);
-      } else if (selection.type === 'hst') {
-        // Both fabric roles default to background (coloring via Paint Mode)
-        addHst(pickerState.gridPosition, selection.variant, 'background', 'background');
-        setPickerState(null);
-      } else if (selection.type === 'flying_geese') {
-        // Check if there are valid adjacent cells
-        const validCells = getValidAdjacentCells(pickerState.gridPosition);
-        if (validCells.length === 0) {
-          // No valid adjacent cells - show feedback (could add toast later)
-          console.warn('Not enough space for Flying Geese here.');
-          setPickerState(null);
-          return;
-        }
-        // Start two-tap placement mode
-        startFlyingGeesePlacement(pickerState.gridPosition);
-        setPickerState(null);
+      // If in placing_shape mode with a selected shape type, place the shape
+      if (isPlacingShape && selectedShapeType) {
+        placeShapeAt(gridPos, selectedShapeType);
       }
     },
-    [pickerState, addSquare, addHst, getValidAdjacentCells, startFlyingGeesePlacement]
+    [mode, flyingGeesePlacement, isPlacingShape, selectedShapeType, completeFlyingGeesePlacement, cancelFlyingGeesePlacement, placeShapeAt]
   );
 
-  // Handle picker dismissal
-  const handleDismissPicker = useCallback(() => {
-    setPickerState(null);
-  }, []);
+  // Handle hover on empty cell (for ghost preview)
+  const handleEmptyCellMouseEnter = useCallback(
+    (row: number, col: number) => {
+      if (isPlacingShape || mode === 'placing_flying_geese_second') {
+        setHoveredCell({ row, col });
+      }
+    },
+    [isPlacingShape, mode, setHoveredCell]
+  );
+
+  const handleEmptyCellMouseLeave = useCallback(() => {
+    setHoveredCell(null);
+  }, [setHoveredCell]);
 
   // Handle click on background (outside grid) to clear selection
   const handleBackgroundClick = useCallback(() => {
-    setPickerState(null);
     clearSelection();
+    clearShapeSelection();
     if (mode === 'placing_flying_geese_second') {
       cancelFlyingGeesePlacement();
     }
-  }, [clearSelection, mode, cancelFlyingGeesePlacement]);
+  }, [clearSelection, clearShapeSelection, mode, cancelFlyingGeesePlacement]);
 
   // Handle shape click (for paint mode or selection)
   const handleShapeClick = useCallback(
@@ -453,6 +409,32 @@ export function BlockCanvas() {
   const squareShapes = shapes.filter((s): s is SquareShape => s.type === 'square');
   const hstShapes = shapes.filter((s): s is HstShape => s.type === 'hst');
   const flyingGeeseShapes = shapes.filter((s): s is FlyingGeeseShape => s.type === 'flying_geese');
+
+  // Compute empty cell positions for rendering EmptyCell components
+  const getEmptyCellPositions = useCallback((): GridPosition[] => {
+    const emptyCells: GridPosition[] = [];
+    for (let row = 0; row < gridSize; row++) {
+      for (let col = 0; col < gridSize; col++) {
+        if (!isCellOccupied({ row, col })) {
+          emptyCells.push({ row, col });
+        }
+      }
+    }
+    return emptyCells;
+  }, [gridSize, isCellOccupied]);
+
+  const emptyCellPositions = getEmptyCellPositions();
+
+  // Check if a cell is a valid Flying Geese target
+  const isValidFlyingGeeseTarget = useCallback(
+    (row: number, col: number): boolean => {
+      if (mode !== 'placing_flying_geese_second' || !flyingGeesePlacement) return false;
+      return flyingGeesePlacement.validAdjacentCells.some(
+        (cell) => cell.row === row && cell.col === col
+      );
+    },
+    [mode, flyingGeesePlacement]
+  );
 
   // Don't render Stage until we have dimensions
   const hasValidDimensions = dimensions.width > 0 && dimensions.height > 0;
@@ -541,48 +523,77 @@ export function BlockCanvas() {
                 />
               ))}
 
-              {/* Highlight cells during Flying Geese placement */}
+              {/* Highlight first cell during Flying Geese placement */}
               {mode === 'placing_flying_geese_second' && flyingGeesePlacement && (
-                <>
-                  {/* First cell highlight (selected) */}
-                  <Rect
-                    x={gridOffsetX + flyingGeesePlacement.firstCellPosition.col * cellSize + 2}
-                    y={gridOffsetY + flyingGeesePlacement.firstCellPosition.row * cellSize + 2}
-                    width={cellSize - 4}
-                    height={cellSize - 4}
-                    fill="rgba(59, 130, 246, 0.3)"
-                    stroke="#3B82F6"
-                    strokeWidth={2}
-                  />
-                  {/* Valid adjacent cells highlight (glowing) */}
-                  {flyingGeesePlacement.validAdjacentCells.map((cell) => (
-                    <Rect
-                      key={`adjacent-${cell.row}-${cell.col}`}
-                      x={gridOffsetX + cell.col * cellSize + 2}
-                      y={gridOffsetY + cell.row * cellSize + 2}
-                      width={cellSize - 4}
-                      height={cellSize - 4}
-                      fill="rgba(34, 197, 94, 0.2)"
-                      stroke="#22C55E"
-                      strokeWidth={2}
-                      dash={[5, 5]}
-                    />
-                  ))}
-                </>
+                <Rect
+                  x={gridOffsetX + flyingGeesePlacement.firstCellPosition.col * cellSize + 2}
+                  y={gridOffsetY + flyingGeesePlacement.firstCellPosition.row * cellSize + 2}
+                  width={cellSize - 4}
+                  height={cellSize - 4}
+                  fill="rgba(59, 130, 246, 0.3)"
+                  stroke="#3B82F6"
+                  strokeWidth={2}
+                  listening={false}
+                />
               )}
 
-              {/* Invisible rect to capture clicks on the entire grid area */}
-              {/* Only render when NOT in paint mode, so shape clicks work */}
-              {!isPaintMode && (
-                <Rect
-                  x={gridOffsetX}
-                  y={gridOffsetY}
-                  width={gridPixelSize}
-                  height={gridPixelSize}
-                  fill="transparent"
-                  onClick={handleGridClick}
-                  onTap={handleGridClick}
+              {/* Empty cells - clickable/hoverable for placement */}
+              {emptyCellPositions.map(({ row, col }) => (
+                <EmptyCell
+                  key={`empty-${row}-${col}`}
+                  row={row}
+                  col={col}
+                  cellSize={cellSize}
+                  offsetX={gridOffsetX}
+                  offsetY={gridOffsetY}
+                  isHighlighted={isPlacingShape}
+                  isHovered={hoveredCell?.row === row && hoveredCell?.col === col}
+                  isValidFlyingGeeseTarget={isValidFlyingGeeseTarget(row, col)}
+                  onClick={handleEmptyCellClick}
+                  onMouseEnter={handleEmptyCellMouseEnter}
+                  onMouseLeave={handleEmptyCellMouseLeave}
                 />
+              ))}
+
+              {/* Ghost preview for shape placement */}
+              {isPlacingShape && hoveredCell && selectedShapeType && !isCellOccupied(hoveredCell) && (
+                <Group opacity={0.5} listening={false}>
+                  {selectedShapeType.type === 'square' && (
+                    <SquareRenderer
+                      shape={{
+                        id: 'ghost-preview',
+                        type: 'square',
+                        position: hoveredCell,
+                        span: { rows: 1, cols: 1 },
+                        fabricRole: 'background',
+                      }}
+                      cellSize={cellSize}
+                      offsetX={gridOffsetX}
+                      offsetY={gridOffsetY}
+                      palette={previewPalette}
+                      isSelected={false}
+                    />
+                  )}
+                  {selectedShapeType.type === 'hst' && (
+                    <HstRenderer
+                      shape={{
+                        id: 'ghost-preview',
+                        type: 'hst',
+                        position: hoveredCell,
+                        span: { rows: 1, cols: 1 },
+                        variant: selectedShapeType.variant,
+                        fabricRole: 'background',
+                        secondaryFabricRole: 'background',
+                      }}
+                      cellSize={cellSize}
+                      offsetX={gridOffsetX}
+                      offsetY={gridOffsetY}
+                      palette={previewPalette}
+                      isSelected={false}
+                    />
+                  )}
+                  {/* Flying Geese doesn't show ghost preview - uses two-tap flow */}
+                </Group>
               )}
             </Layer>
           </Stage>
@@ -623,15 +634,6 @@ export function BlockCanvas() {
               Tap shapes to paint with{' '}
               {previewPalette.roles.find((r) => r.id === activeFabricRole)?.name ?? 'fabric'}
             </div>
-          )}
-
-          {/* Shapes popup */}
-          {pickerState && (
-            <Shapes
-              position={pickerState.screenPosition}
-              onSelectShape={handleSelectShape}
-              onDismiss={handleDismissPicker}
-            />
           )}
 
           {/* Floating toolbar for selected shape */}

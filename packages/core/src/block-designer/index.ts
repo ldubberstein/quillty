@@ -44,6 +44,7 @@ export type {
   DesignerMode,
   FlyingGeesePlacementState,
   PreviewRotationPreset,
+  ShapeSelectionType,
 } from './types';
 
 // Schemas
@@ -117,6 +118,9 @@ export {
   useCanRedo,
   useIsPreviewMode,
   usePreviewRotationPreset,
+  useSelectedShapeType,
+  useHoveredCell,
+  useIsPlacingShape,
   type BlockDesignerStore,
 } from './store';
 

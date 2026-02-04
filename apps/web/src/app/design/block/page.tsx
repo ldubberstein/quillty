@@ -4,11 +4,12 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { PanelRight } from 'lucide-react';
+import { PanelLeft, PanelRight } from 'lucide-react';
 import { useBlockDesignerStore, DEFAULT_GRID_SIZE } from '@quillty/core';
 import { UndoRedoControls } from '@/components/block-designer/UndoRedoControls';
 import { PreviewControls } from '@/components/block-designer/PreviewControls';
 import { SaveControls } from '@/components/block-designer/SaveControls';
+import { ShapeLibraryPanel } from '@/components/block-designer/ShapeLibraryPanel';
 import { SidebarProvider } from '@/components/shared';
 
 // Dynamic import for BlockCanvas (Konva requires browser APIs)
@@ -35,6 +36,7 @@ export default function BlockDesignerPage() {
   const initBlock = useBlockDesignerStore((state) => state.initBlock);
   const block = useBlockDesignerStore((state) => state.block);
   const mode = useBlockDesignerStore((state) => state.mode);
+  const [showShapePanel, setShowShapePanel] = useState(true);
   const [showFabricPanel, setShowFabricPanel] = useState(true);
   const hasInitialized = useRef(false);
 
@@ -56,12 +58,28 @@ export default function BlockDesignerPage() {
 
   const isPaintMode = mode === 'paint_mode';
   const isPreviewMode = mode === 'preview';
+  const isPlacingShape = mode === 'placing_shape';
+  const isPlacingFlyingGeese = mode === 'placing_flying_geese_second';
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
         <div className="flex items-center gap-4">
+          {/* Left sidebar toggle */}
+          <button
+            onClick={() => setShowShapePanel((prev) => !prev)}
+            className={`p-2 rounded-lg transition-colors ${
+              showShapePanel
+                ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                : 'text-gray-500 hover:bg-gray-100'
+            }`}
+            aria-label={showShapePanel ? 'Hide shapes panel' : 'Show shapes panel'}
+            title={showShapePanel ? 'Hide shapes panel' : 'Show shapes panel'}
+          >
+            <PanelLeft className="w-5 h-5" />
+          </button>
+
           <Link
             href="/"
             className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -116,12 +134,19 @@ export default function BlockDesignerPage() {
 
       {/* Main Content Area */}
       <main className="flex-1 min-h-0 flex relative">
+        {/* Left Sidebar - Shapes Library */}
+        {showShapePanel && (
+          <aside className="w-48 flex-shrink-0 bg-white border-r border-gray-200 overflow-y-auto">
+            <ShapeLibraryPanel />
+          </aside>
+        )}
+
         {/* Canvas */}
         <div className="flex-1 min-w-0 relative">
           <BlockCanvas />
         </div>
 
-        {/* Sidebar */}
+        {/* Right Sidebar - Fabrics */}
         {showFabricPanel && (
           <aside className="w-48 flex-shrink-0 bg-white border-l border-gray-200 overflow-y-auto">
             <SidebarProvider defaultPanels={['fabrics']} mode="multi">
@@ -138,7 +163,11 @@ export default function BlockDesignerPage() {
             ? 'Preview mode • Tap anywhere on the canvas to return to editing'
             : isPaintMode
               ? 'Tap shapes to paint them with the selected fabric'
-              : 'Tap a cell to add a shape • Scroll to zoom • Drag to pan'}
+              : isPlacingFlyingGeese
+                ? 'Tap an adjacent cell to complete Flying Geese'
+                : isPlacingShape
+                  ? 'Tap cells to place shape • Click shape again to deselect'
+                  : 'Select a shape from the left panel • Scroll to zoom • Drag to pan'}
         </p>
       </footer>
     </div>

@@ -29,13 +29,22 @@ vi.mock('@quillty/core', () => ({
         },
       },
       selectedShapeId: null,
+      selectedShapeType: null,
+      hoveredCell: null,
+      mode: 'idle',
       addSquare: mockAddSquare,
       addHst: mockAddHst,
       isCellOccupied: mockIsCellOccupied,
       clearSelection: mockClearSelection,
+      selectShapeForPlacement: vi.fn(),
+      setHoveredCell: vi.fn(),
+      clearShapeSelection: vi.fn(),
     };
     return selector ? selector(state) : state;
   }),
+  useSelectedShapeType: vi.fn(() => null),
+  useHoveredCell: vi.fn(() => null),
+  useIsPlacingShape: vi.fn(() => false),
   DEFAULT_GRID_SIZE: 3,
 }));
 

@@ -22,6 +22,7 @@ import type {
   DesignerMode,
   FlyingGeesePlacementState,
   PreviewRotationPreset,
+  ShapeSelectionType,
   UUID,
 } from './types';
 import { DEFAULT_PALETTE, DEFAULT_GRID_SIZE } from './constants';
@@ -103,6 +104,12 @@ interface BlockDesignerState {
 
   /** Preview mode rotation preset */
   previewRotationPreset: PreviewRotationPreset;
+
+  /** Shape type selected from library for placement (null if none) */
+  selectedShapeType: ShapeSelectionType | null;
+
+  /** Cell being hovered during placement mode (for ghost preview) */
+  hoveredCell: GridPosition | null;
 }
 
 interface BlockDesignerActions {
@@ -196,6 +203,14 @@ interface BlockDesignerActions {
   exitPreview: () => void;
   /** Set the preview rotation preset */
   setPreviewRotationPreset: (preset: PreviewRotationPreset) => void;
+
+  // Shape library selection
+  /** Select a shape from library for placement */
+  selectShapeForPlacement: (shape: ShapeSelectionType | null) => void;
+  /** Set hovered cell (for ghost preview) */
+  setHoveredCell: (position: GridPosition | null) => void;
+  /** Clear shape selection and exit placing mode */
+  clearShapeSelection: () => void;
 }
 
 export type BlockDesignerStore = BlockDesignerState & BlockDesignerActions;
@@ -214,6 +229,8 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
     flyingGeesePlacement: null,
     undoManager: createUndoManagerState(),
     previewRotationPreset: 'all_same',
+    selectedShapeType: null,
+    hoveredCell: null,
 
     // Block management
     initBlock: (gridSize = DEFAULT_GRID_SIZE, creatorId = '') => {
@@ -225,6 +242,8 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
         state.flyingGeesePlacement = null;
         state.undoManager = createUndoManagerState();
         state.previewRotationPreset = 'all_same';
+        state.selectedShapeType = null;
+        state.hoveredCell = null;
       });
     },
 
@@ -237,6 +256,8 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
         state.flyingGeesePlacement = null;
         state.undoManager = createUndoManagerState();
         state.previewRotationPreset = 'all_same';
+        state.selectedShapeType = null;
+        state.hoveredCell = null;
       });
     },
 
@@ -864,6 +885,39 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
         state.previewRotationPreset = preset;
       });
     },
+
+    // Shape library selection
+    selectShapeForPlacement: (shape) => {
+      set((state) => {
+        state.selectedShapeType = shape;
+        if (shape !== null) {
+          state.mode = 'placing_shape';
+          // Clear other active states when entering placing mode
+          state.selectedShapeId = null;
+          state.activeFabricRole = null;
+          state.flyingGeesePlacement = null;
+        } else {
+          state.mode = 'idle';
+        }
+      });
+    },
+
+    setHoveredCell: (position) => {
+      set((state) => {
+        state.hoveredCell = position;
+      });
+    },
+
+    clearShapeSelection: () => {
+      set((state) => {
+        state.selectedShapeType = null;
+        state.hoveredCell = null;
+        if (state.mode === 'placing_shape' || state.mode === 'placing_flying_geese_second') {
+          state.mode = 'idle';
+        }
+        state.flyingGeesePlacement = null;
+      });
+    },
   }))
 );
 
@@ -915,3 +969,14 @@ export const useIsPreviewMode = () => useBlockDesignerStore((state) => state.mod
 /** Get the current preview rotation preset */
 export const usePreviewRotationPreset = () =>
   useBlockDesignerStore((state) => state.previewRotationPreset);
+
+/** Get the selected shape type from library */
+export const useSelectedShapeType = () =>
+  useBlockDesignerStore((state) => state.selectedShapeType);
+
+/** Get the hovered cell position */
+export const useHoveredCell = () => useBlockDesignerStore((state) => state.hoveredCell);
+
+/** Check if in placing shape mode */
+export const useIsPlacingShape = () =>
+  useBlockDesignerStore((state) => state.mode === 'placing_shape');

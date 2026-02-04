@@ -63,6 +63,8 @@ vi.mock('@quillty/core', () => ({
       },
       initBlock: mockInitBlock,
       mode: 'idle',
+      selectedShapeType: null,
+      hoveredCell: null,
       undo: vi.fn(),
       redo: vi.fn(),
       canUndo: vi.fn(() => false),
@@ -70,6 +72,9 @@ vi.mock('@quillty/core', () => ({
       enterPreview: vi.fn(),
       exitPreview: vi.fn(),
       setPreviewRotationPreset: vi.fn(),
+      selectShapeForPlacement: vi.fn(),
+      setHoveredCell: vi.fn(),
+      clearShapeSelection: vi.fn(),
     };
     return selector ? selector(state) : state;
   }),
@@ -77,6 +82,9 @@ vi.mock('@quillty/core', () => ({
   useCanRedo: vi.fn(() => false),
   useIsPreviewMode: vi.fn(() => false),
   usePreviewRotationPreset: vi.fn(() => 'all_same'),
+  useSelectedShapeType: vi.fn(() => null),
+  useHoveredCell: vi.fn(() => null),
+  useIsPlacingShape: vi.fn(() => false),
   DEFAULT_GRID_SIZE: 3,
   serializeBlockForDb: vi.fn(() => ({
     name: 'Test Block',
@@ -127,7 +135,7 @@ describe('BlockDesignerPage', () => {
   describe('footer', () => {
     it('renders usage hint text', () => {
       render(<BlockDesignerPage />);
-      expect(screen.getByText(/tap a cell to add a shape/i)).toBeInTheDocument();
+      expect(screen.getByText(/select a shape from the left panel/i)).toBeInTheDocument();
     });
 
     it('renders zoom hint', () => {

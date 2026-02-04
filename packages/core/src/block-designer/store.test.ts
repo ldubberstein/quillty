@@ -33,6 +33,9 @@ function resetStore() {
     mode: 'idle',
     flyingGeesePlacement: null,
     undoManager: createUndoManagerState(),
+    previewRotationPreset: 'all_same',
+    selectedShapeType: null,
+    hoveredCell: null,
   });
 }
 
@@ -1345,6 +1348,249 @@ describe('BlockDesignerStore', () => {
         });
 
         expect(useBlockDesignerStore.getState().previewRotationPreset).toBe('all_same');
+      });
+    });
+  });
+
+  // ===========================================================================
+  // Shape Library Selection
+  // ===========================================================================
+
+  describe('shape library selection', () => {
+    describe('selectShapeForPlacement', () => {
+      it('selects a square shape type for placement', () => {
+        const store = useBlockDesignerStore.getState();
+        store.selectShapeForPlacement({ type: 'square' });
+
+        const state = useBlockDesignerStore.getState();
+        expect(state.selectedShapeType).toEqual({ type: 'square' });
+        expect(state.mode).toBe('placing_shape');
+      });
+
+      it('selects an HST shape type with variant for placement', () => {
+        const store = useBlockDesignerStore.getState();
+        store.selectShapeForPlacement({ type: 'hst', variant: 'nw' });
+
+        const state = useBlockDesignerStore.getState();
+        expect(state.selectedShapeType).toEqual({ type: 'hst', variant: 'nw' });
+        expect(state.mode).toBe('placing_shape');
+      });
+
+      it('selects a flying_geese shape type for placement', () => {
+        const store = useBlockDesignerStore.getState();
+        store.selectShapeForPlacement({ type: 'flying_geese' });
+
+        const state = useBlockDesignerStore.getState();
+        expect(state.selectedShapeType).toEqual({ type: 'flying_geese' });
+        expect(state.mode).toBe('placing_shape');
+      });
+
+      it('clears selection when passing null', () => {
+        const store = useBlockDesignerStore.getState();
+        store.selectShapeForPlacement({ type: 'square' });
+        store.selectShapeForPlacement(null);
+
+        const state = useBlockDesignerStore.getState();
+        expect(state.selectedShapeType).toBeNull();
+        expect(state.mode).toBe('idle');
+      });
+
+      it('clears selectedShapeId when selecting shape type', () => {
+        const store = useBlockDesignerStore.getState();
+        const id = store.addSquare({ row: 0, col: 0 });
+        store.selectShape(id);
+
+        expect(useBlockDesignerStore.getState().selectedShapeId).toBe(id);
+
+        store.selectShapeForPlacement({ type: 'square' });
+
+        expect(useBlockDesignerStore.getState().selectedShapeId).toBeNull();
+      });
+
+      it('clears activeFabricRole when selecting shape type', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setActiveFabricRole('accent1');
+
+        expect(useBlockDesignerStore.getState().activeFabricRole).toBe('accent1');
+
+        store.selectShapeForPlacement({ type: 'hst', variant: 'ne' });
+
+        expect(useBlockDesignerStore.getState().activeFabricRole).toBeNull();
+      });
+
+      it('clears flyingGeesePlacement when selecting shape type', () => {
+        const store = useBlockDesignerStore.getState();
+        store.startFlyingGeesePlacement({ row: 0, col: 0 });
+
+        expect(useBlockDesignerStore.getState().flyingGeesePlacement).not.toBeNull();
+
+        store.selectShapeForPlacement({ type: 'square' });
+
+        expect(useBlockDesignerStore.getState().flyingGeesePlacement).toBeNull();
+      });
+    });
+
+    describe('setHoveredCell', () => {
+      it('sets the hovered cell position', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setHoveredCell({ row: 1, col: 2 });
+
+        expect(useBlockDesignerStore.getState().hoveredCell).toEqual({ row: 1, col: 2 });
+      });
+
+      it('clears hovered cell when passing null', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setHoveredCell({ row: 1, col: 2 });
+        store.setHoveredCell(null);
+
+        expect(useBlockDesignerStore.getState().hoveredCell).toBeNull();
+      });
+
+      it('updates hovered cell when changing position', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setHoveredCell({ row: 0, col: 0 });
+        store.setHoveredCell({ row: 2, col: 1 });
+
+        expect(useBlockDesignerStore.getState().hoveredCell).toEqual({ row: 2, col: 1 });
+      });
+    });
+
+    describe('clearShapeSelection', () => {
+      it('clears selectedShapeType', () => {
+        const store = useBlockDesignerStore.getState();
+        store.selectShapeForPlacement({ type: 'square' });
+
+        expect(useBlockDesignerStore.getState().selectedShapeType).not.toBeNull();
+
+        store.clearShapeSelection();
+
+        expect(useBlockDesignerStore.getState().selectedShapeType).toBeNull();
+      });
+
+      it('clears hoveredCell', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setHoveredCell({ row: 1, col: 1 });
+
+        expect(useBlockDesignerStore.getState().hoveredCell).not.toBeNull();
+
+        store.clearShapeSelection();
+
+        expect(useBlockDesignerStore.getState().hoveredCell).toBeNull();
+      });
+
+      it('sets mode to idle when in placing_shape mode', () => {
+        const store = useBlockDesignerStore.getState();
+        store.selectShapeForPlacement({ type: 'hst', variant: 'sw' });
+
+        expect(useBlockDesignerStore.getState().mode).toBe('placing_shape');
+
+        store.clearShapeSelection();
+
+        expect(useBlockDesignerStore.getState().mode).toBe('idle');
+      });
+
+      it('sets mode to idle when in placing_flying_geese_second mode', () => {
+        const store = useBlockDesignerStore.getState();
+        store.startFlyingGeesePlacement({ row: 0, col: 0 });
+
+        expect(useBlockDesignerStore.getState().mode).toBe('placing_flying_geese_second');
+
+        store.clearShapeSelection();
+
+        expect(useBlockDesignerStore.getState().mode).toBe('idle');
+      });
+
+      it('clears flyingGeesePlacement', () => {
+        const store = useBlockDesignerStore.getState();
+        store.startFlyingGeesePlacement({ row: 1, col: 1 });
+
+        expect(useBlockDesignerStore.getState().flyingGeesePlacement).not.toBeNull();
+
+        store.clearShapeSelection();
+
+        expect(useBlockDesignerStore.getState().flyingGeesePlacement).toBeNull();
+      });
+
+      it('does not change mode if already idle', () => {
+        const store = useBlockDesignerStore.getState();
+
+        expect(useBlockDesignerStore.getState().mode).toBe('idle');
+
+        store.clearShapeSelection();
+
+        expect(useBlockDesignerStore.getState().mode).toBe('idle');
+      });
+
+      it('does not change mode if in paint_mode', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setActiveFabricRole('feature');
+
+        expect(useBlockDesignerStore.getState().mode).toBe('paint_mode');
+
+        store.clearShapeSelection();
+
+        expect(useBlockDesignerStore.getState().mode).toBe('paint_mode');
+      });
+    });
+
+    describe('state reset on initBlock', () => {
+      it('resets selectedShapeType to null', () => {
+        const store = useBlockDesignerStore.getState();
+        store.selectShapeForPlacement({ type: 'square' });
+
+        store.initBlock(3);
+
+        expect(useBlockDesignerStore.getState().selectedShapeType).toBeNull();
+      });
+
+      it('resets hoveredCell to null', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setHoveredCell({ row: 1, col: 1 });
+
+        store.initBlock(3);
+
+        expect(useBlockDesignerStore.getState().hoveredCell).toBeNull();
+      });
+    });
+
+    describe('state reset on loadBlock', () => {
+      const testBlock: Block = {
+        id: 'test-id',
+        creatorId: 'creator-id',
+        derivedFromBlockId: null,
+        title: 'Test Block',
+        description: null,
+        hashtags: [],
+        gridSize: 3,
+        shapes: [],
+        previewPalette: {
+          roles: [
+            { id: 'background', name: 'Background', color: '#FFFFFF' },
+            { id: 'feature', name: 'Feature', color: '#1E3A5F' },
+          ],
+        },
+        status: 'draft',
+        publishedAt: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      it('resets selectedShapeType to null', () => {
+        const store = useBlockDesignerStore.getState();
+        store.selectShapeForPlacement({ type: 'flying_geese' });
+
+        store.loadBlock(testBlock);
+
+        expect(useBlockDesignerStore.getState().selectedShapeType).toBeNull();
+      });
+
+      it('resets hoveredCell to null', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setHoveredCell({ row: 2, col: 2 });
+
+        store.loadBlock(testBlock);
+
+        expect(useBlockDesignerStore.getState().hoveredCell).toBeNull();
       });
     });
   });

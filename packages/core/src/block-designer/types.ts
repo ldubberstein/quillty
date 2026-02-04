@@ -261,3 +261,16 @@ export interface FlyingGeesePlacementState {
   firstCellPosition: GridPosition;
   validAdjacentCells: GridPosition[];
 }
+
+// =============================================================================
+// Shape Selection (Library)
+// =============================================================================
+
+/**
+ * Shape selection from library for placement
+ * Used when user selects a shape from the ShapeLibraryPanel
+ */
+export type ShapeSelectionType =
+  | { type: 'square' }
+  | { type: 'hst'; variant: HstVariant }
+  | { type: 'flying_geese' };
