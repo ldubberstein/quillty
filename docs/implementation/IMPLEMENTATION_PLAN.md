@@ -6,6 +6,7 @@
 |---------|------|--------|
 | 1.0 | 2026-02-02 | Draft — Awaiting Approval |
 | 1.1 | 2026-02-03 | Updated per user testing feedback: shapes default to background color, paint mode is primary coloring method, Shapes component designed for large library |
+| 1.2 | 2026-02-03 | **Block Designer Complete (1.1-1.11)**. Updated Pattern Designer iterations to use API layer (see docs/architecture/) |
 
 ---
 
@@ -531,7 +532,7 @@ Per PRD_BLOCK_PATTERN_DESIGNER.md §9 decisions:
 **Scope:**
 - Create collapsible Block Library panel at bottom
 - Three tabs: "My Blocks" | "Saved" | "Platform"
-- My Blocks: Fetch user's published blocks from Supabase
+- My Blocks: Fetch user's published blocks via API (`GET /api/v1/me/blocks`)
 - Saved: User's saved community blocks (placeholder for MVP)
 - Platform: Curated blocks (placeholder for MVP)
 - Each block shows thumbnail rendered with pattern's current palette
@@ -540,7 +541,8 @@ Per PRD_BLOCK_PATTERN_DESIGNER.md §9 decisions:
 **Files:**
 - `apps/web/src/components/pattern-designer/BlockLibraryPanel.tsx` (new)
 - `apps/web/src/components/pattern-designer/BlockThumbnail.tsx` (new)
-- `apps/web/src/lib/supabase/blocks.ts` (update — fetch user blocks)
+- `packages/api/src/api/blocks.ts` (update — add getUserBlocks function)
+- `packages/api/src/hooks/useUserBlocks.ts` (new — React Query hook)
 
 **Dependencies:**
 - Iteration 2.2 (pattern canvas)
@@ -696,17 +698,17 @@ Per PRD_BLOCK_PATTERN_DESIGNER.md §9 decisions:
 
 **Scope:**
 - "Save Draft" and "Publish" buttons
-- Save Draft: Persist to Supabase `patterns` table
+- Save Draft: Persist via API (`POST /api/v1/patterns` for create, `PATCH /api/v1/patterns/[id]` for update)
 - Auto-save every 30 seconds
 - Publish modal: name, description, tags, difficulty, category
 - Validate: must have at least 1 block
-- On publish: trigger thumbnail generation Edge Function
+- On publish: Call `POST /api/v1/patterns/[id]/publish`, trigger thumbnail generation
 
 **Files:**
 - `apps/web/src/components/pattern-designer/SaveControls.tsx` (new)
 - `apps/web/src/components/pattern-designer/PublishModal.tsx` (new)
-- `packages/core/src/pattern-designer/persistence.ts` (new)
-- `apps/web/src/lib/supabase/patterns.ts` (new)
+- `packages/api/src/api/patterns.ts` (new — API client functions)
+- `packages/api/src/hooks/usePattern.ts` (update — add mutations)
 
 **Dependencies:**
 - Iteration 2.7 (complete Pattern Designer)

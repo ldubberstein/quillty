@@ -244,7 +244,7 @@ describe('HTTP Client', () => {
 
       try {
         await client.get('/bad-request');
-      } catch (error) {
+      } catch {
         // Fetch was already called, this won't execute
       }
     });
