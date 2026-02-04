@@ -846,4 +846,165 @@ describe('PatternDesignerStore', () => {
     });
   });
 
+  // ===========================================================================
+  // Iteration 2.8: Save & Publish Selectors
+  // ===========================================================================
+
+  describe('emptySlotCount (computed)', () => {
+    it('returns total slots when grid is empty', () => {
+      const store = usePatternDesignerStore.getState();
+      store.initPattern({ rows: 3, cols: 3 });
+
+      const state = usePatternDesignerStore.getState();
+      const totalSlots = state.pattern.gridSize.rows * state.pattern.gridSize.cols;
+      const emptySlots = totalSlots - state.pattern.blockInstances.length;
+
+      expect(emptySlots).toBe(9); // 3x3 = 9 slots, all empty
+    });
+
+    it('returns correct count when some slots are filled', () => {
+      const store = usePatternDesignerStore.getState();
+      store.initPattern({ rows: 3, cols: 3 });
+      store.addBlockInstance('block-1', { row: 0, col: 0 });
+      store.addBlockInstance('block-2', { row: 1, col: 1 });
+
+      const state = usePatternDesignerStore.getState();
+      const totalSlots = state.pattern.gridSize.rows * state.pattern.gridSize.cols;
+      const emptySlots = totalSlots - state.pattern.blockInstances.length;
+
+      expect(emptySlots).toBe(7); // 9 - 2 = 7 empty
+    });
+
+    it('returns 0 when all slots are filled', () => {
+      const store = usePatternDesignerStore.getState();
+      store.initPattern({ rows: 2, cols: 2 });
+
+      // Fill all slots
+      store.addBlockInstance('block-1', { row: 0, col: 0 });
+      store.addBlockInstance('block-2', { row: 0, col: 1 });
+      store.addBlockInstance('block-3', { row: 1, col: 0 });
+      store.addBlockInstance('block-4', { row: 1, col: 1 });
+
+      const state = usePatternDesignerStore.getState();
+      const totalSlots = state.pattern.gridSize.rows * state.pattern.gridSize.cols;
+      const emptySlots = totalSlots - state.pattern.blockInstances.length;
+
+      expect(emptySlots).toBe(0);
+    });
+  });
+
+  describe('canPublish (computed)', () => {
+    it('returns false when grid has empty slots', () => {
+      const store = usePatternDesignerStore.getState();
+      store.initPattern({ rows: 2, cols: 2 });
+      store.updatePatternMetadata({ title: 'Test Pattern' });
+
+      // Only fill some slots
+      store.addBlockInstance('block-1', { row: 0, col: 0 });
+
+      const state = usePatternDesignerStore.getState();
+      const totalSlots = state.pattern.gridSize.rows * state.pattern.gridSize.cols;
+      const filledSlots = state.pattern.blockInstances.length;
+      const hasTitle = state.pattern.title.trim().length > 0;
+      const canPublish = filledSlots === totalSlots && hasTitle;
+
+      expect(canPublish).toBe(false);
+    });
+
+    it('returns false when pattern has no title', () => {
+      const store = usePatternDesignerStore.getState();
+      store.initPattern({ rows: 2, cols: 2 });
+
+      // Fill all slots but no title
+      store.addBlockInstance('block-1', { row: 0, col: 0 });
+      store.addBlockInstance('block-2', { row: 0, col: 1 });
+      store.addBlockInstance('block-3', { row: 1, col: 0 });
+      store.addBlockInstance('block-4', { row: 1, col: 1 });
+
+      const state = usePatternDesignerStore.getState();
+      const totalSlots = state.pattern.gridSize.rows * state.pattern.gridSize.cols;
+      const filledSlots = state.pattern.blockInstances.length;
+      const hasTitle = state.pattern.title.trim().length > 0;
+      const canPublish = filledSlots === totalSlots && hasTitle;
+
+      expect(canPublish).toBe(false);
+    });
+
+    it('returns false when title is only whitespace', () => {
+      const store = usePatternDesignerStore.getState();
+      store.initPattern({ rows: 2, cols: 2 });
+      store.updatePatternMetadata({ title: '   ' });
+
+      // Fill all slots
+      store.addBlockInstance('block-1', { row: 0, col: 0 });
+      store.addBlockInstance('block-2', { row: 0, col: 1 });
+      store.addBlockInstance('block-3', { row: 1, col: 0 });
+      store.addBlockInstance('block-4', { row: 1, col: 1 });
+
+      const state = usePatternDesignerStore.getState();
+      const totalSlots = state.pattern.gridSize.rows * state.pattern.gridSize.cols;
+      const filledSlots = state.pattern.blockInstances.length;
+      const hasTitle = state.pattern.title.trim().length > 0;
+      const canPublish = filledSlots === totalSlots && hasTitle;
+
+      expect(canPublish).toBe(false);
+    });
+
+    it('returns true when all slots are filled and has title', () => {
+      const store = usePatternDesignerStore.getState();
+      store.initPattern({ rows: 2, cols: 2 });
+      store.updatePatternMetadata({ title: 'My Quilt Pattern' });
+
+      // Fill all slots
+      store.addBlockInstance('block-1', { row: 0, col: 0 });
+      store.addBlockInstance('block-2', { row: 0, col: 1 });
+      store.addBlockInstance('block-3', { row: 1, col: 0 });
+      store.addBlockInstance('block-4', { row: 1, col: 1 });
+
+      const state = usePatternDesignerStore.getState();
+      const totalSlots = state.pattern.gridSize.rows * state.pattern.gridSize.cols;
+      const filledSlots = state.pattern.blockInstances.length;
+      const hasTitle = state.pattern.title.trim().length > 0;
+      const canPublish = filledSlots === totalSlots && hasTitle;
+
+      expect(canPublish).toBe(true);
+    });
+  });
+
+  describe('markAsSaved', () => {
+    it('clears isDirty flag', () => {
+      const store = usePatternDesignerStore.getState();
+      store.addBlockInstance('block-1', { row: 0, col: 0 });
+
+      expect(usePatternDesignerStore.getState().isDirty).toBe(true);
+
+      store.markAsSaved();
+
+      expect(usePatternDesignerStore.getState().isDirty).toBe(false);
+    });
+
+    it('sets pattern ID when provided', () => {
+      const store = usePatternDesignerStore.getState();
+
+      expect(usePatternDesignerStore.getState().pattern.id).toBe('');
+
+      store.markAsSaved('pattern-123');
+
+      expect(usePatternDesignerStore.getState().pattern.id).toBe('pattern-123');
+    });
+
+    it('does not change pattern ID when not provided', () => {
+      const store = usePatternDesignerStore.getState();
+      store.markAsSaved('pattern-123');
+
+      expect(usePatternDesignerStore.getState().pattern.id).toBe('pattern-123');
+
+      store.addBlockInstance('block-1', { row: 0, col: 0 });
+      store.markAsSaved(); // No ID provided
+
+      expect(usePatternDesignerStore.getState().pattern.id).toBe('pattern-123');
+      expect(usePatternDesignerStore.getState().isDirty).toBe(false);
+    });
+  });
+
 });

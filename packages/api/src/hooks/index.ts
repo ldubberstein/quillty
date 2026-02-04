@@ -9,6 +9,7 @@ export {
   usePattern,
   useCreatePattern,
   useUpdatePattern,
+  usePublishPattern,
   type PatternWithDetails,
 } from './usePattern';
 export {

@@ -747,3 +747,25 @@ export const usePreviewingGridResize = () =>
 /** Get the grid resize position setting */
 export const useGridResizePosition = () =>
   usePatternDesignerStore((state) => state.gridResizePosition);
+
+/** Get count of empty slots in the grid */
+export const useEmptySlotCount = () => {
+  return usePatternDesignerStore((state) => {
+    const totalSlots = state.pattern.gridSize.rows * state.pattern.gridSize.cols;
+    const filledSlots = state.pattern.blockInstances.length;
+    return totalSlots - filledSlots;
+  });
+};
+
+/** Check if pattern can be published (all slots filled and has title) */
+export const useCanPublish = () => {
+  return usePatternDesignerStore((state) => {
+    const totalSlots = state.pattern.gridSize.rows * state.pattern.gridSize.cols;
+    const filledSlots = state.pattern.blockInstances.length;
+    const hasTitle = state.pattern.title.trim().length > 0;
+    return filledSlots === totalSlots && hasTitle;
+  });
+};
+
+/** Get the pattern ID (empty string if not yet saved) */
+export const usePatternId = () => usePatternDesignerStore((state) => state.pattern.id);

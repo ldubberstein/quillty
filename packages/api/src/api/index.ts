@@ -6,4 +6,5 @@
 
 export * from './blocks';
 export * from './feed';
+export * from './patterns';
 export * from './users';

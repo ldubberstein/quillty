@@ -72,6 +72,9 @@ export {
   useCanRemoveColumn,
   usePreviewingGridResize,
   useGridResizePosition,
+  useEmptySlotCount,
+  useCanPublish,
+  usePatternId,
 } from './store';
 
 export type { PatternDesignerStore } from './store';
