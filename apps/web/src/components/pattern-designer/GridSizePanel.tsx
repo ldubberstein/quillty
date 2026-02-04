@@ -86,7 +86,7 @@ export function GridSizePanel() {
 
       {/* Row stepper */}
       <div className="flex items-center mb-3">
-        <span className="text-sm text-gray-600 w-[62px] shrink-0">Rows</span>
+        <span className="text-sm text-gray-600 w-[68px] shrink-0">Rows</span>
         <div className="flex items-center">
           <button
             onClick={handleRemoveRow}
@@ -122,7 +122,7 @@ export function GridSizePanel() {
 
       {/* Column stepper */}
       <div className="flex items-center mb-4">
-        <span className="text-sm text-gray-600 w-[62px] shrink-0">Columns</span>
+        <span className="text-sm text-gray-600 w-[68px] shrink-0">Columns</span>
         <div className="flex items-center">
           <button
             onClick={handleRemoveColumn}
