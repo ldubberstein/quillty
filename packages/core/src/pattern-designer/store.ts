@@ -757,13 +757,13 @@ export const useEmptySlotCount = () => {
   });
 };
 
-/** Check if pattern can be published (all slots filled and has title) */
+/** Check if pattern can be published (all slots must be filled) */
 export const useCanPublish = () => {
   return usePatternDesignerStore((state) => {
     const totalSlots = state.pattern.gridSize.rows * state.pattern.gridSize.cols;
     const filledSlots = state.pattern.blockInstances.length;
-    const hasTitle = state.pattern.title.trim().length > 0;
-    return filledSlots === totalSlots && hasTitle;
+    // Title is validated in the PublishModal, not here
+    return filledSlots === totalSlots;
   });
 };
 

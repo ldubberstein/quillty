@@ -897,7 +897,6 @@ describe('PatternDesignerStore', () => {
     it('returns false when grid has empty slots', () => {
       const store = usePatternDesignerStore.getState();
       store.initPattern({ rows: 2, cols: 2 });
-      store.updatePatternMetadata({ title: 'Test Pattern' });
 
       // Only fill some slots
       store.addBlockInstance('block-1', { row: 0, col: 0 });
@@ -905,17 +904,16 @@ describe('PatternDesignerStore', () => {
       const state = usePatternDesignerStore.getState();
       const totalSlots = state.pattern.gridSize.rows * state.pattern.gridSize.cols;
       const filledSlots = state.pattern.blockInstances.length;
-      const hasTitle = state.pattern.title.trim().length > 0;
-      const canPublish = filledSlots === totalSlots && hasTitle;
+      const canPublish = filledSlots === totalSlots;
 
       expect(canPublish).toBe(false);
     });
 
-    it('returns false when pattern has no title', () => {
+    it('returns true when all slots are filled (title validated in modal)', () => {
       const store = usePatternDesignerStore.getState();
       store.initPattern({ rows: 2, cols: 2 });
 
-      // Fill all slots but no title
+      // Fill all slots - no title needed for canPublish
       store.addBlockInstance('block-1', { row: 0, col: 0 });
       store.addBlockInstance('block-2', { row: 0, col: 1 });
       store.addBlockInstance('block-3', { row: 1, col: 0 });
@@ -924,48 +922,7 @@ describe('PatternDesignerStore', () => {
       const state = usePatternDesignerStore.getState();
       const totalSlots = state.pattern.gridSize.rows * state.pattern.gridSize.cols;
       const filledSlots = state.pattern.blockInstances.length;
-      const hasTitle = state.pattern.title.trim().length > 0;
-      const canPublish = filledSlots === totalSlots && hasTitle;
-
-      expect(canPublish).toBe(false);
-    });
-
-    it('returns false when title is only whitespace', () => {
-      const store = usePatternDesignerStore.getState();
-      store.initPattern({ rows: 2, cols: 2 });
-      store.updatePatternMetadata({ title: '   ' });
-
-      // Fill all slots
-      store.addBlockInstance('block-1', { row: 0, col: 0 });
-      store.addBlockInstance('block-2', { row: 0, col: 1 });
-      store.addBlockInstance('block-3', { row: 1, col: 0 });
-      store.addBlockInstance('block-4', { row: 1, col: 1 });
-
-      const state = usePatternDesignerStore.getState();
-      const totalSlots = state.pattern.gridSize.rows * state.pattern.gridSize.cols;
-      const filledSlots = state.pattern.blockInstances.length;
-      const hasTitle = state.pattern.title.trim().length > 0;
-      const canPublish = filledSlots === totalSlots && hasTitle;
-
-      expect(canPublish).toBe(false);
-    });
-
-    it('returns true when all slots are filled and has title', () => {
-      const store = usePatternDesignerStore.getState();
-      store.initPattern({ rows: 2, cols: 2 });
-      store.updatePatternMetadata({ title: 'My Quilt Pattern' });
-
-      // Fill all slots
-      store.addBlockInstance('block-1', { row: 0, col: 0 });
-      store.addBlockInstance('block-2', { row: 0, col: 1 });
-      store.addBlockInstance('block-3', { row: 1, col: 0 });
-      store.addBlockInstance('block-4', { row: 1, col: 1 });
-
-      const state = usePatternDesignerStore.getState();
-      const totalSlots = state.pattern.gridSize.rows * state.pattern.gridSize.cols;
-      const filledSlots = state.pattern.blockInstances.length;
-      const hasTitle = state.pattern.title.trim().length > 0;
-      const canPublish = filledSlots === totalSlots && hasTitle;
+      const canPublish = filledSlots === totalSlots;
 
       expect(canPublish).toBe(true);
     });
