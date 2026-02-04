@@ -20,13 +20,14 @@ describe('GridLines', () => {
   describe('rendering', () => {
     it('renders without crashing', () => {
       render(<GridLines {...defaultProps} />);
-      // With mocked react-konva, we should see our mock elements
-      expect(screen.getByTestId('konva-group')).toBeInTheDocument();
+      // With mocked react-konva, we should see our mock elements (outer group + checkerboard clip group)
+      const groups = screen.getAllByTestId('konva-group');
+      expect(groups.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('renders grid background rect', () => {
+    it('renders checkerboard pattern rectangles', () => {
       render(<GridLines {...defaultProps} />);
-      // The mocked Rect should be present
+      // Checkerboard pattern creates multiple small rects for empty cell visibility
       const rects = screen.getAllByTestId('konva-rect');
       expect(rects.length).toBeGreaterThanOrEqual(1);
     });
@@ -58,15 +59,15 @@ describe('GridLines', () => {
   describe('props handling', () => {
     it('accepts different cell sizes', () => {
       const { rerender } = render(<GridLines {...defaultProps} cellSize={50} />);
-      expect(screen.getByTestId('konva-group')).toBeInTheDocument();
+      expect(screen.getAllByTestId('konva-group').length).toBeGreaterThanOrEqual(1);
 
       rerender(<GridLines {...defaultProps} cellSize={150} />);
-      expect(screen.getByTestId('konva-group')).toBeInTheDocument();
+      expect(screen.getAllByTestId('konva-group').length).toBeGreaterThanOrEqual(1);
     });
 
     it('accepts different offset values', () => {
       render(<GridLines {...defaultProps} offsetX={100} offsetY={200} />);
-      expect(screen.getByTestId('konva-group')).toBeInTheDocument();
+      expect(screen.getAllByTestId('konva-group').length).toBeGreaterThanOrEqual(1);
     });
   });
 });

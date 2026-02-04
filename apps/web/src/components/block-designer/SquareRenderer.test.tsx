@@ -134,8 +134,8 @@ describe('SquareRenderer', () => {
     it('shows outline stroke by default (for visibility)', () => {
       render(<SquareRenderer {...defaultProps} />);
       const rect = screen.getByTestId('konva-rect');
-      // When not selected, shows gray outline for visibility
-      expect(rect).toHaveAttribute('stroke', '#D1D5DB');
+      // When not selected, shows darker gray outline to distinguish from grid lines
+      expect(rect).toHaveAttribute('stroke', '#9CA3AF');
     });
 
     it('shows selection styles when isSelected is true', () => {

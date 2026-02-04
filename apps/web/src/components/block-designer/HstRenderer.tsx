@@ -59,8 +59,8 @@ export function HstRenderer({
   const handlePrimaryClick = onClick ? () => onClick('primary') : undefined;
   const handleSecondaryClick = onClick ? () => onClick('secondary') : undefined;
 
-  // Light gray outline to make shapes visible even when same color as background
-  const outlineColor = '#D1D5DB';
+  // Darker gray outline to make shapes distinct from grid lines
+  const outlineColor = '#9CA3AF'; // gray-400
 
   return (
     <Group x={x + padding} y={y + padding}>

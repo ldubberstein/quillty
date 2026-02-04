@@ -121,7 +121,8 @@ describe('BlockCanvas', () => {
       await act(async () => {
         render(<BlockCanvas />);
       });
-      expect(screen.getByTestId('konva-group')).toBeInTheDocument();
+      // GridLines now has multiple groups (outer group + checkerboard clip group)
+      expect(screen.getAllByTestId('konva-group').length).toBeGreaterThanOrEqual(1);
     });
 
     it('renders click capture rect for grid interactions', async () => {
@@ -156,11 +157,10 @@ describe('BlockCanvas', () => {
         render(<BlockCanvas />);
       });
       const rects = screen.getAllByTestId('konva-rect');
-      // GridLines renders background rect + border rect
+      // GridLines renders checkerboard pattern rects + border rect
       // BlockCanvas renders click capture rect + background click rect for dismiss
-      // No additional shape rects should be present
+      // Checkerboard creates many small rects for empty cell visibility pattern
       expect(rects.length).toBeGreaterThanOrEqual(2);
-      expect(rects.length).toBeLessThanOrEqual(4);
     });
   });
 

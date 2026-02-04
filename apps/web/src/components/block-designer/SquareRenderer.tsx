@@ -47,8 +47,8 @@ export function SquareRenderer({
   const padding = 1;
   const size = cellSize - padding * 2;
 
-  // Light gray outline to make shapes visible even when same color as background
-  const outlineColor = '#D1D5DB';
+  // Darker gray outline to make shapes distinct from grid lines
+  const outlineColor = '#9CA3AF'; // gray-400
 
   return (
     <Rect
