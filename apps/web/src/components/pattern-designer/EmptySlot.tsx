@@ -14,10 +14,16 @@ interface EmptySlotProps {
   offsetX: number;
   /** Y offset for the grid */
   offsetY: number;
-  /** Whether this slot is highlighted (e.g., during placement) */
+  /** Whether this slot is highlighted (e.g., during placement mode) */
   isHighlighted?: boolean;
+  /** Whether this slot is being hovered */
+  isHovered?: boolean;
   /** Called when slot is clicked/tapped */
   onClick?: (row: number, col: number) => void;
+  /** Called when mouse enters slot */
+  onMouseEnter?: (row: number, col: number) => void;
+  /** Called when mouse leaves slot */
+  onMouseLeave?: () => void;
 }
 
 export function EmptySlot({
@@ -27,7 +33,10 @@ export function EmptySlot({
   offsetX,
   offsetY,
   isHighlighted = false,
+  isHovered = false,
   onClick,
+  onMouseEnter,
+  onMouseLeave,
 }: EmptySlotProps) {
   const x = offsetX + col * cellSize;
   const y = offsetY + row * cellSize;
@@ -35,6 +44,26 @@ export function EmptySlot({
   const handleClick = useCallback(() => {
     onClick?.(row, col);
   }, [onClick, row, col]);
+
+  const handleMouseEnter = useCallback(() => {
+    onMouseEnter?.(row, col);
+  }, [onMouseEnter, row, col]);
+
+  const handleMouseLeave = useCallback(() => {
+    onMouseLeave?.();
+  }, [onMouseLeave]);
+
+  // Determine fill color based on state
+  // Hovered gets a stronger highlight than just being in placement mode
+  const getFillColor = () => {
+    if (isHovered && isHighlighted) {
+      return 'rgba(59, 130, 246, 0.25)'; // Stronger blue when hovered
+    }
+    if (isHighlighted) {
+      return 'rgba(59, 130, 246, 0.08)'; // Subtle blue when in placement mode
+    }
+    return 'transparent';
+  };
 
   return (
     <Group x={x} y={y}>
@@ -44,16 +73,18 @@ export function EmptySlot({
         y={0}
         width={cellSize}
         height={cellSize}
-        fill={isHighlighted ? 'rgba(59, 130, 246, 0.15)' : 'transparent'}
-        stroke={isHighlighted ? '#3B82F6' : 'transparent'}
-        strokeWidth={isHighlighted ? 2 : 0}
+        fill={getFillColor()}
+        stroke={isHovered && isHighlighted ? '#3B82F6' : 'transparent'}
+        strokeWidth={isHovered && isHighlighted ? 2 : 0}
         onClick={handleClick}
         onTap={handleClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       />
 
-      {/* Plus icon in center - only visible when highlighted */}
-      {isHighlighted && (
-        <Group listening={false} opacity={0.6}>
+      {/* Plus icon in center - only visible when hovered in placement mode */}
+      {isHovered && isHighlighted && (
+        <Group listening={false} opacity={0.4}>
           <Line
             points={[
               cellSize / 2 - 10, cellSize / 2,

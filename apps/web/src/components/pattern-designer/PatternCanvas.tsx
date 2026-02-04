@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Stage, Layer, Rect } from 'react-konva';
+import { Stage, Layer, Rect, Group } from 'react-konva';
 import type Konva from 'konva';
 import { EmptySlot } from './EmptySlot';
 import { PatternGridLines } from './PatternGridLines';
@@ -70,6 +70,9 @@ export function PatternCanvas() {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  // Hover state for ghost preview
+  const [hoveredSlot, setHoveredSlot] = useState<{ row: number; col: number } | null>(null);
 
   // Calculate cell size based on available space
   // Use both rows and cols to ensure grid fits
@@ -285,6 +288,21 @@ export function PatternCanvas() {
     clearSelections();
   }, [clearSelections]);
 
+  // Handle slot hover for ghost preview
+  const handleSlotMouseEnter = useCallback((row: number, col: number) => {
+    if (isPlacingBlock) {
+      setHoveredSlot({ row, col });
+    }
+  }, [isPlacingBlock]);
+
+  const handleSlotMouseLeave = useCallback(() => {
+    setHoveredSlot(null);
+  }, []);
+
+  // Get the selected block for ghost preview
+  const selectedBlock = selectedLibraryBlockId ? blockCache[selectedLibraryBlockId] : null;
+  const selectedBlockShapes = selectedBlock ? getBlockShapes(selectedBlock) : [];
+
   // Build the grid of slots
   const slots: { row: number; col: number; isOccupied: boolean }[] = [];
   for (let row = 0; row < rows; row++) {
@@ -354,7 +372,10 @@ export function PatternCanvas() {
                     offsetX={gridOffsetX}
                     offsetY={gridOffsetY}
                     isHighlighted={isPlacingBlock}
+                    isHovered={hoveredSlot?.row === row && hoveredSlot?.col === col}
                     onClick={handleSlotClick}
+                    onMouseEnter={handleSlotMouseEnter}
+                    onMouseLeave={handleSlotMouseLeave}
                   />
                 ) : null
               )}
@@ -383,6 +404,29 @@ export function PatternCanvas() {
                   />
                 );
               })}
+
+              {/* Ghost preview when hovering empty slot in placement mode */}
+              {isPlacingBlock && hoveredSlot && selectedBlock && selectedBlockShapes.length > 0 && (
+                <Group opacity={0.5} listening={false}>
+                  <BlockInstanceRenderer
+                    instance={{
+                      id: 'ghost-preview',
+                      blockId: selectedLibraryBlockId!,
+                      position: hoveredSlot,
+                      rotation: 0,
+                      flipHorizontal: false,
+                      flipVertical: false,
+                    }}
+                    shapes={selectedBlockShapes}
+                    blockGridSize={selectedBlock.gridSize || 3}
+                    palette={palette}
+                    cellSize={cellSize}
+                    offsetX={gridOffsetX}
+                    offsetY={gridOffsetY}
+                    isSelected={false}
+                  />
+                </Group>
+              )}
             </Layer>
           </Stage>
 
