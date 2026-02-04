@@ -62,7 +62,7 @@ function getCurrentTimestamp(): string {
 function createEmptyBlock(gridSize: GridSize = DEFAULT_GRID_SIZE, creatorId: UUID = ''): Block {
   const now = getCurrentTimestamp();
   return {
-    id: generateUUID(),
+    id: '', // Empty until saved to database
     creatorId,
     derivedFromBlockId: null,
     title: '',
