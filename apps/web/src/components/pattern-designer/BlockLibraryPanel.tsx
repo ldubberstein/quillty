@@ -3,8 +3,8 @@
 import { useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useMyPublishedBlocks } from '@quillty/api';
-import { usePatternDesignerStore, usePatternPalette, useSelectedLibraryBlockId } from '@quillty/core';
-import type { Block as CoreBlock, Shape } from '@quillty/core';
+import { usePatternDesignerStore, useSelectedLibraryBlockId, DEFAULT_PALETTE } from '@quillty/core';
+import type { Block as CoreBlock, Shape, Palette } from '@quillty/core';
 import type { Block } from '@quillty/api';
 
 // Dynamic import for BlockThumbnail (uses Konva)
@@ -37,8 +37,6 @@ const TABS: Tab[] = [
 export function BlockLibraryPanel() {
   const [activeTab, setActiveTab] = useState<TabId>('my-blocks');
 
-  // Get pattern palette for rendering thumbnails
-  const palette = usePatternPalette();
   const selectedLibraryBlockId = useSelectedLibraryBlockId();
   const selectLibraryBlock = usePatternDesignerStore((state) => state.selectLibraryBlock);
   const cacheBlock = usePatternDesignerStore((state) => state.cacheBlock);
@@ -78,16 +76,21 @@ export function BlockLibraryPanel() {
   }, [setPreviewingFillEmpty]);
 
   // Parse design_data from block (stored as JSON in database)
-  const getBlockShapes = (block: Block): Shape[] => {
-    if (!block.design_data) return [];
+  const getBlockDesignData = (block: Block): { shapes: Shape[]; previewPalette: Palette } => {
+    if (!block.design_data) {
+      return { shapes: [], previewPalette: DEFAULT_PALETTE };
+    }
     try {
       const designData =
         typeof block.design_data === 'string'
           ? JSON.parse(block.design_data)
           : block.design_data;
-      return designData.shapes ?? [];
+      return {
+        shapes: designData.shapes ?? [],
+        previewPalette: designData.previewPalette ?? DEFAULT_PALETTE,
+      };
     } catch {
-      return [];
+      return { shapes: [], previewPalette: DEFAULT_PALETTE };
     }
   };
 
@@ -153,31 +156,34 @@ export function BlockLibraryPanel() {
 
             {!isLoading && !error && blocks.length > 0 && (
               <div className="grid grid-cols-2 gap-2">
-                {blocks.map((block) => (
-                  <div
-                    key={block.id}
-                    className={`p-2 rounded-lg cursor-pointer transition-all ${
-                      selectedLibraryBlockId === block.id
-                        ? 'bg-blue-50 ring-2 ring-blue-500'
-                        : 'bg-gray-50 hover:bg-gray-100'
-                    }`}
-                    onClick={() => handleSelectBlock(block)}
-                  >
-                    <div className="flex justify-center">
-                      <BlockThumbnail
-                        shapes={getBlockShapes(block)}
-                        gridSize={block.grid_size || 3}
-                        palette={palette}
-                        size={70}
-                        isSelected={false}
-                        onClick={() => handleSelectBlock(block)}
-                      />
+                {blocks.map((block) => {
+                  const { shapes, previewPalette } = getBlockDesignData(block);
+                  return (
+                    <div
+                      key={block.id}
+                      className={`p-2 rounded-lg cursor-pointer transition-all ${
+                        selectedLibraryBlockId === block.id
+                          ? 'bg-blue-50 ring-2 ring-blue-500'
+                          : 'bg-gray-50 hover:bg-gray-100'
+                      }`}
+                      onClick={() => handleSelectBlock(block)}
+                    >
+                      <div className="flex justify-center">
+                        <BlockThumbnail
+                          shapes={shapes}
+                          gridSize={block.grid_size || 3}
+                          palette={previewPalette}
+                          size={70}
+                          isSelected={false}
+                          onClick={() => handleSelectBlock(block)}
+                        />
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1 text-center truncate">
+                        {block.name}
+                      </p>
                     </div>
-                    <p className="text-xs text-gray-600 mt-1 text-center truncate">
-                      {block.name}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </>

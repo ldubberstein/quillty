@@ -24,6 +24,12 @@ const BlockLibraryPanel = dynamic(
   { ssr: false }
 );
 
+// PalettePanel doesn't use Konva, but we still dynamic import it for consistency
+const PalettePanel = dynamic(
+  () => import('@/components/pattern-designer/PalettePanel').then((mod) => mod.PalettePanel),
+  { ssr: false }
+);
+
 export default function PatternDesignerPage() {
   const initPattern = usePatternDesignerStore((state) => state.initPattern);
   const pattern = usePatternDesignerStore((state) => state.pattern);
@@ -166,14 +172,9 @@ export default function PatternDesignerPage() {
           <PatternCanvas />
         </div>
 
-        {/* Right Sidebar - Colors/Tools (placeholder for now) */}
-        <aside className="w-44 bg-white border-l border-gray-200 flex-shrink-0 overflow-y-auto p-3">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-            Colors
-          </h3>
-          <p className="text-xs text-gray-400">
-            Palette controls coming in iteration 2.6
-          </p>
+        {/* Right Sidebar - Colors/Palette */}
+        <aside className="w-44 bg-white border-l border-gray-200 flex-shrink-0 overflow-y-auto">
+          <PalettePanel />
         </aside>
       </main>
     </div>
