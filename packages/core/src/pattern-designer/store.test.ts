@@ -44,6 +44,8 @@ function resetStore() {
     mode: 'idle',
     isDirty: false,
     isPreviewingFillEmpty: false,
+    previewingGridResize: null,
+    gridResizePosition: 'end',
   });
 }
 
@@ -562,6 +564,285 @@ describe('PatternDesignerStore', () => {
 
       expect(filledCount).toBe(0);
       expect(usePatternDesignerStore.getState().pattern.blockInstances).toHaveLength(0);
+    });
+  });
+
+  // ===========================================================================
+  // Grid Resize (Iteration 2.7)
+  // ===========================================================================
+
+  describe('gridResizePosition', () => {
+    it('defaults to end', () => {
+      expect(usePatternDesignerStore.getState().gridResizePosition).toBe('end');
+    });
+
+    it('can be changed to start', () => {
+      const store = usePatternDesignerStore.getState();
+      store.setGridResizePosition('start');
+      expect(usePatternDesignerStore.getState().gridResizePosition).toBe('start');
+    });
+
+    it('can be changed back to end', () => {
+      const store = usePatternDesignerStore.getState();
+      store.setGridResizePosition('start');
+      store.setGridResizePosition('end');
+      expect(usePatternDesignerStore.getState().gridResizePosition).toBe('end');
+    });
+  });
+
+  describe('addRow', () => {
+    it('adds a row at the end by default', () => {
+      const store = usePatternDesignerStore.getState();
+      store.initPattern({ rows: 3, cols: 3 });
+      store.addBlockInstance('block-1', { row: 2, col: 0 });
+
+      store.addRow();
+
+      const state = usePatternDesignerStore.getState();
+      expect(state.pattern.gridSize.rows).toBe(4);
+      // Block position should be unchanged
+      expect(state.pattern.blockInstances[0].position.row).toBe(2);
+    });
+
+    it('adds a row at the start when position is start', () => {
+      const store = usePatternDesignerStore.getState();
+      store.initPattern({ rows: 3, cols: 3 });
+      store.addBlockInstance('block-1', { row: 0, col: 0 });
+      store.setGridResizePosition('start');
+
+      store.addRow();
+
+      const state = usePatternDesignerStore.getState();
+      expect(state.pattern.gridSize.rows).toBe(4);
+      // Block should be shifted down
+      expect(state.pattern.blockInstances[0].position.row).toBe(1);
+    });
+
+    it('returns false when at max grid size', () => {
+      const store = usePatternDesignerStore.getState();
+      store.initPattern({ rows: 25, cols: 3 });
+
+      const result = store.addRow();
+
+      expect(result).toBe(false);
+      expect(usePatternDesignerStore.getState().pattern.gridSize.rows).toBe(25);
+    });
+
+    it('marks pattern as dirty', () => {
+      const store = usePatternDesignerStore.getState();
+      usePatternDesignerStore.setState({ isDirty: false });
+
+      store.addRow();
+
+      expect(usePatternDesignerStore.getState().isDirty).toBe(true);
+    });
+  });
+
+  describe('removeRow', () => {
+    it('removes a row from the end by default', () => {
+      const store = usePatternDesignerStore.getState();
+      store.initPattern({ rows: 4, cols: 3 });
+      store.addBlockInstance('block-1', { row: 3, col: 0 }); // Block in last row
+
+      store.removeRow();
+
+      const state = usePatternDesignerStore.getState();
+      expect(state.pattern.gridSize.rows).toBe(3);
+      // Block in last row should be removed
+      expect(state.pattern.blockInstances).toHaveLength(0);
+    });
+
+    it('removes a row from the start when position is start', () => {
+      const store = usePatternDesignerStore.getState();
+      store.initPattern({ rows: 4, cols: 3 });
+      store.addBlockInstance('block-1', { row: 0, col: 0 }); // Block in first row
+      store.addBlockInstance('block-2', { row: 2, col: 0 }); // Block in row 2
+      store.setGridResizePosition('start');
+
+      store.removeRow();
+
+      const state = usePatternDesignerStore.getState();
+      expect(state.pattern.gridSize.rows).toBe(3);
+      // Block in first row should be removed
+      expect(state.pattern.blockInstances).toHaveLength(1);
+      // Remaining block should be shifted up
+      expect(state.pattern.blockInstances[0].position.row).toBe(1);
+    });
+
+    it('returns false when at min grid size', () => {
+      const store = usePatternDesignerStore.getState();
+      store.initPattern({ rows: 2, cols: 3 });
+
+      const result = store.removeRow();
+
+      expect(result).toBe(false);
+      expect(usePatternDesignerStore.getState().pattern.gridSize.rows).toBe(2);
+    });
+
+    it('clears selection if selected block was removed', () => {
+      const store = usePatternDesignerStore.getState();
+      store.initPattern({ rows: 4, cols: 3 });
+      store.addBlockInstance('block-1', { row: 3, col: 0 });
+      const instanceId = usePatternDesignerStore.getState().pattern.blockInstances[0].id;
+      store.selectBlockInstance(instanceId);
+
+      store.removeRow();
+
+      expect(usePatternDesignerStore.getState().selectedBlockInstanceId).toBeNull();
+    });
+  });
+
+  describe('addColumn', () => {
+    it('adds a column at the end by default', () => {
+      const store = usePatternDesignerStore.getState();
+      store.initPattern({ rows: 3, cols: 3 });
+      store.addBlockInstance('block-1', { row: 0, col: 2 });
+
+      store.addColumn();
+
+      const state = usePatternDesignerStore.getState();
+      expect(state.pattern.gridSize.cols).toBe(4);
+      // Block position should be unchanged
+      expect(state.pattern.blockInstances[0].position.col).toBe(2);
+    });
+
+    it('adds a column at the start when position is start', () => {
+      const store = usePatternDesignerStore.getState();
+      store.initPattern({ rows: 3, cols: 3 });
+      store.addBlockInstance('block-1', { row: 0, col: 0 });
+      store.setGridResizePosition('start');
+
+      store.addColumn();
+
+      const state = usePatternDesignerStore.getState();
+      expect(state.pattern.gridSize.cols).toBe(4);
+      // Block should be shifted right
+      expect(state.pattern.blockInstances[0].position.col).toBe(1);
+    });
+
+    it('returns false when at max grid size', () => {
+      const store = usePatternDesignerStore.getState();
+      store.initPattern({ rows: 3, cols: 25 });
+
+      const result = store.addColumn();
+
+      expect(result).toBe(false);
+      expect(usePatternDesignerStore.getState().pattern.gridSize.cols).toBe(25);
+    });
+  });
+
+  describe('removeColumn', () => {
+    it('removes a column from the end by default', () => {
+      const store = usePatternDesignerStore.getState();
+      store.initPattern({ rows: 3, cols: 4 });
+      store.addBlockInstance('block-1', { row: 0, col: 3 }); // Block in last column
+
+      store.removeColumn();
+
+      const state = usePatternDesignerStore.getState();
+      expect(state.pattern.gridSize.cols).toBe(3);
+      // Block in last column should be removed
+      expect(state.pattern.blockInstances).toHaveLength(0);
+    });
+
+    it('removes a column from the start when position is start', () => {
+      const store = usePatternDesignerStore.getState();
+      store.initPattern({ rows: 3, cols: 4 });
+      store.addBlockInstance('block-1', { row: 0, col: 0 }); // Block in first column
+      store.addBlockInstance('block-2', { row: 0, col: 2 }); // Block in column 2
+      store.setGridResizePosition('start');
+
+      store.removeColumn();
+
+      const state = usePatternDesignerStore.getState();
+      expect(state.pattern.gridSize.cols).toBe(3);
+      // Block in first column should be removed
+      expect(state.pattern.blockInstances).toHaveLength(1);
+      // Remaining block should be shifted left
+      expect(state.pattern.blockInstances[0].position.col).toBe(1);
+    });
+
+    it('returns false when at min grid size', () => {
+      const store = usePatternDesignerStore.getState();
+      store.initPattern({ rows: 3, cols: 2 });
+
+      const result = store.removeColumn();
+
+      expect(result).toBe(false);
+      expect(usePatternDesignerStore.getState().pattern.gridSize.cols).toBe(2);
+    });
+  });
+
+  describe('hasBlocksInRow', () => {
+    it('returns true when row has blocks', () => {
+      const store = usePatternDesignerStore.getState();
+      store.addBlockInstance('block-1', { row: 2, col: 0 });
+
+      expect(store.hasBlocksInRow(2)).toBe(true);
+    });
+
+    it('returns false when row is empty', () => {
+      const store = usePatternDesignerStore.getState();
+      store.addBlockInstance('block-1', { row: 2, col: 0 });
+
+      expect(store.hasBlocksInRow(0)).toBe(false);
+      expect(store.hasBlocksInRow(1)).toBe(false);
+      expect(store.hasBlocksInRow(3)).toBe(false);
+    });
+  });
+
+  describe('hasBlocksInColumn', () => {
+    it('returns true when column has blocks', () => {
+      const store = usePatternDesignerStore.getState();
+      store.addBlockInstance('block-1', { row: 0, col: 2 });
+
+      expect(store.hasBlocksInColumn(2)).toBe(true);
+    });
+
+    it('returns false when column is empty', () => {
+      const store = usePatternDesignerStore.getState();
+      store.addBlockInstance('block-1', { row: 0, col: 2 });
+
+      expect(store.hasBlocksInColumn(0)).toBe(false);
+      expect(store.hasBlocksInColumn(1)).toBe(false);
+      expect(store.hasBlocksInColumn(3)).toBe(false);
+    });
+  });
+
+  describe('previewingGridResize', () => {
+    it('defaults to null', () => {
+      expect(usePatternDesignerStore.getState().previewingGridResize).toBeNull();
+    });
+
+    it('can be set to add-row', () => {
+      const store = usePatternDesignerStore.getState();
+      store.setPreviewingGridResize('add-row');
+      expect(usePatternDesignerStore.getState().previewingGridResize).toBe('add-row');
+    });
+
+    it('can be set to remove-row', () => {
+      const store = usePatternDesignerStore.getState();
+      store.setPreviewingGridResize('remove-row');
+      expect(usePatternDesignerStore.getState().previewingGridResize).toBe('remove-row');
+    });
+
+    it('can be set to add-col', () => {
+      const store = usePatternDesignerStore.getState();
+      store.setPreviewingGridResize('add-col');
+      expect(usePatternDesignerStore.getState().previewingGridResize).toBe('add-col');
+    });
+
+    it('can be set to remove-col', () => {
+      const store = usePatternDesignerStore.getState();
+      store.setPreviewingGridResize('remove-col');
+      expect(usePatternDesignerStore.getState().previewingGridResize).toBe('remove-col');
+    });
+
+    it('can be reset to null', () => {
+      const store = usePatternDesignerStore.getState();
+      store.setPreviewingGridResize('add-row');
+      store.setPreviewingGridResize(null);
+      expect(usePatternDesignerStore.getState().previewingGridResize).toBeNull();
     });
   });
 
