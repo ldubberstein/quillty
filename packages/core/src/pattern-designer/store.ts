@@ -107,6 +107,12 @@ interface PatternDesignerState {
 
   /** Whether we're previewing the "fill empty" action (hover state) */
   isPreviewingFillEmpty: boolean;
+
+  /** Which grid resize action is being previewed (hover state) */
+  previewingGridResize: 'add-row' | 'remove-row' | 'add-col' | 'remove-col' | null;
+
+  /** Where to add new rows/columns: 'start' (top/left) or 'end' (bottom/right) */
+  gridResizePosition: 'start' | 'end';
 }
 
 interface PatternDesignerActions {
@@ -153,16 +159,22 @@ interface PatternDesignerActions {
   setRoleColor: (roleId: FabricRoleId, color: string) => void;
 
   // Grid management
-  /** Add a row to the grid */
+  /** Add a row to the grid (uses gridResizePosition for placement) */
   addRow: () => boolean;
-  /** Remove the last row from the grid */
+  /** Remove a row from the grid (uses gridResizePosition for which end) */
   removeRow: () => boolean;
-  /** Add a column to the grid */
+  /** Add a column to the grid (uses gridResizePosition for placement) */
   addColumn: () => boolean;
-  /** Remove the last column from the grid */
+  /** Remove a column from the grid (uses gridResizePosition for which end) */
   removeColumn: () => boolean;
   /** Resize grid to specific dimensions */
   resizeGrid: (newSize: QuiltGridSize) => boolean;
+  /** Check if a specific row has any blocks */
+  hasBlocksInRow: (rowIndex: number) => boolean;
+  /** Check if a specific column has any blocks */
+  hasBlocksInColumn: (colIndex: number) => boolean;
+  /** Set where new rows/columns are added */
+  setGridResizePosition: (position: 'start' | 'end') => void;
 
   // Block cache
   /** Add a block to the cache (for rendering) */
@@ -183,6 +195,8 @@ interface PatternDesignerActions {
   // Preview state
   /** Set whether we're previewing the fill empty action */
   setPreviewingFillEmpty: (preview: boolean) => void;
+  /** Set which grid resize action is being previewed */
+  setPreviewingGridResize: (preview: 'add-row' | 'remove-row' | 'add-col' | 'remove-col' | null) => void;
 }
 
 export type PatternDesignerStore = PatternDesignerState & PatternDesignerActions;
@@ -201,6 +215,8 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
     mode: 'idle',
     isDirty: false,
     isPreviewingFillEmpty: false,
+    previewingGridResize: null,
+    gridResizePosition: 'end',
 
     // Pattern management
     initPattern: (gridSize, creatorId = '') => {
@@ -405,10 +421,17 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
     // Grid management
     addRow: () => {
       const { rows } = get().pattern.gridSize;
+      const position = get().gridResizePosition;
       if (rows >= MAX_GRID_SIZE) return false;
 
       set((state) => {
         state.pattern.gridSize.rows += 1;
+        // If adding at start (top), shift all existing blocks down by 1
+        if (position === 'start') {
+          state.pattern.blockInstances.forEach((b) => {
+            b.position.row += 1;
+          });
+        }
         state.pattern.physicalSize = calculatePhysicalSize(
           state.pattern.gridSize,
           state.pattern.physicalSize.blockSizeInches
@@ -421,15 +444,28 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
 
     removeRow: () => {
       const { rows } = get().pattern.gridSize;
+      const position = get().gridResizePosition;
       if (rows <= MIN_GRID_SIZE) return false;
 
       set((state) => {
         const newRows = state.pattern.gridSize.rows - 1;
         state.pattern.gridSize.rows = newRows;
-        // Remove blocks that are now out of bounds
-        state.pattern.blockInstances = state.pattern.blockInstances.filter(
-          (b) => b.position.row < newRows
-        );
+
+        if (position === 'start') {
+          // Remove blocks in row 0, then shift all others up by 1
+          state.pattern.blockInstances = state.pattern.blockInstances
+            .filter((b) => b.position.row > 0)
+            .map((b) => ({
+              ...b,
+              position: { ...b.position, row: b.position.row - 1 },
+            }));
+        } else {
+          // Remove blocks in the last row
+          state.pattern.blockInstances = state.pattern.blockInstances.filter(
+            (b) => b.position.row < newRows
+          );
+        }
+
         state.pattern.physicalSize = calculatePhysicalSize(
           state.pattern.gridSize,
           state.pattern.physicalSize.blockSizeInches
@@ -451,10 +487,17 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
 
     addColumn: () => {
       const { cols } = get().pattern.gridSize;
+      const position = get().gridResizePosition;
       if (cols >= MAX_GRID_SIZE) return false;
 
       set((state) => {
         state.pattern.gridSize.cols += 1;
+        // If adding at start (left), shift all existing blocks right by 1
+        if (position === 'start') {
+          state.pattern.blockInstances.forEach((b) => {
+            b.position.col += 1;
+          });
+        }
         state.pattern.physicalSize = calculatePhysicalSize(
           state.pattern.gridSize,
           state.pattern.physicalSize.blockSizeInches
@@ -467,15 +510,28 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
 
     removeColumn: () => {
       const { cols } = get().pattern.gridSize;
+      const position = get().gridResizePosition;
       if (cols <= MIN_GRID_SIZE) return false;
 
       set((state) => {
         const newCols = state.pattern.gridSize.cols - 1;
         state.pattern.gridSize.cols = newCols;
-        // Remove blocks that are now out of bounds
-        state.pattern.blockInstances = state.pattern.blockInstances.filter(
-          (b) => b.position.col < newCols
-        );
+
+        if (position === 'start') {
+          // Remove blocks in column 0, then shift all others left by 1
+          state.pattern.blockInstances = state.pattern.blockInstances
+            .filter((b) => b.position.col > 0)
+            .map((b) => ({
+              ...b,
+              position: { ...b.position, col: b.position.col - 1 },
+            }));
+        } else {
+          // Remove blocks in the last column
+          state.pattern.blockInstances = state.pattern.blockInstances.filter(
+            (b) => b.position.col < newCols
+          );
+        }
+
         state.pattern.physicalSize = calculatePhysicalSize(
           state.pattern.gridSize,
           state.pattern.physicalSize.blockSizeInches
@@ -519,6 +575,20 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
         state.isDirty = true;
       });
       return true;
+    },
+
+    hasBlocksInRow: (rowIndex) => {
+      return get().pattern.blockInstances.some((b) => b.position.row === rowIndex);
+    },
+
+    hasBlocksInColumn: (colIndex) => {
+      return get().pattern.blockInstances.some((b) => b.position.col === colIndex);
+    },
+
+    setGridResizePosition: (position) => {
+      set((state) => {
+        state.gridResizePosition = position;
+      });
     },
 
     // Block cache
@@ -591,6 +661,12 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
         state.isPreviewingFillEmpty = preview;
       });
     },
+
+    setPreviewingGridResize: (preview) => {
+      set((state) => {
+        state.previewingGridResize = preview;
+      });
+    },
   }))
 );
 
@@ -643,3 +719,31 @@ export const usePatternRoleColor = (roleId: FabricRoleId) => {
     return role?.color ?? '#CCCCCC';
   });
 };
+
+/** Check if grid can add more rows */
+export const useCanAddRow = () => {
+  return usePatternDesignerStore((state) => state.pattern.gridSize.rows < MAX_GRID_SIZE);
+};
+
+/** Check if grid can remove rows */
+export const useCanRemoveRow = () => {
+  return usePatternDesignerStore((state) => state.pattern.gridSize.rows > MIN_GRID_SIZE);
+};
+
+/** Check if grid can add more columns */
+export const useCanAddColumn = () => {
+  return usePatternDesignerStore((state) => state.pattern.gridSize.cols < MAX_GRID_SIZE);
+};
+
+/** Check if grid can remove columns */
+export const useCanRemoveColumn = () => {
+  return usePatternDesignerStore((state) => state.pattern.gridSize.cols > MIN_GRID_SIZE);
+};
+
+/** Get the current grid resize preview state */
+export const usePreviewingGridResize = () =>
+  usePatternDesignerStore((state) => state.previewingGridResize);
+
+/** Get the grid resize position setting */
+export const useGridResizePosition = () =>
+  usePatternDesignerStore((state) => state.gridResizePosition);

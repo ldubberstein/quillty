@@ -66,6 +66,12 @@ export {
   useIsDirty,
   useIsGridLarge,
   usePatternRoleColor,
+  useCanAddRow,
+  useCanRemoveRow,
+  useCanAddColumn,
+  useCanRemoveColumn,
+  usePreviewingGridResize,
+  useGridResizePosition,
 } from './store';
 
 export type { PatternDesignerStore } from './store';

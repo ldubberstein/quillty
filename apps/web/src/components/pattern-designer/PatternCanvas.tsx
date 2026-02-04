@@ -13,6 +13,8 @@ import {
   useGridSize,
   useSelectedLibraryBlockId,
   usePatternPalette,
+  usePreviewingGridResize,
+  useGridResizePosition,
 } from '@quillty/core';
 import type { GridPosition, Shape, BlockInstance } from '@quillty/core';
 
@@ -60,6 +62,8 @@ export function PatternCanvas() {
   const blockCache = usePatternDesignerStore((state) => state.blockCache);
   const selectedBlockInstanceId = usePatternDesignerStore((state) => state.selectedBlockInstanceId);
   const isPreviewingFillEmpty = usePatternDesignerStore((state) => state.isPreviewingFillEmpty);
+  const previewingGridResize = usePreviewingGridResize();
+  const gridResizePosition = useGridResizePosition();
   const addBlockInstance = usePatternDesignerStore((state) => state.addBlockInstance);
   const isPositionOccupied = usePatternDesignerStore((state) => state.isPositionOccupied);
   const clearSelections = usePatternDesignerStore((state) => state.clearSelections);
@@ -515,6 +519,64 @@ export function PatternCanvas() {
                       />
                     ))}
                 </Group>
+              )}
+
+              {/* Ghost preview for grid resize when hovering +/- buttons */}
+              {previewingGridResize === 'add-row' && (
+                <Rect
+                  x={gridOffsetX}
+                  y={gridResizePosition === 'start' ? gridOffsetY - cellSize : gridOffsetY + gridPixelHeight}
+                  width={gridPixelWidth}
+                  height={cellSize}
+                  fill="#3B82F6"
+                  opacity={0.3}
+                  stroke="#3B82F6"
+                  strokeWidth={2}
+                  dash={[8, 4]}
+                  listening={false}
+                />
+              )}
+              {previewingGridResize === 'remove-row' && (
+                <Rect
+                  x={gridOffsetX}
+                  y={gridResizePosition === 'start' ? gridOffsetY : gridOffsetY + gridPixelHeight - cellSize}
+                  width={gridPixelWidth}
+                  height={cellSize}
+                  fill="#EF4444"
+                  opacity={0.3}
+                  stroke="#EF4444"
+                  strokeWidth={2}
+                  dash={[8, 4]}
+                  listening={false}
+                />
+              )}
+              {previewingGridResize === 'add-col' && (
+                <Rect
+                  x={gridResizePosition === 'start' ? gridOffsetX - cellSize : gridOffsetX + gridPixelWidth}
+                  y={gridOffsetY}
+                  width={cellSize}
+                  height={gridPixelHeight}
+                  fill="#3B82F6"
+                  opacity={0.3}
+                  stroke="#3B82F6"
+                  strokeWidth={2}
+                  dash={[8, 4]}
+                  listening={false}
+                />
+              )}
+              {previewingGridResize === 'remove-col' && (
+                <Rect
+                  x={gridResizePosition === 'start' ? gridOffsetX : gridOffsetX + gridPixelWidth - cellSize}
+                  y={gridOffsetY}
+                  width={cellSize}
+                  height={gridPixelHeight}
+                  fill="#EF4444"
+                  opacity={0.3}
+                  stroke="#EF4444"
+                  strokeWidth={2}
+                  dash={[8, 4]}
+                  listening={false}
+                />
               )}
             </Layer>
           </Stage>

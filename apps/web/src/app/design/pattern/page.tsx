@@ -30,6 +30,12 @@ const PalettePanel = dynamic(
   { ssr: false }
 );
 
+// GridSizePanel for grid resize controls
+const GridSizePanel = dynamic(
+  () => import('@/components/pattern-designer/GridSizePanel').then((mod) => mod.GridSizePanel),
+  { ssr: false }
+);
+
 export default function PatternDesignerPage() {
   const initPattern = usePatternDesignerStore((state) => state.initPattern);
   const pattern = usePatternDesignerStore((state) => state.pattern);
@@ -172,9 +178,10 @@ export default function PatternDesignerPage() {
           <PatternCanvas />
         </div>
 
-        {/* Right Sidebar - Colors/Palette */}
+        {/* Right Sidebar - Colors/Palette + Grid Size */}
         <aside className="w-44 bg-white border-l border-gray-200 flex-shrink-0 overflow-y-auto">
           <PalettePanel />
+          <GridSizePanel />
         </aside>
       </main>
     </div>

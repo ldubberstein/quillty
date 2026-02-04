@@ -25,9 +25,8 @@ const thumbnailCalls: Array<{ palette: Palette; shapes: unknown[]; gridSize: num
 let mockSelectedLibraryBlockId: string | null = null;
 
 // Mock block with its own palette (different from DEFAULT_PALETTE)
+// Uses distinct background color (#AABBCC) to identify it's the block's palette
 const mockBlockPalette: Palette = {
-  id: 'block-original-palette',
-  name: 'Block Original',
   roles: [
     { id: 'background' as FabricRoleId, name: 'Background', color: '#AABBCC' },
     { id: 'feature' as FabricRoleId, name: 'Feature', color: '#112233' },
@@ -35,6 +34,11 @@ const mockBlockPalette: Palette = {
     { id: 'accent2' as FabricRoleId, name: 'Accent 2', color: '#778899' },
   ],
 };
+
+// Helper to identify palettes by their background color
+const BLOCK_PALETTE_BG = '#AABBCC';
+const PATTERN_PALETTE_BG = '#FFFFFF';
+const DEFAULT_PALETTE_BG = '#F5F5DC';
 
 const mockBlocks = [
   {
@@ -65,9 +69,8 @@ let mockApiResponse: { data: typeof mockBlocks | null; isLoading: boolean; error
 };
 
 // Pattern's palette (should NOT be used for library thumbnails)
+// Uses distinct background color (#FFFFFF) to identify it's the pattern's palette
 const mockPatternPalette: Palette = {
-  id: 'pattern-palette',
-  name: 'Pattern',
   roles: [
     { id: 'background' as FabricRoleId, name: 'Background', color: '#FFFFFF' },
     { id: 'feature' as FabricRoleId, name: 'Feature', color: '#000000' },
@@ -81,8 +84,10 @@ vi.mock('next/dynamic', () => ({
     // Return a component that captures props and renders a test element
     const MockComponent = ({ palette, shapes, gridSize }: { palette: Palette; shapes: unknown[]; gridSize: number }) => {
       thumbnailCalls.push({ palette, shapes, gridSize });
+      // Use background color to identify the palette source
+      const bgColor = palette.roles.find(r => r.id === 'background')?.color ?? 'unknown';
       return (
-        <div data-testid="block-thumbnail" data-palette-id={palette.id} data-grid-size={gridSize}>
+        <div data-testid="block-thumbnail" data-palette-bg={bgColor} data-grid-size={gridSize}>
           Mock Thumbnail
         </div>
       );
@@ -113,8 +118,6 @@ vi.mock('@quillty/core', () => ({
   useSelectedLibraryBlockId: vi.fn(() => mockSelectedLibraryBlockId),
   usePatternPalette: vi.fn(() => mockPatternPalette),
   DEFAULT_PALETTE: {
-    id: 'default-palette',
-    name: 'Default',
     roles: [
       { id: 'background' as FabricRoleId, name: 'Background', color: '#F5F5DC' },
       { id: 'feature' as FabricRoleId, name: 'Feature', color: '#1E3A5F' },
@@ -187,13 +190,13 @@ describe('BlockLibraryPanel', () => {
       // BlockThumbnail should be called with the block's own palette
       expect(thumbnailCalls.length).toBe(2);
 
-      // Verify the palette passed is the block's original palette, not the pattern's
+      // Verify the palette passed is the block's original palette (by background color)
       const thumbnails = screen.getAllByTestId('block-thumbnail');
       thumbnails.forEach((thumbnail) => {
         // Each thumbnail should use the block's original palette
-        expect(thumbnail).toHaveAttribute('data-palette-id', 'block-original-palette');
+        expect(thumbnail).toHaveAttribute('data-palette-bg', BLOCK_PALETTE_BG);
         // It should NOT use the pattern's palette
-        expect(thumbnail).not.toHaveAttribute('data-palette-id', 'pattern-palette');
+        expect(thumbnail).not.toHaveAttribute('data-palette-bg', PATTERN_PALETTE_BG);
       });
     });
 
@@ -203,9 +206,10 @@ describe('BlockLibraryPanel', () => {
       // First block has stringified design_data
       expect(thumbnailCalls.length).toBeGreaterThan(0);
 
-      // Check that palette was correctly extracted
+      // Check that palette was correctly extracted (by background color)
       const firstCallPalette = thumbnailCalls[0].palette;
-      expect(firstCallPalette.id).toBe('block-original-palette');
+      const bgRole = firstCallPalette.roles.find(r => r.id === 'background');
+      expect(bgRole?.color).toBe(BLOCK_PALETTE_BG);
     });
 
     it('handles design_data as object (not string)', () => {
@@ -214,14 +218,15 @@ describe('BlockLibraryPanel', () => {
       // Second block has design_data as object (not stringified)
       expect(thumbnailCalls.length).toBeGreaterThan(1);
 
-      // Check second call
+      // Check second call (by background color)
       const secondCallPalette = thumbnailCalls[1].palette;
-      expect(secondCallPalette.id).toBe('block-original-palette');
+      const bgRole = secondCallPalette.roles.find(r => r.id === 'background');
+      expect(bgRole?.color).toBe(BLOCK_PALETTE_BG);
     });
 
     it('falls back to DEFAULT_PALETTE when design_data is missing', () => {
       mockApiResponse = {
-        data: [{ id: 'block-no-design', name: 'No Design Block', grid_size: 3, design_data: null }],
+        data: [{ id: 'block-no-design', name: 'No Design Block', grid_size: 3, design_data: undefined as unknown as string }],
         isLoading: false,
         error: null,
       };
@@ -229,9 +234,10 @@ describe('BlockLibraryPanel', () => {
 
       expect(thumbnailCalls.length).toBe(1);
 
-      // Should fall back to default palette
+      // Should fall back to default palette (by background color)
       const palette = thumbnailCalls[0].palette;
-      expect(palette.id).toBe('default-palette');
+      const bgRole = palette.roles.find(r => r.id === 'background');
+      expect(bgRole?.color).toBe(DEFAULT_PALETTE_BG);
     });
 
     it('falls back to DEFAULT_PALETTE when design_data is invalid JSON', () => {
@@ -244,9 +250,10 @@ describe('BlockLibraryPanel', () => {
 
       expect(thumbnailCalls.length).toBe(1);
 
-      // Should fall back to default palette
+      // Should fall back to default palette (by background color)
       const palette = thumbnailCalls[0].palette;
-      expect(palette.id).toBe('default-palette');
+      const bgRole = palette.roles.find(r => r.id === 'background');
+      expect(bgRole?.color).toBe(DEFAULT_PALETTE_BG);
     });
   });
 
