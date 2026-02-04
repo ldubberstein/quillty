@@ -112,6 +112,7 @@ describe('useCreatePattern', () => {
       title: 'New Pattern',
       description: 'Description',
       creator_id: 'user-123',
+      design_data: {},
     };
 
     const createdPattern = {
@@ -166,6 +167,7 @@ describe('useCreatePattern', () => {
           title: '',
           description: 'Missing title',
           creator_id: 'user-123',
+          design_data: {},
         });
       })
     ).rejects.toThrow('Validation failed');

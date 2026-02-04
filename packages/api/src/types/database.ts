@@ -418,6 +418,98 @@ export type Database = {
           }
         ];
       };
+      partners: {
+        Row: {
+          id: string;
+          user_id: string;
+          stripe_account_id: string | null;
+          stripe_onboarding_complete: boolean;
+          status: 'pending' | 'active' | 'suspended';
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          stripe_account_id?: string | null;
+          stripe_onboarding_complete?: boolean;
+          status?: 'pending' | 'active' | 'suspended';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          stripe_account_id?: string | null;
+          stripe_onboarding_complete?: boolean;
+          status?: 'pending' | 'active' | 'suspended';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'partners_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: true;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
+      purchases: {
+        Row: {
+          id: string;
+          user_id: string;
+          pattern_id: string;
+          stripe_payment_intent_id: string;
+          amount_cents: number;
+          platform_fee_cents: number;
+          creator_payout_cents: number;
+          status: 'pending' | 'completed' | 'refunded';
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          pattern_id: string;
+          stripe_payment_intent_id: string;
+          amount_cents: number;
+          platform_fee_cents: number;
+          creator_payout_cents: number;
+          status?: 'pending' | 'completed' | 'refunded';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          pattern_id?: string;
+          stripe_payment_intent_id?: string;
+          amount_cents?: number;
+          platform_fee_cents?: number;
+          creator_payout_cents?: number;
+          status?: 'pending' | 'completed' | 'refunded';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'purchases_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'purchases_pattern_id_fkey';
+            columns: ['pattern_id'];
+            isOneToOne: false;
+            referencedRelation: 'quilt_patterns';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

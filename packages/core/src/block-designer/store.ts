@@ -5,7 +5,7 @@
  * Provides reactive state for shapes, selection, palette, and designer mode.
  */
 
-import { create } from 'zustand';
+import { create, type StoreApi, type UseBoundStore } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import type {
   Block,
@@ -204,7 +204,7 @@ export type BlockDesignerStore = BlockDesignerState & BlockDesignerActions;
 // Store Implementation
 // =============================================================================
 
-export const useBlockDesignerStore = create<BlockDesignerStore>()(
+export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> = create<BlockDesignerStore>()(
   immer((set, get) => ({
     // Initial state
     block: createEmptyBlock(),

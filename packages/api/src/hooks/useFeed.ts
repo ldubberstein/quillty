@@ -1,8 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { supabase } from '../client';
 import type { Pattern, Block, User } from '../types/models';
-
-const PAGE_SIZE = 20;
+import { getFeedApi, type ApiFeedItem, type FeedType } from '../api/feed';
 
 // Extended types that include creator info
 export interface PatternWithCreator extends Pattern {
@@ -18,111 +16,33 @@ export type FeedItem =
   | { type: 'block'; data: BlockWithCreator };
 
 interface FeedOptions {
-  type: 'forYou' | 'following';
+  type: FeedType;
   userId?: string;
 }
 
+/**
+ * Fetch feed items via the API
+ * Uses Redis caching on the server (60s for forYou, 30s for following)
+ */
 export function useFeed({ type, userId }: FeedOptions) {
   return useInfiniteQuery({
     queryKey: ['feed', type, userId],
     queryFn: async ({ pageParam = 0 }): Promise<FeedItem[]> => {
-      // Fetch patterns with creator info
-      const patternsQuery = supabase
-        .from('quilt_patterns')
-        .select(`
-          *,
-          creator:users!quilt_patterns_creator_id_fkey(id, username, display_name, avatar_url)
-        `)
-        .in('status', ['published_free', 'published_premium'])
-        .order('published_at', { ascending: false })
-        .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1);
+      const response = await getFeedApi({
+        type,
+        cursor: pageParam,
+      });
 
-      // Fetch blocks with creator info
-      const blocksQuery = supabase
-        .from('blocks')
-        .select(`
-          *,
-          creator:users!blocks_creator_id_fkey(id, username, display_name, avatar_url)
-        `)
-        .eq('status', 'published')
-        .order('published_at', { ascending: false })
-        .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1);
-
-      // If following feed, filter by followed users
-      if (type === 'following' && userId) {
-        const { data: followedUsers } = await supabase
-          .from('follows')
-          .select('followed_id')
-          .eq('follower_id', userId);
-
-        const followedIds = (followedUsers || []).map(f => f.followed_id);
-
-        if (followedIds.length > 0) {
-          // Filter both queries by followed users
-          const [patternsResult, blocksResult] = await Promise.all([
-            supabase
-              .from('quilt_patterns')
-              .select(`
-                *,
-                creator:users!quilt_patterns_creator_id_fkey(id, username, display_name, avatar_url)
-              `)
-              .in('status', ['published_free', 'published_premium'])
-              .in('creator_id', followedIds)
-              .order('published_at', { ascending: false })
-              .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1),
-            supabase
-              .from('blocks')
-              .select(`
-                *,
-                creator:users!blocks_creator_id_fkey(id, username, display_name, avatar_url)
-              `)
-              .eq('status', 'published')
-              .in('creator_id', followedIds)
-              .order('published_at', { ascending: false })
-              .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1),
-          ]);
-
-          if (patternsResult.error) throw patternsResult.error;
-          if (blocksResult.error) throw blocksResult.error;
-
-          return combineAndSort(
-            (patternsResult.data || []) as unknown as PatternWithCreator[],
-            (blocksResult.data || []) as unknown as BlockWithCreator[]
-          );
-        }
-
-        return []; // No followed users
-      }
-
-      const [patternsResult, blocksResult] = await Promise.all([
-        patternsQuery,
-        blocksQuery,
-      ]);
-
-      if (patternsResult.error) throw patternsResult.error;
-      if (blocksResult.error) throw blocksResult.error;
-
-      return combineAndSort(
-        (patternsResult.data || []) as unknown as PatternWithCreator[],
-        (blocksResult.data || []) as unknown as BlockWithCreator[]
-      );
+      // Transform API response to local types
+      return response.data.map((item: ApiFeedItem) => ({
+        type: item.type,
+        data: item.data as unknown as PatternWithCreator | BlockWithCreator,
+      })) as FeedItem[];
     },
     initialPageParam: 0,
-    getNextPageParam: (lastPage, allPages) => {
-      return lastPage.length === PAGE_SIZE ? allPages.length : undefined;
+    getNextPageParam: (lastPage, allPages, lastPageParam) => {
+      // Return next cursor if we got a full page
+      return lastPage.length === 20 ? lastPageParam + 1 : undefined;
     },
   });
-}
-
-function combineAndSort(patterns: PatternWithCreator[], blocks: BlockWithCreator[]): FeedItem[] {
-  const feedItems: FeedItem[] = [
-    ...patterns.map((p) => ({ type: 'pattern' as const, data: p })),
-    ...blocks.map((b) => ({ type: 'block' as const, data: b })),
-  ].sort((a, b) => {
-    const aDate = a.data.published_at || a.data.created_at;
-    const bDate = b.data.published_at || b.data.created_at;
-    return new Date(bDate).getTime() - new Date(aDate).getTime();
-  });
-
-  return feedItems;
 }

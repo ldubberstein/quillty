@@ -16,15 +16,21 @@
     "@quillty/api": "workspace:*",
     "@quillty/core": "workspace:*",
     "@quillty/ui": "workspace:*",
+    "@sentry/nextjs": "^10.38.0",
+    "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.47.15",
     "@tanstack/react-query": "^5.62.16",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.36.2",
     "date-fns": "^4.1.0",
     "konva": "^10.2.0",
     "lucide-react": "^0.563.0",
     "next": "^14.2.22",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-konva": "18"
+    "react-konva": "18",
+    "stripe": "^20.3.0",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
