@@ -286,7 +286,7 @@ describe('BlockLibraryPanel', () => {
 
       expect(screen.getByText('Click slots to place')).toBeInTheDocument();
       expect(screen.getByText('Fill Empty')).toBeInTheDocument();
-      expect(screen.getByText('Cancel')).toBeInTheDocument();
+      expect(screen.getByLabelText('Cancel selection')).toBeInTheDocument();
     });
   });
 
@@ -328,13 +328,13 @@ describe('BlockLibraryPanel', () => {
 
     it('calls clearSelections when Cancel is clicked', () => {
       render(<BlockLibraryPanel />);
-      fireEvent.click(screen.getByText('Cancel'));
+      fireEvent.click(screen.getByLabelText('Cancel selection'));
       expect(mockClearSelections).toHaveBeenCalled();
     });
 
     it('disables preview when Cancel is clicked', () => {
       render(<BlockLibraryPanel />);
-      fireEvent.click(screen.getByText('Cancel'));
+      fireEvent.click(screen.getByLabelText('Cancel selection'));
       expect(mockSetPreviewingFillEmpty).toHaveBeenCalledWith(false);
     });
   });

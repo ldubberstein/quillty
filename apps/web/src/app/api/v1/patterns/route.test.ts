@@ -242,7 +242,15 @@ describe('POST /api/v1/patterns', () => {
     const request = createRequest({
       title: 'New Pattern',
       description: 'My new pattern',
-      designData: { blocks: [] },
+      designData: {
+        gridSize: { rows: 3, cols: 3 },
+        blockInstances: [],
+        palette: {
+          roles: [
+            { id: 'background', name: 'Background', color: '#FFFFFF' },
+          ],
+        },
+      },
     });
     const response = await POST(request);
     const body = await response.json();
