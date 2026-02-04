@@ -297,6 +297,27 @@ describe('PatternDesignerStore', () => {
 
       expect(usePatternDesignerStore.getState().selectedBlockInstanceId).toBeNull();
     });
+
+    it('marks pattern as dirty', () => {
+      const store = usePatternDesignerStore.getState();
+      store.addBlockInstance('block-123', { row: 0, col: 0 });
+      const instanceId = usePatternDesignerStore.getState().pattern.blockInstances[0].id;
+      usePatternDesignerStore.setState({ isDirty: false });
+
+      store.removeBlockInstance(instanceId);
+
+      expect(usePatternDesignerStore.getState().isDirty).toBe(true);
+    });
+
+    it('does nothing for non-existent instance', () => {
+      const store = usePatternDesignerStore.getState();
+      store.addBlockInstance('block-123', { row: 0, col: 0 });
+      const originalLength = usePatternDesignerStore.getState().pattern.blockInstances.length;
+
+      store.removeBlockInstance('non-existent-id');
+
+      expect(usePatternDesignerStore.getState().pattern.blockInstances).toHaveLength(originalLength);
+    });
   });
 
   // ===========================================================================
@@ -324,6 +345,27 @@ describe('PatternDesignerStore', () => {
       store.rotateBlockInstance(instanceId);
       expect(usePatternDesignerStore.getState().pattern.blockInstances[0].rotation).toBe(0);
     });
+
+    it('marks pattern as dirty', () => {
+      const store = usePatternDesignerStore.getState();
+      store.addBlockInstance('block-123', { row: 0, col: 0 });
+      const instanceId = usePatternDesignerStore.getState().pattern.blockInstances[0].id;
+      usePatternDesignerStore.setState({ isDirty: false });
+
+      store.rotateBlockInstance(instanceId);
+
+      expect(usePatternDesignerStore.getState().isDirty).toBe(true);
+    });
+
+    it('does nothing for non-existent instance', () => {
+      const store = usePatternDesignerStore.getState();
+      store.addBlockInstance('block-123', { row: 0, col: 0 });
+      const originalRotation = usePatternDesignerStore.getState().pattern.blockInstances[0].rotation;
+
+      store.rotateBlockInstance('non-existent-id');
+
+      expect(usePatternDesignerStore.getState().pattern.blockInstances[0].rotation).toBe(originalRotation);
+    });
   });
 
   describe('flipBlockInstanceHorizontal', () => {
@@ -340,6 +382,17 @@ describe('PatternDesignerStore', () => {
       store.flipBlockInstanceHorizontal(instanceId);
       expect(usePatternDesignerStore.getState().pattern.blockInstances[0].flipHorizontal).toBe(false);
     });
+
+    it('marks pattern as dirty', () => {
+      const store = usePatternDesignerStore.getState();
+      store.addBlockInstance('block-123', { row: 0, col: 0 });
+      const instanceId = usePatternDesignerStore.getState().pattern.blockInstances[0].id;
+      usePatternDesignerStore.setState({ isDirty: false });
+
+      store.flipBlockInstanceHorizontal(instanceId);
+
+      expect(usePatternDesignerStore.getState().isDirty).toBe(true);
+    });
   });
 
   describe('flipBlockInstanceVertical', () => {
@@ -355,6 +408,17 @@ describe('PatternDesignerStore', () => {
 
       store.flipBlockInstanceVertical(instanceId);
       expect(usePatternDesignerStore.getState().pattern.blockInstances[0].flipVertical).toBe(false);
+    });
+
+    it('marks pattern as dirty', () => {
+      const store = usePatternDesignerStore.getState();
+      store.addBlockInstance('block-123', { row: 0, col: 0 });
+      const instanceId = usePatternDesignerStore.getState().pattern.blockInstances[0].id;
+      usePatternDesignerStore.setState({ isDirty: false });
+
+      store.flipBlockInstanceVertical(instanceId);
+
+      expect(usePatternDesignerStore.getState().isDirty).toBe(true);
     });
   });
 
