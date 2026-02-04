@@ -29,7 +29,6 @@ export default function PatternDesignerPage() {
   const pattern = usePatternDesignerStore((state) => state.pattern);
   const gridSize = useGridSize();
   const isDirty = useIsDirty();
-  const mode = usePatternDesignerStore((state) => state.mode);
 
   // Track if we're showing the size picker (on initial load)
   const [showSizePicker, setShowSizePicker] = useState(true);
@@ -163,14 +162,8 @@ export default function PatternDesignerPage() {
         </aside>
 
         {/* Center - Canvas (maximized for square-ish quilts) */}
-        <div className="flex-1 min-w-0 relative">
+        <div className="flex-1 min-w-0">
           <PatternCanvas />
-          {/* Mode indicator overlay */}
-          {mode === 'placing_block' && (
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
-              Click a slot to place the selected block
-            </div>
-          )}
         </div>
 
         {/* Right Sidebar - Colors/Tools (placeholder for now) */}

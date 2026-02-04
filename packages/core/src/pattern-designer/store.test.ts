@@ -43,6 +43,7 @@ function resetStore() {
     blockCache: {},
     mode: 'idle',
     isDirty: false,
+    isPreviewingFillEmpty: false,
   });
 }
 
@@ -379,6 +380,71 @@ describe('PatternDesignerStore', () => {
       store.setRoleColor('background', '#FF0000');
 
       expect(usePatternDesignerStore.getState().isDirty).toBe(true);
+    });
+  });
+
+  // ===========================================================================
+  // Block Instance Selection (Iteration 2.4/2.5)
+  // ===========================================================================
+
+  describe('selectBlockInstance', () => {
+    it('selects a placed block instance', () => {
+      const store = usePatternDesignerStore.getState();
+      store.addBlockInstance('block-123', { row: 0, col: 0 });
+      const instanceId = usePatternDesignerStore.getState().pattern.blockInstances[0].id;
+
+      store.selectBlockInstance(instanceId);
+
+      expect(usePatternDesignerStore.getState().selectedBlockInstanceId).toBe(instanceId);
+    });
+
+    it('switches mode to selecting when selecting an instance', () => {
+      const store = usePatternDesignerStore.getState();
+      store.addBlockInstance('block-123', { row: 0, col: 0 });
+      const instanceId = usePatternDesignerStore.getState().pattern.blockInstances[0].id;
+
+      store.selectBlockInstance(instanceId);
+
+      expect(usePatternDesignerStore.getState().mode).toBe('selecting');
+    });
+
+    it('can deselect by passing null', () => {
+      const store = usePatternDesignerStore.getState();
+      store.addBlockInstance('block-123', { row: 0, col: 0 });
+      const instanceId = usePatternDesignerStore.getState().pattern.blockInstances[0].id;
+      store.selectBlockInstance(instanceId);
+
+      store.selectBlockInstance(null);
+
+      expect(usePatternDesignerStore.getState().selectedBlockInstanceId).toBeNull();
+    });
+  });
+
+  // ===========================================================================
+  // Fill Empty Preview (Iteration 2.4)
+  // ===========================================================================
+
+  describe('isPreviewingFillEmpty', () => {
+    it('starts as false', () => {
+      const state = usePatternDesignerStore.getState();
+      expect(state.isPreviewingFillEmpty).toBe(false);
+    });
+
+    it('can be set to true via setPreviewingFillEmpty', () => {
+      const store = usePatternDesignerStore.getState();
+
+      store.setPreviewingFillEmpty(true);
+
+      expect(usePatternDesignerStore.getState().isPreviewingFillEmpty).toBe(true);
+    });
+
+    it('can be toggled back to false', () => {
+      const store = usePatternDesignerStore.getState();
+      store.setPreviewingFillEmpty(true);
+
+      store.setPreviewingFillEmpty(false);
+
+      expect(usePatternDesignerStore.getState().isPreviewingFillEmpty).toBe(false);
     });
   });
 
