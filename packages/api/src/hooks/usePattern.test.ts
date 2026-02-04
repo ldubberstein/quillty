@@ -4,8 +4,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createElement } from 'react';
 
 // Use vi.hoisted to define mocks
-const { mockFrom } = vi.hoisted(() => ({
+const { mockFrom, mockGetPatternApi, mockCreatePatternApi, mockUpdatePatternApi, mockPublishPatternApi } = vi.hoisted(() => ({
   mockFrom: vi.fn(),
+  mockGetPatternApi: vi.fn(),
+  mockCreatePatternApi: vi.fn(),
+  mockUpdatePatternApi: vi.fn(),
+  mockPublishPatternApi: vi.fn(),
 }));
 
 // Mock the Supabase client
@@ -21,7 +25,21 @@ vi.mock('../client', () => ({
   },
 }));
 
-import { usePattern, useCreatePattern, useUpdatePattern } from './usePattern';
+// Mock the API functions
+vi.mock('../api/patterns', () => ({
+  getPatternApi: mockGetPatternApi,
+  createPatternApi: mockCreatePatternApi,
+  updatePatternApi: mockUpdatePatternApi,
+  publishPatternApi: mockPublishPatternApi,
+}));
+
+import {
+  usePattern,
+  usePatternDirect,
+  useCreatePattern,
+  useUpdatePattern,
+  usePublishPattern,
+} from './usePattern';
 
 // Test wrapper with QueryClient
 function createWrapper() {
@@ -63,11 +81,7 @@ describe('usePattern', () => {
       },
     };
 
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data: mockPattern, error: null }),
-    });
+    mockGetPatternApi.mockResolvedValue(mockPattern);
 
     const { result } = renderHook(() => usePattern('pattern-123'), {
       wrapper: createWrapper(),
@@ -77,18 +91,11 @@ describe('usePattern', () => {
       expect(result.current.data).toEqual(mockPattern);
     });
 
-    expect(mockFrom).toHaveBeenCalledWith('quilt_patterns');
+    expect(mockGetPatternApi).toHaveBeenCalledWith('pattern-123');
   });
 
   it('handles pattern not found', async () => {
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: null,
-        error: { message: 'Pattern not found', code: 'PGRST116' },
-      }),
-    });
+    mockGetPatternApi.mockRejectedValue(new Error('Pattern not found'));
 
     const { result } = renderHook(() => usePattern('nonexistent'), {
       wrapper: createWrapper(),
@@ -240,5 +247,143 @@ describe('useUpdatePattern', () => {
         });
       })
     ).rejects.toThrow('Pattern not found');
+  });
+
+  it('uses API format for update with designData', async () => {
+    const updatedPattern = { id: 'pattern-123', title: 'Updated' };
+    mockUpdatePatternApi.mockResolvedValue(updatedPattern);
+
+    const { result } = renderHook(() => useUpdatePattern(), {
+      wrapper: createWrapper(),
+    });
+
+    await act(async () => {
+      await result.current.mutateAsync({
+        id: 'pattern-123',
+        title: 'Updated',
+        designData: {
+          gridSize: { rows: 4, cols: 5 },
+          blockInstances: [],
+          palette: { roles: [] },
+        },
+      });
+    });
+
+    expect(mockUpdatePatternApi).toHaveBeenCalled();
+  });
+});
+
+describe('usePatternDirect', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns null when no patternId provided', async () => {
+    const { result } = renderHook(() => usePatternDirect(undefined), {
+      wrapper: createWrapper(),
+    });
+
+    expect(result.current.data).toBeUndefined();
+    expect(result.current.fetchStatus).toBe('idle');
+  });
+
+  it('fetches pattern directly from Supabase', async () => {
+    const mockPattern = {
+      id: 'pattern-123',
+      title: 'My Pattern',
+      creator: { id: 'user-1', username: 'test' },
+    };
+
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: mockPattern, error: null }),
+    });
+
+    const { result } = renderHook(() => usePatternDirect('pattern-123'), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current.data).toEqual(mockPattern);
+    });
+
+    expect(mockFrom).toHaveBeenCalledWith('quilt_patterns');
+  });
+});
+
+describe('usePublishPattern', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('publishes pattern with title update', async () => {
+    const publishedPattern = { id: 'pattern-123', status: 'published_free' };
+    mockUpdatePatternApi.mockResolvedValue({ id: 'pattern-123' });
+    mockPublishPatternApi.mockResolvedValue(publishedPattern);
+
+    const { result } = renderHook(() => usePublishPattern(), {
+      wrapper: createWrapper(),
+    });
+
+    let response;
+    await act(async () => {
+      response = await result.current.mutateAsync({
+        id: 'pattern-123',
+        title: 'Published Pattern',
+        description: 'My description',
+        publishInput: { type: 'free' },
+      });
+    });
+
+    expect(response).toEqual(publishedPattern);
+    expect(mockUpdatePatternApi).toHaveBeenCalledWith('pattern-123', {
+      title: 'Published Pattern',
+      description: 'My description',
+    });
+    expect(mockPublishPatternApi).toHaveBeenCalledWith('pattern-123', { type: 'free' });
+  });
+
+  it('publishes premium pattern with price', async () => {
+    const publishedPattern = { id: 'pattern-123', status: 'published_premium' };
+    mockUpdatePatternApi.mockResolvedValue({});
+    mockPublishPatternApi.mockResolvedValue(publishedPattern);
+
+    const { result } = renderHook(() => usePublishPattern(), {
+      wrapper: createWrapper(),
+    });
+
+    await act(async () => {
+      await result.current.mutateAsync({
+        id: 'pattern-123',
+        title: 'Premium Pattern',
+        publishInput: { type: 'premium', priceCents: 999 },
+      });
+    });
+
+    expect(mockPublishPatternApi).toHaveBeenCalledWith('pattern-123', {
+      type: 'premium',
+      priceCents: 999,
+    });
+  });
+
+  it('publishes without update when no title', async () => {
+    const publishedPattern = { id: 'pattern-123', status: 'published_free' };
+    mockPublishPatternApi.mockResolvedValue(publishedPattern);
+
+    const { result } = renderHook(() => usePublishPattern(), {
+      wrapper: createWrapper(),
+    });
+
+    await act(async () => {
+      await result.current.mutateAsync({
+        id: 'pattern-123',
+        title: '',
+        publishInput: { type: 'free' },
+      });
+    });
+
+    expect(mockUpdatePatternApi).not.toHaveBeenCalled();
+    expect(mockPublishPatternApi).toHaveBeenCalledWith('pattern-123', { type: 'free' });
   });
 });
