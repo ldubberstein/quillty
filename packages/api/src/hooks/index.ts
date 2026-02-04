@@ -16,6 +16,8 @@ export {
   useCreateBlock,
   useUpdateBlock,
   useBlockLibrary,
+  useMyDraftBlocks,
+  usePublishBlock,
   type BlockWithDetails,
 } from './useBlock';
 export {

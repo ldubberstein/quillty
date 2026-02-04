@@ -89,3 +89,59 @@ export function useBlockLibrary() {
     },
   });
 }
+
+export function useMyDraftBlocks(userId?: string) {
+  return useQuery({
+    queryKey: ['blocks', 'drafts', userId],
+    queryFn: async (): Promise<Block[]> => {
+      if (!userId) return [];
+
+      const { data, error } = await supabase
+        .from('blocks')
+        .select('*')
+        .eq('creator_id', userId)
+        .eq('status', 'draft')
+        .order('updated_at', { ascending: false });
+
+      if (error) throw error;
+      return (data || []) as Block[];
+    },
+    enabled: !!userId,
+  });
+}
+
+export function usePublishBlock() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      name,
+      description,
+    }: {
+      id: string;
+      name: string;
+      description?: string;
+    }): Promise<Block> => {
+      const { data, error } = await supabase
+        .from('blocks')
+        .update({
+          name,
+          description,
+          status: 'published',
+          published_at: new Date().toISOString(),
+        } as never)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as Block;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['block', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['blocks', 'drafts'] });
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
+    },
+  });
+}

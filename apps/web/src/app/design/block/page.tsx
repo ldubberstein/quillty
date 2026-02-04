@@ -2,10 +2,12 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useBlockDesignerStore, DEFAULT_GRID_SIZE } from '@quillty/core';
 import { UndoRedoControls } from '@/components/block-designer/UndoRedoControls';
 import { PreviewControls } from '@/components/block-designer/PreviewControls';
+import { SaveControls } from '@/components/block-designer/SaveControls';
 
 // Dynamic import for BlockCanvas (Konva requires browser APIs)
 const BlockCanvas = dynamic(
@@ -27,11 +29,17 @@ const FabricPanel = dynamic(
 );
 
 export default function BlockDesignerPage() {
+  const router = useRouter();
   const initBlock = useBlockDesignerStore((state) => state.initBlock);
   const block = useBlockDesignerStore((state) => state.block);
   const mode = useBlockDesignerStore((state) => state.mode);
   const [showFabricPanel, setShowFabricPanel] = useState(true);
   const hasInitialized = useRef(false);
+
+  // Handle successful publish - navigate to the block detail page
+  const handlePublished = useCallback((blockId: string) => {
+    router.push(`/blocks/${blockId}`);
+  }, [router]);
 
   // Initialize a new block on mount (only once)
   useEffect(() => {
@@ -107,19 +115,8 @@ export default function BlockDesignerPage() {
             </span>
           </button>
 
-          {/* Placeholder buttons */}
-          <button
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            disabled
-          >
-            Save Draft
-          </button>
-          <button
-            className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 transition-colors"
-            disabled
-          >
-            Publish
-          </button>
+          {/* Save and Publish controls */}
+          <SaveControls onPublished={handlePublished} />
         </div>
       </header>
 

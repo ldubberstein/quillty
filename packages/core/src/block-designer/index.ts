@@ -133,5 +133,15 @@ export {
   type FlyingGeeseTriangles,
 } from './geometry';
 
+// Persistence
+export {
+  serializeBlockForDb,
+  deserializeBlockFromDb,
+  extractHashtags,
+  validateBlockForPublish,
+  type BlockDesignData,
+  type BlockPersistData,
+} from './persistence';
+
 // Legacy class (deprecated - use useBlockDesignerStore instead)
 // export { BlockDesigner } from './BlockDesigner';

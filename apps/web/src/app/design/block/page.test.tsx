@@ -8,9 +8,36 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
+// Mock next/navigation
+vi.mock('next/navigation', () => ({
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+  })),
+}));
+
 // Mock the keyboard hook
 vi.mock('@/hooks/useUndoRedoKeyboard', () => ({
   useUndoRedoKeyboard: vi.fn(),
+}));
+
+// Mock the API hooks
+vi.mock('@quillty/api', () => ({
+  useAuth: vi.fn(() => ({
+    user: null,
+    isLoading: false,
+  })),
+  useCreateBlock: vi.fn(() => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  })),
+  useUpdateBlock: vi.fn(() => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  })),
+  usePublishBlock: vi.fn(() => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  })),
 }));
 
 // Store state that can be modified between renders
@@ -51,6 +78,13 @@ vi.mock('@quillty/core', () => ({
   useIsPreviewMode: vi.fn(() => false),
   usePreviewRotationPreset: vi.fn(() => 'all_same'),
   DEFAULT_GRID_SIZE: 3,
+  serializeBlockForDb: vi.fn(() => ({
+    name: 'Test Block',
+    gridSize: 3,
+    designData: {},
+    pieceCount: 0,
+  })),
+  validateBlockForPublish: vi.fn(() => ({ valid: false, error: 'Add at least one shape' })),
 }));
 
 // Import component after mocks
