@@ -46,8 +46,6 @@ function renderSquare(
       width={cellSize - padding * 2}
       height={cellSize - padding * 2}
       fill={color}
-      stroke="#9CA3AF"
-      strokeWidth={0.5}
       listening={false}
     />
   );
@@ -92,8 +90,8 @@ function renderHst(
 
   return (
     <Group key={shape.id} x={x} y={y} listening={false}>
-      <Line points={secondaryPoints} fill={secondaryColor} closed stroke="#9CA3AF" strokeWidth={0.5} />
-      <Line points={primaryPoints} fill={primaryColor} closed stroke="#9CA3AF" strokeWidth={0.5} />
+      <Line points={secondaryPoints} fill={secondaryColor} closed />
+      <Line points={primaryPoints} fill={primaryColor} closed />
     </Group>
   );
 }
@@ -146,9 +144,9 @@ function renderFlyingGeese(
 
   return (
     <Group key={shape.id} x={x} y={y} listening={false}>
-      <Line points={sky1Points} fill={sky1Color} closed stroke="#9CA3AF" strokeWidth={0.5} />
-      <Line points={sky2Points} fill={sky2Color} closed stroke="#9CA3AF" strokeWidth={0.5} />
-      <Line points={goosePoints} fill={gooseColor} closed stroke="#9CA3AF" strokeWidth={0.5} />
+      <Line points={sky1Points} fill={sky1Color} closed />
+      <Line points={sky2Points} fill={sky2Color} closed />
+      <Line points={goosePoints} fill={gooseColor} closed />
     </Group>
   );
 }

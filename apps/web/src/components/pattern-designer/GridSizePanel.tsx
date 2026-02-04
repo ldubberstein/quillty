@@ -85,9 +85,9 @@ export function GridSizePanel() {
       )}
 
       {/* Row stepper */}
-      <div className="flex items-center gap-3 mb-3">
-        <span className="text-sm text-gray-600 w-16">Rows</span>
-        <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm text-gray-600">Rows</span>
+        <div className="flex items-center gap-1">
           <button
             onClick={handleRemoveRow}
             onMouseEnter={() => canRemoveRow && setPreviewingGridResize('remove-row')}
@@ -101,7 +101,7 @@ export function GridSizePanel() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
             </svg>
           </button>
-          <span className="w-8 text-center text-sm font-medium text-gray-800 tabular-nums">
+          <span className="w-10 text-center text-sm font-medium text-gray-800 tabular-nums">
             {gridSize.rows}
           </span>
           <button
@@ -121,9 +121,9 @@ export function GridSizePanel() {
       </div>
 
       {/* Column stepper */}
-      <div className="flex items-center gap-3 mb-4">
-        <span className="text-sm text-gray-600 w-16">Columns</span>
-        <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-sm text-gray-600">Columns</span>
+        <div className="flex items-center gap-1">
           <button
             onClick={handleRemoveColumn}
             onMouseEnter={() => canRemoveColumn && setPreviewingGridResize('remove-col')}
@@ -137,7 +137,7 @@ export function GridSizePanel() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
             </svg>
           </button>
-          <span className="w-8 text-center text-sm font-medium text-gray-800 tabular-nums">
+          <span className="w-10 text-center text-sm font-medium text-gray-800 tabular-nums">
             {gridSize.cols}
           </span>
           <button

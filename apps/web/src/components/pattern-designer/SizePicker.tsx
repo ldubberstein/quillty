@@ -37,13 +37,13 @@ export function SizePicker({ onConfirm, onCancel }: SizePickerProps) {
     onConfirm(rows, cols);
   }, [onConfirm, rows, cols]);
 
-  // Generate preset options
+  // Generate preset options (1 block = ~12 inches)
   const presets = [
-    { rows: 3, cols: 3, label: '3×3 (Small)' },
-    { rows: 4, cols: 4, label: '4×4 (Standard)' },
-    { rows: 5, cols: 5, label: '5×5 (Medium)' },
-    { rows: 6, cols: 8, label: '6×8 (Throw)' },
-    { rows: 8, cols: 10, label: '8×10 (Twin)' },
+    { rows: 4, cols: 5, label: 'Baby/Crib (4×5)' },
+    { rows: 6, cols: 9, label: 'Twin (6×9)' },
+    { rows: 7, cols: 9, label: 'Full/Double (7×9)' },
+    { rows: 8, cols: 9, label: 'Queen (8×9)' },
+    { rows: 9, cols: 9, label: 'King (9×9)' },
   ];
 
   return (
@@ -134,24 +134,30 @@ export function SizePicker({ onConfirm, onCancel }: SizePickerProps) {
           Preview
         </label>
         <div className="flex justify-center">
-          <div
-            className="border-2 border-gray-300 bg-gray-50 rounded-lg overflow-hidden"
-            style={{
-              display: 'grid',
-              gridTemplateRows: `repeat(${rows}, 1fr)`,
-              gridTemplateColumns: `repeat(${cols}, 1fr)`,
-              width: Math.min(240, cols * 24),
-              height: Math.min(180, rows * 18),
-              gap: 1,
-            }}
-          >
-            {Array.from({ length: rows * cols }).map((_, i) => (
+          {(() => {
+            // Use same cell size for both dimensions to show squares
+            const cellSize = Math.min(200 / Math.max(rows, cols), 20);
+            return (
               <div
-                key={i}
-                className="bg-white border border-gray-200"
-              />
-            ))}
-          </div>
+                className="border-2 border-gray-300 bg-gray-50 rounded-lg overflow-hidden"
+                style={{
+                  display: 'grid',
+                  gridTemplateRows: `repeat(${rows}, 1fr)`,
+                  gridTemplateColumns: `repeat(${cols}, 1fr)`,
+                  width: cols * cellSize,
+                  height: rows * cellSize,
+                  gap: 1,
+                }}
+              >
+                {Array.from({ length: rows * cols }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="bg-white border border-gray-200"
+                  />
+                ))}
+              </div>
+            );
+          })()}
         </div>
       </div>
 

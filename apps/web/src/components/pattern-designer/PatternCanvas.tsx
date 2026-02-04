@@ -593,13 +593,16 @@ export function PatternCanvas() {
 
           {/* Placement mode indicator */}
           {isPlacingBlock && (
-            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium">
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2">
               Tap a slot to place the selected block
               <button
                 onClick={clearSelections}
-                className="ml-3 text-blue-100 hover:text-white underline"
+                className="ml-1 p-1 text-blue-100 hover:text-white hover:bg-blue-600 rounded"
+                aria-label="Cancel placement"
               >
-                Cancel
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
           )}

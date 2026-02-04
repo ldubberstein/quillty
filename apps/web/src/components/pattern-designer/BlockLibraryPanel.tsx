@@ -223,9 +223,12 @@ export function BlockLibraryPanel() {
             </button>
             <button
               onClick={handleCancelSelection}
-              className="px-2 py-1.5 text-xs font-medium text-gray-600 bg-white hover:bg-gray-100 rounded border border-gray-200 transition-colors"
+              className="p-1.5 text-gray-600 bg-white hover:bg-gray-100 rounded border border-gray-200 transition-colors"
+              aria-label="Cancel selection"
             >
-              Cancel
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
         </div>

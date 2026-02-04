@@ -212,15 +212,23 @@ export function SaveControls({ onPublished }: SaveControlsProps) {
         </button>
 
         {/* Publish button */}
-        <button
-          onClick={handlePublishClick}
-          disabled={!publishValidation.valid || isSaving}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title={!publishValidation.valid ? publishValidation.error : 'Publish block'}
-        >
-          <Upload className="w-4 h-4" />
-          <span className="hidden sm:inline">Publish</span>
-        </button>
+        <div className="flex flex-col items-end gap-1">
+          <button
+            onClick={handlePublishClick}
+            disabled={!publishValidation.valid || isSaving || !block.id}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title={!block.id ? 'Save draft first' : !publishValidation.valid ? publishValidation.error : 'Publish block'}
+          >
+            <Upload className="w-4 h-4" />
+            <span className="hidden sm:inline">Publish</span>
+          </button>
+          {!block.id && (
+            <span className="text-xs text-gray-500 hidden sm:inline">Save draft first</span>
+          )}
+          {block.id && !publishValidation.valid && publishValidation.error && (
+            <span className="text-xs text-amber-600 hidden sm:inline">{publishValidation.error}</span>
+          )}
+        </div>
       </div>
 
       {/* Publish Modal */}

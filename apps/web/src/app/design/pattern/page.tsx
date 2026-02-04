@@ -328,14 +328,24 @@ export default function PatternDesignerPage() {
               >
                 {isSaving ? 'Saving...' : 'Save Draft'}
               </button>
-              <button
-                onClick={handlePublishClick}
-                disabled={!canPublish || isSaving}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title={!canPublish ? `Fill all ${emptySlotCount} empty slots to publish` : 'Publish pattern'}
-              >
-                Publish
-              </button>
+              <div className="flex flex-col items-end gap-1">
+                <button
+                  onClick={handlePublishClick}
+                  disabled={!canPublish || isSaving || !patternId}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={!patternId ? 'Save draft first' : !canPublish ? `Fill all ${emptySlotCount} empty slots to publish` : 'Publish pattern'}
+                >
+                  Publish
+                </button>
+                {!patternId && (
+                  <span className="text-xs text-gray-500">Save draft first</span>
+                )}
+                {patternId && !canPublish && emptySlotCount > 0 && (
+                  <span className="text-xs text-amber-600">
+                    {emptySlotCount} slot{emptySlotCount > 1 ? 's' : ''} empty
+                  </span>
+                )}
+              </div>
             </>
           )}
         </div>

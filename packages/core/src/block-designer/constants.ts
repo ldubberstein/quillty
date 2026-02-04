@@ -13,13 +13,14 @@ import type { Palette, GridSize, HstVariant, FlyingGeeseDirection } from './type
 /**
  * Default palette for new blocks and patterns
  * Per DATA_MODEL.md - 4 standard roles with default colors
+ * Colors chosen based on popular quilting fabric combinations
  */
 export const DEFAULT_PALETTE: Palette = {
   roles: [
-    { id: 'background', name: 'Background', color: '#FFFFFF' },
-    { id: 'feature', name: 'Feature', color: '#1E3A5F' },
-    { id: 'accent1', name: 'Accent 1', color: '#E85D04' },
-    { id: 'accent2', name: 'Accent 2', color: '#FAA307' },
+    { id: 'background', name: 'Background', color: '#F5F5DC' }, // Beige/cream
+    { id: 'feature', name: 'Feature', color: '#2C3E50' },       // Navy blue
+    { id: 'accent1', name: 'Accent 1', color: '#8B4513' },      // Saddle brown
+    { id: 'accent2', name: 'Accent 2', color: '#DAA520' },      // Goldenrod
   ],
 };
 
