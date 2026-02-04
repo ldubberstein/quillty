@@ -116,18 +116,11 @@ describe('BlockDesignerPage', () => {
       expect(screen.getByText(/3×3 grid/i)).toBeInTheDocument();
     });
 
-    it('renders Save Draft button (disabled)', () => {
+    it('renders sign-in link when not authenticated', () => {
       render(<BlockDesignerPage />);
-      const saveButton = screen.getByRole('button', { name: /save draft/i });
-      expect(saveButton).toBeInTheDocument();
-      expect(saveButton).toBeDisabled();
-    });
-
-    it('renders Publish button (disabled)', () => {
-      render(<BlockDesignerPage />);
-      const publishButton = screen.getByRole('button', { name: /publish/i });
-      expect(publishButton).toBeInTheDocument();
-      expect(publishButton).toBeDisabled();
+      const signInLink = screen.getByRole('link', { name: /sign in to save/i });
+      expect(signInLink).toBeInTheDocument();
+      expect(signInLink).toHaveAttribute('href', '/login');
     });
   });
 

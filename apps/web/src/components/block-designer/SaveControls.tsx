@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Save, Upload, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { Save, Upload, Loader2, LogIn } from 'lucide-react';
 import { useBlockDesignerStore, serializeBlockForDb, validateBlockForPublish } from '@quillty/core';
 import { useAuth, useCreateBlock, useUpdateBlock } from '@quillty/api';
 import { PublishModal } from './PublishModal';
@@ -157,6 +158,29 @@ export function SaveControls({ onPublished }: SaveControlsProps) {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Show sign-in prompt when not authenticated
+  if (!isAuthenticated && !isAuthLoading) {
+    return (
+      <Link
+        href="/login"
+        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 transition-colors"
+      >
+        <LogIn className="w-4 h-4" />
+        <span className="hidden sm:inline">Sign in to save</span>
+      </Link>
+    );
+  }
+
+  // Show loading state while checking auth
+  if (isAuthLoading) {
+    return (
+      <div className="flex items-center gap-2 px-4 py-2 text-sm text-gray-400">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        <span className="hidden sm:inline">Loading...</span>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="flex items-center gap-2">
@@ -175,9 +199,9 @@ export function SaveControls({ onPublished }: SaveControlsProps) {
         {/* Save Draft button */}
         <button
           onClick={handleSaveDraft}
-          disabled={!isAuthenticated || isSaving}
+          disabled={isSaving}
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title={!isAuthenticated ? 'Sign in to save' : 'Save draft'}
+          title="Save draft"
         >
           {isSaving ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -190,15 +214,9 @@ export function SaveControls({ onPublished }: SaveControlsProps) {
         {/* Publish button */}
         <button
           onClick={handlePublishClick}
-          disabled={!isAuthenticated || !publishValidation.valid || isSaving}
+          disabled={!publishValidation.valid || isSaving}
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title={
-            !isAuthenticated
-              ? 'Sign in to publish'
-              : !publishValidation.valid
-                ? publishValidation.error
-                : 'Publish block'
-          }
+          title={!publishValidation.valid ? publishValidation.error : 'Publish block'}
         >
           <Upload className="w-4 h-4" />
           <span className="hidden sm:inline">Publish</span>
