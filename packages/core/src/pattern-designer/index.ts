@@ -70,6 +70,7 @@ export {
   useCanRemoveRow,
   useCanAddColumn,
   useCanRemoveColumn,
+  usePreviewingGridResize,
 } from './store';
 
 export type { PatternDesignerStore } from './store';

@@ -107,6 +107,9 @@ interface PatternDesignerState {
 
   /** Whether we're previewing the "fill empty" action (hover state) */
   isPreviewingFillEmpty: boolean;
+
+  /** Which grid resize action is being previewed (hover state) */
+  previewingGridResize: 'row-top' | 'row-bottom' | 'col-left' | 'col-right' | null;
 }
 
 interface PatternDesignerActions {
@@ -187,6 +190,8 @@ interface PatternDesignerActions {
   // Preview state
   /** Set whether we're previewing the fill empty action */
   setPreviewingFillEmpty: (preview: boolean) => void;
+  /** Set which grid resize action is being previewed */
+  setPreviewingGridResize: (preview: 'row-top' | 'row-bottom' | 'col-left' | 'col-right' | null) => void;
 }
 
 export type PatternDesignerStore = PatternDesignerState & PatternDesignerActions;
@@ -205,6 +210,7 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
     mode: 'idle',
     isDirty: false,
     isPreviewingFillEmpty: false,
+    previewingGridResize: null,
 
     // Pattern management
     initPattern: (gridSize, creatorId = '') => {
@@ -639,6 +645,12 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
         state.isPreviewingFillEmpty = preview;
       });
     },
+
+    setPreviewingGridResize: (preview) => {
+      set((state) => {
+        state.previewingGridResize = preview;
+      });
+    },
   }))
 );
 
@@ -711,3 +723,7 @@ export const useCanAddColumn = () => {
 export const useCanRemoveColumn = () => {
   return usePatternDesignerStore((state) => state.pattern.gridSize.cols > MIN_GRID_SIZE);
 };
+
+/** Get the current grid resize preview state */
+export const usePreviewingGridResize = () =>
+  usePatternDesignerStore((state) => state.previewingGridResize);
