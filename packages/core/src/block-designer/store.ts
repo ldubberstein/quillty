@@ -21,6 +21,7 @@ import type {
   FlyingGeeseDirection,
   DesignerMode,
   FlyingGeesePlacementState,
+  PreviewRotationPreset,
   UUID,
 } from './types';
 import { DEFAULT_PALETTE, DEFAULT_GRID_SIZE } from './constants';
@@ -99,6 +100,9 @@ interface BlockDesignerState {
 
   /** Undo/redo history manager */
   undoManager: UndoManagerState;
+
+  /** Preview mode rotation preset */
+  previewRotationPreset: PreviewRotationPreset;
 }
 
 interface BlockDesignerActions {
@@ -184,6 +188,14 @@ interface BlockDesignerActions {
   canUndo: () => boolean;
   /** Check if redo is available */
   canRedo: () => boolean;
+
+  // Preview mode
+  /** Enter preview mode */
+  enterPreview: () => void;
+  /** Exit preview mode (return to idle) */
+  exitPreview: () => void;
+  /** Set the preview rotation preset */
+  setPreviewRotationPreset: (preset: PreviewRotationPreset) => void;
 }
 
 export type BlockDesignerStore = BlockDesignerState & BlockDesignerActions;
@@ -201,6 +213,7 @@ export const useBlockDesignerStore = create<BlockDesignerStore>()(
     mode: 'idle',
     flyingGeesePlacement: null,
     undoManager: createUndoManagerState(),
+    previewRotationPreset: 'all_same',
 
     // Block management
     initBlock: (gridSize = DEFAULT_GRID_SIZE, creatorId = '') => {
@@ -211,6 +224,7 @@ export const useBlockDesignerStore = create<BlockDesignerStore>()(
         state.mode = 'idle';
         state.flyingGeesePlacement = null;
         state.undoManager = createUndoManagerState();
+        state.previewRotationPreset = 'all_same';
       });
     },
 
@@ -222,6 +236,7 @@ export const useBlockDesignerStore = create<BlockDesignerStore>()(
         state.mode = 'idle';
         state.flyingGeesePlacement = null;
         state.undoManager = createUndoManagerState();
+        state.previewRotationPreset = 'all_same';
       });
     },
 
@@ -826,6 +841,29 @@ export const useBlockDesignerStore = create<BlockDesignerStore>()(
     canRedo: () => {
       return checkCanRedo(get().undoManager);
     },
+
+    // Preview mode
+    enterPreview: () => {
+      set((state) => {
+        state.mode = 'preview';
+        // Clear selection and other active states when entering preview
+        state.selectedShapeId = null;
+        state.activeFabricRole = null;
+        state.flyingGeesePlacement = null;
+      });
+    },
+
+    exitPreview: () => {
+      set((state) => {
+        state.mode = 'idle';
+      });
+    },
+
+    setPreviewRotationPreset: (preset) => {
+      set((state) => {
+        state.previewRotationPreset = preset;
+      });
+    },
   }))
 );
 
@@ -870,3 +908,10 @@ export const useCanUndo = () => useBlockDesignerStore((state) => checkCanUndo(st
 
 /** Check if redo is available */
 export const useCanRedo = () => useBlockDesignerStore((state) => checkCanRedo(state.undoManager));
+
+/** Check if in preview mode */
+export const useIsPreviewMode = () => useBlockDesignerStore((state) => state.mode === 'preview');
+
+/** Get the current preview rotation preset */
+export const usePreviewRotationPreset = () =>
+  useBlockDesignerStore((state) => state.previewRotationPreset);

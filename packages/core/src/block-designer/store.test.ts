@@ -1227,4 +1227,125 @@ describe('BlockDesignerStore', () => {
       expect(store.canRedo()).toBe(true);
     });
   });
+
+  describe('preview mode', () => {
+    describe('enterPreview', () => {
+      it('sets mode to preview', () => {
+        const store = useBlockDesignerStore.getState();
+        store.enterPreview();
+
+        expect(useBlockDesignerStore.getState().mode).toBe('preview');
+      });
+
+      it('clears selectedShapeId when entering preview', () => {
+        const store = useBlockDesignerStore.getState();
+        store.addSquare({ row: 0, col: 0 });
+        const shapeId = useBlockDesignerStore.getState().block.shapes[0].id;
+        store.selectShape(shapeId);
+
+        expect(useBlockDesignerStore.getState().selectedShapeId).toBe(shapeId);
+
+        store.enterPreview();
+        expect(useBlockDesignerStore.getState().selectedShapeId).toBeNull();
+      });
+
+      it('clears activeFabricRole when entering preview', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setActiveFabricRole('feature');
+
+        expect(useBlockDesignerStore.getState().activeFabricRole).toBe('feature');
+
+        store.enterPreview();
+        expect(useBlockDesignerStore.getState().activeFabricRole).toBeNull();
+      });
+
+      it('clears flyingGeesePlacement when entering preview', () => {
+        const store = useBlockDesignerStore.getState();
+        store.startFlyingGeesePlacement({ row: 0, col: 0 });
+
+        expect(useBlockDesignerStore.getState().flyingGeesePlacement).not.toBeNull();
+
+        store.enterPreview();
+        expect(useBlockDesignerStore.getState().flyingGeesePlacement).toBeNull();
+      });
+    });
+
+    describe('exitPreview', () => {
+      it('sets mode to idle', () => {
+        const store = useBlockDesignerStore.getState();
+        store.enterPreview();
+        expect(useBlockDesignerStore.getState().mode).toBe('preview');
+
+        store.exitPreview();
+        expect(useBlockDesignerStore.getState().mode).toBe('idle');
+      });
+    });
+
+    describe('setPreviewRotationPreset', () => {
+      it('sets preset to all_same', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setPreviewRotationPreset('all_same');
+
+        expect(useBlockDesignerStore.getState().previewRotationPreset).toBe('all_same');
+      });
+
+      it('sets preset to alternating', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setPreviewRotationPreset('alternating');
+
+        expect(useBlockDesignerStore.getState().previewRotationPreset).toBe('alternating');
+      });
+
+      it('sets preset to pinwheel', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setPreviewRotationPreset('pinwheel');
+
+        expect(useBlockDesignerStore.getState().previewRotationPreset).toBe('pinwheel');
+      });
+
+      it('sets preset to random', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setPreviewRotationPreset('random');
+
+        expect(useBlockDesignerStore.getState().previewRotationPreset).toBe('random');
+      });
+    });
+
+    describe('previewRotationPreset initialization', () => {
+      it('defaults to all_same on initBlock', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setPreviewRotationPreset('pinwheel');
+        store.initBlock(3);
+
+        expect(useBlockDesignerStore.getState().previewRotationPreset).toBe('all_same');
+      });
+
+      it('resets to all_same on loadBlock', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setPreviewRotationPreset('random');
+        store.loadBlock({
+          id: 'test-id',
+          creatorId: 'creator-id',
+          derivedFromBlockId: null,
+          title: 'Test Block',
+          description: null,
+          hashtags: [],
+          gridSize: 3,
+          shapes: [],
+          previewPalette: {
+            roles: [
+              { id: 'background', name: 'Background', color: '#FFFFFF' },
+              { id: 'feature', name: 'Feature', color: '#1E3A5F' },
+            ],
+          },
+          status: 'draft',
+          publishedAt: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+
+        expect(useBlockDesignerStore.getState().previewRotationPreset).toBe('all_same');
+      });
+    });
+  });
 });

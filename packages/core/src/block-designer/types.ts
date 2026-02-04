@@ -247,6 +247,15 @@ export type DesignerMode =
   | 'paint_mode'
   | 'preview';
 
+/**
+ * Preview rotation presets for 3×3 block repeat visualization
+ * - all_same: All 9 blocks at 0° rotation
+ * - alternating: Checkerboard pattern (0°, 90°, 0°, 90°...)
+ * - pinwheel: 4-corner rotation pattern (0°, 90°, 180°, 270° around center)
+ * - random: Random rotation for each block instance
+ */
+export type PreviewRotationPreset = 'all_same' | 'alternating' | 'pinwheel' | 'random';
+
 /** State for tracking Flying Geese two-tap placement */
 export interface FlyingGeesePlacementState {
   firstCellPosition: GridPosition;

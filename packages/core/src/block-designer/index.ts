@@ -43,6 +43,7 @@ export type {
   // Designer state
   DesignerMode,
   FlyingGeesePlacementState,
+  PreviewRotationPreset,
 } from './types';
 
 // Schemas
@@ -114,6 +115,8 @@ export {
   useFlyingGeesePlacement,
   useCanUndo,
   useCanRedo,
+  useIsPreviewMode,
+  usePreviewRotationPreset,
   type BlockDesignerStore,
 } from './store';
 

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useBlockDesignerStore, DEFAULT_GRID_SIZE } from '@quillty/core';
 import { UndoRedoControls } from '@/components/block-designer/UndoRedoControls';
+import { PreviewControls } from '@/components/block-designer/PreviewControls';
 
 // Dynamic import for BlockCanvas (Konva requires browser APIs)
 const BlockCanvas = dynamic(
@@ -44,6 +45,7 @@ export default function BlockDesignerPage() {
   }, [initBlock, block.shapes.length, block.title]);
 
   const isPaintMode = mode === 'paint_mode';
+  const isPreviewMode = mode === 'preview';
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
@@ -79,6 +81,9 @@ export default function BlockDesignerPage() {
           <span className="text-sm text-gray-500">
             {block.gridSize}×{block.gridSize} grid
           </span>
+
+          {/* Preview mode controls */}
+          <PreviewControls />
 
           {/* Fabric panel toggle */}
           <button
@@ -136,9 +141,11 @@ export default function BlockDesignerPage() {
       {/* Footer hint */}
       <footer className="px-4 py-2 bg-white border-t border-gray-200">
         <p className="text-sm text-gray-500 text-center">
-          {isPaintMode
-            ? 'Tap shapes to paint them with the selected fabric'
-            : 'Tap a cell to add a shape • Scroll to zoom • Drag to pan'}
+          {isPreviewMode
+            ? 'Preview mode • Tap anywhere on the canvas to return to editing'
+            : isPaintMode
+              ? 'Tap shapes to paint them with the selected fabric'
+              : 'Tap a cell to add a shape • Scroll to zoom • Drag to pan'}
         </p>
       </footer>
     </div>

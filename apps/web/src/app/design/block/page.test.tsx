@@ -40,11 +40,16 @@ vi.mock('@quillty/core', () => ({
       redo: vi.fn(),
       canUndo: vi.fn(() => false),
       canRedo: vi.fn(() => false),
+      enterPreview: vi.fn(),
+      exitPreview: vi.fn(),
+      setPreviewRotationPreset: vi.fn(),
     };
     return selector ? selector(state) : state;
   }),
   useCanUndo: vi.fn(() => false),
   useCanRedo: vi.fn(() => false),
+  useIsPreviewMode: vi.fn(() => false),
+  usePreviewRotationPreset: vi.fn(() => 'all_same'),
   DEFAULT_GRID_SIZE: 3,
 }));
 

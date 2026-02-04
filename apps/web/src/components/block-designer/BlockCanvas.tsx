@@ -10,6 +10,7 @@ import { SquareRenderer } from './SquareRenderer';
 import { HstRenderer } from './HstRenderer';
 import { FlyingGeeseRenderer } from './FlyingGeeseRenderer';
 import { FloatingToolbar } from './FloatingToolbar';
+import { PreviewGrid } from './PreviewGrid';
 import { useBlockDesignerStore } from '@quillty/core';
 import type { GridPosition, SquareShape, HstShape, FlyingGeeseShape, Shape } from '@quillty/core';
 
@@ -54,6 +55,7 @@ export function BlockCanvas() {
 
   const { gridSize, shapes, previewPalette } = block;
   const isPaintMode = mode === 'paint_mode';
+  const isPreviewMode = mode === 'preview';
 
   // Canvas state - start with 0 to force measurement
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -462,7 +464,8 @@ export function BlockCanvas() {
           <div className="text-gray-500">Initializing canvas...</div>
         </div>
       )}
-      {hasValidDimensions && (
+      {hasValidDimensions && isPreviewMode && <PreviewGrid />}
+      {hasValidDimensions && !isPreviewMode && (
         <>
           <Stage
             ref={stageRef}
