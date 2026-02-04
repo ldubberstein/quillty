@@ -124,6 +124,7 @@ export function extractHashtags(description: string): string[] {
 
 /**
  * Validates that a block has enough content to be published.
+ * All grid cells must have a shape covering them.
  *
  * @param block - The block to validate
  * @returns Object with valid flag and optional error message
@@ -136,6 +137,33 @@ export function validateBlockForPublish(block: Block): {
     return {
       valid: false,
       error: 'Add at least one shape before publishing',
+    };
+  }
+
+  // Check that all grid cells are covered by shapes
+  const gridSize = block.gridSize;
+  const totalCells = gridSize * gridSize;
+
+  // Create a set to track covered cells
+  const coveredCells = new Set<string>();
+
+  // Mark all cells covered by each shape
+  for (const shape of block.shapes) {
+    const { row: startRow, col: startCol } = shape.position;
+    const { rows: spanRows, cols: spanCols } = shape.span;
+
+    for (let r = startRow; r < startRow + spanRows; r++) {
+      for (let c = startCol; c < startCol + spanCols; c++) {
+        coveredCells.add(`${r},${c}`);
+      }
+    }
+  }
+
+  const emptyCells = totalCells - coveredCells.size;
+  if (emptyCells > 0) {
+    return {
+      valid: false,
+      error: `${emptyCells} empty cell${emptyCells > 1 ? 's' : ''} remaining. Fill all cells to publish.`,
     };
   }
 
