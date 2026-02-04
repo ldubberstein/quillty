@@ -42,8 +42,8 @@ function TestSidebar({ defaultPanel }: { defaultPanel?: SidebarPanel | null }) {
 
 describe('SidebarContext', () => {
   describe('default behavior', () => {
-    it('expands colors panel by default', () => {
-      render(<TestSidebar />);
+    it('expands colors panel when set as default', () => {
+      render(<TestSidebar defaultPanel="colors" />);
 
       expect(screen.getByTestId('colors-content')).toBeInTheDocument();
       expect(screen.queryByTestId('borders-content')).not.toBeInTheDocument();

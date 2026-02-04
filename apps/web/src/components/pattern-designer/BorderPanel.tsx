@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useState, useRef, useEffect } from 'react';
-import { Plus, Trash2, ChevronDown, ChevronRight, ChevronUp } from 'lucide-react';
+import { useCallback, useState } from 'react';
+import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import {
   usePatternDesignerStore,
   useBordersEnabled,
@@ -15,6 +15,7 @@ import {
 } from '@quillty/core';
 import type { Border, BorderCornerStyle, FabricRoleId } from '@quillty/core';
 import { useSidebarPanel } from './SidebarContext';
+import { ColorSwatch, CollapsiblePanel } from '../shared';
 
 /** Corner style options with labels */
 const CORNER_STYLES: { value: BorderCornerStyle; label: string }[] = [
@@ -75,111 +76,90 @@ export function BorderPanel() {
     return `${borders.length} · ${finalWidth}" × ${finalHeight}"`;
   };
 
+  // Header actions: toggle switch when expanded and borders exist
+  const headerActions = borders.length > 0 ? (
+    <button
+      onClick={() => setBordersEnabled(!bordersEnabled)}
+      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${
+        bordersEnabled ? 'bg-blue-600' : 'bg-gray-300'
+      }`}
+      aria-label={bordersEnabled ? 'Hide borders' : 'Show borders'}
+      title={bordersEnabled ? 'Hide borders' : 'Show borders'}
+    >
+      <span
+        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+          bordersEnabled ? 'translate-x-5' : 'translate-x-1'
+        }`}
+      />
+    </button>
+  ) : undefined;
+
   return (
-    <div className="p-3 border-t border-gray-200">
-      {/* Collapsible header - use div with flex to avoid nested buttons */}
-      <div className="flex items-center justify-between">
+    <CollapsiblePanel
+      title="Borders"
+      isExpanded={isExpanded}
+      onToggle={toggle}
+      summary={getSummary()}
+      headerActions={headerActions}
+    >
+      {/* Border list - show when borders exist and are enabled */}
+      {bordersEnabled && borders.length > 0 && (
+        <div className="space-y-2 mb-3">
+          {borders.map((border, index) => (
+            <BorderListItem
+              key={border.id}
+              border={border}
+              index={index}
+              isSelected={selectedBorderId === border.id}
+              onSelect={() => handleSelectBorder(border.id)}
+              onRemove={() => handleRemoveBorder(border.id)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Add border button - always visible when can add */}
+      {canAddBorder && (
         <button
-          onClick={toggle}
-          className="flex items-center gap-1.5 group"
+          onClick={handleAddBorder}
+          className="w-full px-3 py-2 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center justify-center gap-1"
         >
-          {isExpanded ? (
-            <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
-          ) : (
-            <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
-          )}
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            Borders
-          </h3>
+          <Plus className="w-3.5 h-3.5" />
+          {borders.length === 0 ? 'Add Border' : `Add Border (${borders.length}/${MAX_BORDERS})`}
         </button>
+      )}
 
-        {/* Collapsed summary */}
-        {!isExpanded && (
-          <span className="text-xs text-gray-400">{getSummary()}</span>
-        )}
+      {/* Empty state hint - only when no borders */}
+      {borders.length === 0 && (
+        <p className="text-xs text-gray-400 text-center mt-2">
+          Add a border frame around your quilt
+        </p>
+      )}
 
-        {/* Toggle switch - only show when expanded and borders exist */}
-        {isExpanded && borders.length > 0 && (
-          <button
-            onClick={() => setBordersEnabled(!bordersEnabled)}
-            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${
-              bordersEnabled ? 'bg-blue-600' : 'bg-gray-300'
-            }`}
-            aria-label={bordersEnabled ? 'Hide borders' : 'Show borders'}
-            title={bordersEnabled ? 'Hide borders' : 'Show borders'}
-          >
-            <span
-              className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
-                bordersEnabled ? 'translate-x-5' : 'translate-x-1'
-              }`}
-            />
-          </button>
-        )}
-      </div>
+      {/* Selected border editor */}
+      {bordersEnabled && selectedBorderId && (
+        <BorderEditor
+          border={borders.find((b) => b.id === selectedBorderId)!}
+          palette={palette}
+          onUpdate={updateBorder}
+        />
+      )}
 
-      {/* Expanded content */}
-      {isExpanded && (
-        <div className="mt-3">
-          {/* Border list - show when borders exist and are enabled */}
-          {bordersEnabled && borders.length > 0 && (
-            <div className="space-y-2 mb-3">
-              {borders.map((border, index) => (
-                <BorderListItem
-                  key={border.id}
-                  border={border}
-                  index={index}
-                  isSelected={selectedBorderId === border.id}
-                  onSelect={() => handleSelectBorder(border.id)}
-                  onRemove={() => handleRemoveBorder(border.id)}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Add border button - always visible when can add */}
-          {canAddBorder && (
-            <button
-              onClick={handleAddBorder}
-              className="w-full px-3 py-2 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center justify-center gap-1"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              {borders.length === 0 ? 'Add Border' : `Add Border (${borders.length}/${MAX_BORDERS})`}
-            </button>
-          )}
-
-          {/* Empty state hint - only when no borders */}
-          {borders.length === 0 && (
-            <p className="text-xs text-gray-400 text-center mt-2">
-              Add a border frame around your quilt
+      {/* Final size display - only when borders exist */}
+      {borders.length > 0 && (
+        <div className="mt-4 pt-3 border-t border-gray-100">
+          <p className="text-xs text-gray-500 mb-1">Final quilt size:</p>
+          <p className="text-sm font-medium text-gray-800">
+            {finalWidth}" × {finalHeight}"
+          </p>
+          {!bordersEnabled && (
+            <p className="text-xs text-gray-400 mt-1 italic">
+              (borders hidden)
             </p>
-          )}
-
-          {/* Selected border editor */}
-          {bordersEnabled && selectedBorderId && (
-            <BorderEditor
-              border={borders.find((b) => b.id === selectedBorderId)!}
-              palette={palette}
-              onUpdate={updateBorder}
-            />
-          )}
-
-          {/* Final size display - only when borders exist */}
-          {borders.length > 0 && (
-            <div className="mt-4 pt-3 border-t border-gray-100">
-              <p className="text-xs text-gray-500 mb-1">Final quilt size:</p>
-              <p className="text-sm font-medium text-gray-800">
-                {finalWidth}" × {finalHeight}"
-              </p>
-              {!bordersEnabled && (
-                <p className="text-xs text-gray-400 mt-1 italic">
-                  (borders hidden)
-                </p>
-              )}
-            </div>
           )}
         </div>
       )}
-    </div>
+    </CollapsiblePanel>
   );
 }
 
@@ -208,10 +188,14 @@ function BorderListItem({
       onClick={onSelect}
     >
       {/* Color preview */}
-      <div
-        className="w-6 h-6 rounded border border-gray-300 flex-shrink-0"
-        style={{ backgroundColor: color }}
-      />
+      <div className="flex-shrink-0">
+        <ColorSwatch
+          color={color}
+          size="sm"
+          className="w-6 h-6"
+          aria-label={`Border ${index + 1} color`}
+        />
+      </div>
 
       {/* Border info */}
       <div className="flex-1 min-w-0">
@@ -255,15 +239,6 @@ function BorderEditor({
   palette: { roles: Array<{ id: string; name: string; color: string }> };
   onUpdate: (borderId: string, updates: Partial<Omit<Border, 'id'>>) => void;
 }) {
-  const [editingColor, setEditingColor] = useState<'main' | 'cornerstone' | null>(null);
-  const colorInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (editingColor && colorInputRef.current) {
-      colorInputRef.current.click();
-    }
-  }, [editingColor]);
-
   const handleWidthChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = parseFloat(e.target.value);
@@ -298,11 +273,6 @@ function BorderEditor({
     },
     [border.id, onUpdate]
   );
-
-  const mainColor = palette.roles.find((r) => r.id === border.fabricRole)?.color ?? '#CCCCCC';
-  const cornerstoneColor = border.cornerstoneFabricRole
-    ? palette.roles.find((r) => r.id === border.cornerstoneFabricRole)?.color ?? '#CCCCCC'
-    : '#CCCCCC';
 
   return (
     <div className="mt-3 p-3 bg-gray-50 rounded-lg space-y-3">
@@ -351,16 +321,13 @@ function BorderEditor({
         </label>
         <div className="flex gap-2">
           {palette.roles.map((role) => (
-            <button
+            <ColorSwatch
               key={role.id}
+              color={role.color}
+              size="md"
+              selected={border.fabricRole === role.id}
               onClick={() => handleFabricRoleChange(role.id)}
-              className={`w-8 h-8 rounded border-2 transition-all ${
-                border.fabricRole === role.id
-                  ? 'border-blue-500 scale-110'
-                  : 'border-gray-300 hover:scale-105'
-              }`}
-              style={{ backgroundColor: role.color }}
-              title={role.name}
+              aria-label={role.name}
             />
           ))}
         </div>
@@ -374,16 +341,13 @@ function BorderEditor({
           </label>
           <div className="flex gap-2">
             {palette.roles.map((role) => (
-              <button
+              <ColorSwatch
                 key={role.id}
+                color={role.color}
+                size="md"
+                selected={border.cornerstoneFabricRole === role.id}
                 onClick={() => handleCornerstoneFabricChange(role.id)}
-                className={`w-8 h-8 rounded border-2 transition-all ${
-                  border.cornerstoneFabricRole === role.id
-                    ? 'border-blue-500 scale-110'
-                    : 'border-gray-300 hover:scale-105'
-                }`}
-                style={{ backgroundColor: role.color }}
-                title={role.name}
+                aria-label={role.name}
               />
             ))}
           </div>

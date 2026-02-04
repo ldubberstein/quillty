@@ -4,10 +4,12 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { PanelRight } from 'lucide-react';
 import { useBlockDesignerStore, DEFAULT_GRID_SIZE } from '@quillty/core';
 import { UndoRedoControls } from '@/components/block-designer/UndoRedoControls';
 import { PreviewControls } from '@/components/block-designer/PreviewControls';
 import { SaveControls } from '@/components/block-designer/SaveControls';
+import { SidebarProvider } from '@/components/shared';
 
 // Dynamic import for BlockCanvas (Konva requires browser APIs)
 const BlockCanvas = dynamic(
@@ -93,26 +95,18 @@ export default function BlockDesignerPage() {
           {/* Preview mode controls */}
           <PreviewControls />
 
-          {/* Fabric panel toggle */}
+          {/* Sidebar toggle */}
           <button
             onClick={() => setShowFabricPanel((prev) => !prev)}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+            className={`p-2 rounded-lg transition-colors ${
               showFabricPanel
-                ? 'text-white bg-blue-500 hover:bg-blue-600'
-                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                : 'text-gray-500 hover:bg-gray-100'
             }`}
-            aria-label={showFabricPanel ? 'Hide fabric panel' : 'Show fabric panel'}
+            aria-label={showFabricPanel ? 'Hide sidebar' : 'Show sidebar'}
+            title={showFabricPanel ? 'Hide sidebar' : 'Show sidebar'}
           >
-            <span className="flex items-center gap-2">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Fabrics
-            </span>
+            <PanelRight className="w-5 h-5" />
           </button>
 
           {/* Save and Publish controls */}
@@ -127,10 +121,12 @@ export default function BlockDesignerPage() {
           <BlockCanvas />
         </div>
 
-        {/* Fabric Panel Sidebar */}
+        {/* Sidebar */}
         {showFabricPanel && (
-          <aside className="w-64 flex-shrink-0 bg-gray-50 border-l border-gray-200 p-4 overflow-y-auto">
-            <FabricPanel />
+          <aside className="w-48 flex-shrink-0 bg-white border-l border-gray-200 overflow-y-auto">
+            <SidebarProvider defaultPanels={['fabrics']} mode="multi">
+              <FabricPanel />
+            </SidebarProvider>
           </aside>
         )}
       </main>

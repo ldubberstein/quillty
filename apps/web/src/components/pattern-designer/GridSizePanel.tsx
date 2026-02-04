@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
 import {
   usePatternDesignerStore,
   useGridSize,
@@ -13,6 +12,7 @@ import {
   useGridResizePosition,
 } from '@quillty/core';
 import { useSidebarPanel } from './SidebarContext';
+import { CollapsiblePanel } from '../shared';
 
 /**
  * GridSizePanel - Right sidebar panel for grid resize controls
@@ -76,143 +76,125 @@ export function GridSizePanel() {
     setPreviewingGridResize(null);
   }, [setPreviewingGridResize]);
 
+  // Build collapsed summary
+  const collapsedSummary = (
+    <span className="tabular-nums">{gridSize.rows}×{gridSize.cols}</span>
+  );
+
   return (
-    <div className="p-3 border-t border-gray-200 overflow-hidden">
-      {/* Collapsible header */}
-      <button
-        onClick={toggle}
-        className="w-full flex items-center justify-between group"
-      >
-        <div className="flex items-center gap-1.5">
-          {isExpanded ? (
-            <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
-          ) : (
-            <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
-          )}
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            Grid Size
-          </h3>
-        </div>
-
-        {/* Collapsed summary */}
-        {!isExpanded && (
-          <span className="text-xs text-gray-400 tabular-nums">
-            {gridSize.rows}×{gridSize.cols}
-          </span>
-        )}
-      </button>
-
-      {/* Expanded content */}
-      {isExpanded && (
-        <div className="mt-3">
-          {isGridLarge && (
-            <p className="text-xs text-amber-600 mb-3">
-              Large grids may affect performance
-            </p>
-          )}
-
-          {/* Row stepper */}
-          <div className="flex items-center mb-3">
-            <span className="text-sm text-gray-600 w-[68px] shrink-0">Rows</span>
-            <div className="flex items-center">
-              <button
-                onClick={handleRemoveRow}
-                onMouseEnter={() => canRemoveRow && setPreviewingGridResize('remove-row')}
-                onMouseLeave={clearPreview}
-                disabled={!canRemoveRow}
-                className="w-6 h-6 flex items-center justify-center rounded bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                title={`Remove ${gridResizePosition === 'start' ? 'top' : 'bottom'} row`}
-                aria-label="Remove row"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                </svg>
-              </button>
-              <span className="w-7 text-center text-sm font-medium text-gray-800 tabular-nums">
-                {gridSize.rows}
-              </span>
-              <button
-                onClick={handleAddRow}
-                onMouseEnter={() => canAddRow && setPreviewingGridResize('add-row')}
-                onMouseLeave={clearPreview}
-                disabled={!canAddRow}
-                className="w-6 h-6 flex items-center justify-center rounded bg-blue-50 text-blue-600 hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                title={`Add row at ${gridResizePosition === 'start' ? 'top' : 'bottom'}`}
-                aria-label="Add row"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          {/* Column stepper */}
-          <div className="flex items-center mb-4">
-            <span className="text-sm text-gray-600 w-[68px] shrink-0">Columns</span>
-            <div className="flex items-center">
-              <button
-                onClick={handleRemoveColumn}
-                onMouseEnter={() => canRemoveColumn && setPreviewingGridResize('remove-col')}
-                onMouseLeave={clearPreview}
-                disabled={!canRemoveColumn}
-                className="w-6 h-6 flex items-center justify-center rounded bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                title={`Remove ${gridResizePosition === 'start' ? 'left' : 'right'} column`}
-                aria-label="Remove column"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                </svg>
-              </button>
-              <span className="w-7 text-center text-sm font-medium text-gray-800 tabular-nums">
-                {gridSize.cols}
-              </span>
-              <button
-                onClick={handleAddColumn}
-                onMouseEnter={() => canAddColumn && setPreviewingGridResize('add-col')}
-                onMouseLeave={clearPreview}
-                disabled={!canAddColumn}
-                className="w-6 h-6 flex items-center justify-center rounded bg-blue-50 text-blue-600 hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                title={`Add column at ${gridResizePosition === 'start' ? 'left' : 'right'}`}
-                aria-label="Add column"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          {/* Position toggle */}
-          <div className="space-y-2">
-            <p className="text-xs text-gray-500">Add/remove at:</p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setGridResizePosition('start')}
-                className={`flex-1 px-2 py-1.5 text-xs font-medium rounded transition-colors ${
-                  gridResizePosition === 'start'
-                    ? 'bg-blue-100 text-blue-700 ring-1 ring-blue-300'
-                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                Start
-                <span className="block text-[10px] opacity-70">(top/left)</span>
-              </button>
-              <button
-                onClick={() => setGridResizePosition('end')}
-                className={`flex-1 px-2 py-1.5 text-xs font-medium rounded transition-colors ${
-                  gridResizePosition === 'end'
-                    ? 'bg-blue-100 text-blue-700 ring-1 ring-blue-300'
-                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                End
-                <span className="block text-[10px] opacity-70">(bottom/right)</span>
-              </button>
-            </div>
-          </div>
-        </div>
+    <CollapsiblePanel
+      title="Grid Size"
+      isExpanded={isExpanded}
+      onToggle={toggle}
+      summary={collapsedSummary}
+      className="overflow-hidden"
+    >
+      {isGridLarge && (
+        <p className="text-xs text-amber-600 mb-3">
+          Large grids may affect performance
+        </p>
       )}
-    </div>
+
+      {/* Row stepper */}
+      <div className="flex items-center mb-3">
+        <span className="text-sm text-gray-600 w-[68px] shrink-0">Rows</span>
+        <div className="flex items-center">
+          <button
+            onClick={handleRemoveRow}
+            onMouseEnter={() => canRemoveRow && setPreviewingGridResize('remove-row')}
+            onMouseLeave={clearPreview}
+            disabled={!canRemoveRow}
+            className="w-6 h-6 flex items-center justify-center rounded bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            title={`Remove ${gridResizePosition === 'start' ? 'top' : 'bottom'} row`}
+            aria-label="Remove row"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+            </svg>
+          </button>
+          <span className="w-7 text-center text-sm font-medium text-gray-800 tabular-nums">
+            {gridSize.rows}
+          </span>
+          <button
+            onClick={handleAddRow}
+            onMouseEnter={() => canAddRow && setPreviewingGridResize('add-row')}
+            onMouseLeave={clearPreview}
+            disabled={!canAddRow}
+            className="w-6 h-6 flex items-center justify-center rounded bg-blue-50 text-blue-600 hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            title={`Add row at ${gridResizePosition === 'start' ? 'top' : 'bottom'}`}
+            aria-label="Add row"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Column stepper */}
+      <div className="flex items-center mb-4">
+        <span className="text-sm text-gray-600 w-[68px] shrink-0">Columns</span>
+        <div className="flex items-center">
+          <button
+            onClick={handleRemoveColumn}
+            onMouseEnter={() => canRemoveColumn && setPreviewingGridResize('remove-col')}
+            onMouseLeave={clearPreview}
+            disabled={!canRemoveColumn}
+            className="w-6 h-6 flex items-center justify-center rounded bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            title={`Remove ${gridResizePosition === 'start' ? 'left' : 'right'} column`}
+            aria-label="Remove column"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+            </svg>
+          </button>
+          <span className="w-7 text-center text-sm font-medium text-gray-800 tabular-nums">
+            {gridSize.cols}
+          </span>
+          <button
+            onClick={handleAddColumn}
+            onMouseEnter={() => canAddColumn && setPreviewingGridResize('add-col')}
+            onMouseLeave={clearPreview}
+            disabled={!canAddColumn}
+            className="w-6 h-6 flex items-center justify-center rounded bg-blue-50 text-blue-600 hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            title={`Add column at ${gridResizePosition === 'start' ? 'left' : 'right'}`}
+            aria-label="Add column"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Position toggle */}
+      <div className="space-y-2">
+        <p className="text-xs text-gray-500">Add/remove at:</p>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setGridResizePosition('start')}
+            className={`flex-1 px-2 py-1.5 text-xs font-medium rounded transition-colors ${
+              gridResizePosition === 'start'
+                ? 'bg-blue-100 text-blue-700 ring-1 ring-blue-300'
+                : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Start
+            <span className="block text-[10px] opacity-70">(top/left)</span>
+          </button>
+          <button
+            onClick={() => setGridResizePosition('end')}
+            className={`flex-1 px-2 py-1.5 text-xs font-medium rounded transition-colors ${
+              gridResizePosition === 'end'
+                ? 'bg-blue-100 text-blue-700 ring-1 ring-blue-300'
+                : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            End
+            <span className="block text-[10px] opacity-70">(bottom/right)</span>
+          </button>
+        </div>
+      </div>
+    </CollapsiblePanel>
   );
 }
