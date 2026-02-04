@@ -6,5 +6,3 @@ export { BlockThumbnail } from './BlockThumbnail';
 export { BlockLibraryPanel } from './BlockLibraryPanel';
 export { BlockInstanceRenderer } from './BlockInstanceRenderer';
 export { PalettePanel } from './PalettePanel';
-export { GridResizeControls } from './GridResizeControls';
-export { GridSizePanel } from './GridSizePanel';

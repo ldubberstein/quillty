@@ -13,7 +13,6 @@ import {
   useGridSize,
   useSelectedLibraryBlockId,
   usePatternPalette,
-  usePreviewingGridResize,
 } from '@quillty/core';
 import type { GridPosition, Shape, BlockInstance } from '@quillty/core';
 
@@ -61,7 +60,6 @@ export function PatternCanvas() {
   const blockCache = usePatternDesignerStore((state) => state.blockCache);
   const selectedBlockInstanceId = usePatternDesignerStore((state) => state.selectedBlockInstanceId);
   const isPreviewingFillEmpty = usePatternDesignerStore((state) => state.isPreviewingFillEmpty);
-  const previewingGridResize = usePreviewingGridResize();
   const addBlockInstance = usePatternDesignerStore((state) => state.addBlockInstance);
   const isPositionOccupied = usePatternDesignerStore((state) => state.isPositionOccupied);
   const clearSelections = usePatternDesignerStore((state) => state.clearSelections);
@@ -517,64 +515,6 @@ export function PatternCanvas() {
                       />
                     ))}
                 </Group>
-              )}
-
-              {/* Ghost preview for grid resize when hovering sidebar buttons */}
-              {previewingGridResize === 'row-top' && (
-                <Rect
-                  x={gridOffsetX}
-                  y={gridOffsetY - cellSize}
-                  width={gridPixelWidth}
-                  height={cellSize}
-                  fill="#3B82F6"
-                  opacity={0.3}
-                  stroke="#3B82F6"
-                  strokeWidth={2}
-                  dash={[8, 4]}
-                  listening={false}
-                />
-              )}
-              {previewingGridResize === 'row-bottom' && (
-                <Rect
-                  x={gridOffsetX}
-                  y={gridOffsetY + gridPixelHeight}
-                  width={gridPixelWidth}
-                  height={cellSize}
-                  fill="#3B82F6"
-                  opacity={0.3}
-                  stroke="#3B82F6"
-                  strokeWidth={2}
-                  dash={[8, 4]}
-                  listening={false}
-                />
-              )}
-              {previewingGridResize === 'col-left' && (
-                <Rect
-                  x={gridOffsetX - cellSize}
-                  y={gridOffsetY}
-                  width={cellSize}
-                  height={gridPixelHeight}
-                  fill="#3B82F6"
-                  opacity={0.3}
-                  stroke="#3B82F6"
-                  strokeWidth={2}
-                  dash={[8, 4]}
-                  listening={false}
-                />
-              )}
-              {previewingGridResize === 'col-right' && (
-                <Rect
-                  x={gridOffsetX + gridPixelWidth}
-                  y={gridOffsetY}
-                  width={cellSize}
-                  height={gridPixelHeight}
-                  fill="#3B82F6"
-                  opacity={0.3}
-                  stroke="#3B82F6"
-                  strokeWidth={2}
-                  dash={[8, 4]}
-                  listening={false}
-                />
               )}
             </Layer>
           </Stage>
