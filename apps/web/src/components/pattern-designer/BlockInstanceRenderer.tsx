@@ -5,6 +5,7 @@ import { Group, Rect, Line } from 'react-konva';
 import type {
   BlockInstance,
   Palette,
+  PaletteOverrides,
   Shape,
   SquareShape,
   HstShape,
@@ -32,8 +33,20 @@ interface BlockInstanceRendererProps {
   onClick?: (instanceId: string) => void;
 }
 
-/** Helper to get color for a fabric role from palette */
-function getColor(palette: Palette, roleId: string): string {
+/**
+ * Helper to get color for a fabric role
+ * Checks instance overrides first, then falls back to pattern palette
+ */
+function getColor(
+  palette: Palette,
+  roleId: string,
+  instanceOverrides?: PaletteOverrides
+): string {
+  // Check instance override first
+  if (instanceOverrides?.[roleId]) {
+    return instanceOverrides[roleId];
+  }
+  // Fall back to pattern palette
   const role = palette.roles.find((r) => r.id === roleId);
   return role?.color ?? '#CCCCCC';
 }
@@ -42,9 +55,10 @@ function getColor(palette: Palette, roleId: string): string {
 function renderSquare(
   shape: SquareShape,
   unitSize: number,
-  palette: Palette
+  palette: Palette,
+  instanceOverrides?: PaletteOverrides
 ): JSX.Element {
-  const color = getColor(palette, shape.fabricRole);
+  const color = getColor(palette, shape.fabricRole, instanceOverrides);
   const x = shape.position.col * unitSize;
   const y = shape.position.row * unitSize;
 
@@ -65,10 +79,11 @@ function renderSquare(
 function renderHst(
   shape: HstShape,
   unitSize: number,
-  palette: Palette
+  palette: Palette,
+  instanceOverrides?: PaletteOverrides
 ): JSX.Element {
-  const primaryColor = getColor(palette, shape.fabricRole);
-  const secondaryColor = getColor(palette, shape.secondaryFabricRole);
+  const primaryColor = getColor(palette, shape.fabricRole, instanceOverrides);
+  const secondaryColor = getColor(palette, shape.secondaryFabricRole, instanceOverrides);
   const x = shape.position.col * unitSize;
   const y = shape.position.row * unitSize;
 
@@ -107,11 +122,12 @@ function renderHst(
 function renderFlyingGeese(
   shape: FlyingGeeseShape,
   unitSize: number,
-  palette: Palette
+  palette: Palette,
+  instanceOverrides?: PaletteOverrides
 ): JSX.Element {
-  const gooseColor = getColor(palette, shape.partFabricRoles.goose);
-  const sky1Color = getColor(palette, shape.partFabricRoles.sky1);
-  const sky2Color = getColor(palette, shape.partFabricRoles.sky2);
+  const gooseColor = getColor(palette, shape.partFabricRoles.goose, instanceOverrides);
+  const sky1Color = getColor(palette, shape.partFabricRoles.sky1, instanceOverrides);
+  const sky2Color = getColor(palette, shape.partFabricRoles.sky2, instanceOverrides);
   const x = shape.position.col * unitSize;
   const y = shape.position.row * unitSize;
 
@@ -194,21 +210,24 @@ export function BlockInstanceRenderer({
   const transformOffsetX = cellSize / 2;
   const transformOffsetY = cellSize / 2;
 
+  // Check if this instance has color overrides
+  const hasOverrides = instance.paletteOverrides && Object.keys(instance.paletteOverrides).length > 0;
+
   // Render all shapes
   const renderedShapes = useMemo(() => {
     return shapes.map((shape) => {
       switch (shape.type) {
         case 'square':
-          return renderSquare(shape as SquareShape, unitSize, palette);
+          return renderSquare(shape as SquareShape, unitSize, palette, instance.paletteOverrides);
         case 'hst':
-          return renderHst(shape as HstShape, unitSize, palette);
+          return renderHst(shape as HstShape, unitSize, palette, instance.paletteOverrides);
         case 'flying_geese':
-          return renderFlyingGeese(shape as FlyingGeeseShape, unitSize, palette);
+          return renderFlyingGeese(shape as FlyingGeeseShape, unitSize, palette, instance.paletteOverrides);
         default:
           return null;
       }
     });
-  }, [shapes, unitSize, palette]);
+  }, [shapes, unitSize, palette, instance.paletteOverrides]);
 
   const handleClick = () => {
     onClick?.(instance.id);
@@ -251,6 +270,20 @@ export function BlockInstanceRenderer({
           fill="transparent"
           listening={false}
         />
+      )}
+
+      {/* Override indicator - purple dot for blocks with custom colors */}
+      {hasOverrides && (
+        <Group x={cellSize - 12} y={4} listening={false}>
+          <Rect
+            width={8}
+            height={8}
+            fill="#8B5CF6"
+            cornerRadius={4}
+            stroke="#FFFFFF"
+            strokeWidth={1}
+          />
+        </Group>
       )}
     </Group>
   );

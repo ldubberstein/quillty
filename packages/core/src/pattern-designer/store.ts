@@ -208,6 +208,16 @@ interface PatternDesignerActions {
   /** Check if a role can be removed (not the last one) */
   canRemoveRole: () => boolean;
 
+  // Instance palette overrides
+  /** Set a color override for a specific fabric role on a block instance */
+  setInstanceRoleColor: (instanceId: UUID, roleId: FabricRoleId, color: string) => void;
+  /** Reset a single fabric role override to use pattern palette */
+  resetInstanceRoleColor: (instanceId: UUID, roleId: FabricRoleId) => void;
+  /** Reset all color overrides for a block instance to pattern palette */
+  resetInstancePalette: (instanceId: UUID) => void;
+  /** Place a block with pre-set palette overrides (for variant placement) */
+  placeBlockWithOverrides: (blockId: UUID, position: GridPosition, overrides: Record<string, string>, rotation?: Rotation) => UUID;
+
   // Grid management
   /** Add a row to the grid (uses gridResizePosition for placement) */
   addRow: () => boolean;
@@ -674,15 +684,47 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
       if (!role) return;
 
       const prevColor = role.color;
+      const prevColorLower = prevColor.toLowerCase();
+
+      // Find all overrides that match the old color (these will be updated too)
+      const affectedOverrides: Array<{ instanceId: UUID; roleId: FabricRoleId; prevColor: string }> = [];
+      for (const instance of get().pattern.blockInstances) {
+        if (instance.paletteOverrides) {
+          for (const [overrideRoleId, overrideColor] of Object.entries(instance.paletteOverrides)) {
+            if (overrideColor.toLowerCase() === prevColorLower) {
+              affectedOverrides.push({
+                instanceId: instance.id,
+                roleId: overrideRoleId,
+                prevColor: overrideColor,
+              });
+            }
+          }
+        }
+      }
 
       set((state) => {
         const stateRole = state.pattern.palette.roles.find((r) => r.id === roleId);
         if (stateRole) {
           stateRole.color = color;
+
+          // Update all affected overrides to the new color
+          for (const affected of affectedOverrides) {
+            const instance = state.pattern.blockInstances.find((b) => b.id === affected.instanceId);
+            if (instance?.paletteOverrides) {
+              instance.paletteOverrides[affected.roleId] = color;
+            }
+          }
+
           state.pattern.updatedAt = getCurrentTimestamp();
           state.isDirty = true;
-          // Record operation for undo
-          const operation: PatternOperation = { type: 'update_palette', roleId, prevColor, nextColor: color };
+          // Record operation for undo (include affected overrides)
+          const operation: PatternOperation = {
+            type: 'update_palette',
+            roleId,
+            prevColor,
+            nextColor: color,
+            affectedOverrides: affectedOverrides.length > 0 ? affectedOverrides : undefined,
+          };
           state.undoManager = recordOperation(state.undoManager, operation);
         }
       });
@@ -694,6 +736,16 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
       // Enforce maximum
       if (palette.roles.length >= MAX_PALETTE_ROLES) {
         return '';
+      }
+
+      // If a color is provided, check if it already exists in the palette (case-insensitive)
+      // Return the existing role ID instead of creating a duplicate
+      if (color) {
+        const colorLower = color.toLowerCase();
+        const existingRole = palette.roles.find((r) => r.color.toLowerCase() === colorLower);
+        if (existingRole) {
+          return existingRole.id;
+        }
       }
 
       // Generate unique ID
@@ -777,6 +829,145 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
 
     canRemoveRole: () => {
       return get().pattern.palette.roles.length > 1;
+    },
+
+    // Instance palette overrides
+    setInstanceRoleColor: (instanceId, roleId, color) => {
+      const instance = get().pattern.blockInstances.find((b) => b.id === instanceId);
+      if (!instance) return;
+
+      const prevColor = instance.paletteOverrides?.[roleId] ?? null;
+      const palette = get().pattern.palette;
+
+      // Check if this color already exists in the palette (case-insensitive)
+      const colorLower = color.toLowerCase();
+      const existingRole = palette.roles.find((r) => r.color.toLowerCase() === colorLower);
+
+      // If color doesn't exist in palette and we have room, add it as a new role
+      // Do this before recording the override operation so it's a separate undo step
+      if (!existingRole && palette.roles.length < MAX_PALETTE_ROLES) {
+        get().addRole(undefined, color);
+      }
+
+      set((state) => {
+        const stateInstance = state.pattern.blockInstances.find((b) => b.id === instanceId);
+        if (stateInstance) {
+          // Initialize paletteOverrides if needed
+          if (!stateInstance.paletteOverrides) {
+            stateInstance.paletteOverrides = {};
+          }
+          stateInstance.paletteOverrides[roleId] = color;
+          state.pattern.updatedAt = getCurrentTimestamp();
+          state.isDirty = true;
+
+          // Record operation for undo
+          const operation: PatternOperation = {
+            type: 'update_instance_palette',
+            instanceId,
+            roleId,
+            prevColor,
+            nextColor: color,
+          };
+          state.undoManager = recordOperation(state.undoManager, operation);
+        }
+      });
+    },
+
+    resetInstanceRoleColor: (instanceId, roleId) => {
+      const instance = get().pattern.blockInstances.find((b) => b.id === instanceId);
+      if (!instance || !instance.paletteOverrides?.[roleId]) return;
+
+      const prevColor = instance.paletteOverrides[roleId];
+
+      set((state) => {
+        const stateInstance = state.pattern.blockInstances.find((b) => b.id === instanceId);
+        if (stateInstance && stateInstance.paletteOverrides) {
+          delete stateInstance.paletteOverrides[roleId];
+          // Clean up empty overrides object
+          if (Object.keys(stateInstance.paletteOverrides).length === 0) {
+            delete stateInstance.paletteOverrides;
+          }
+          state.pattern.updatedAt = getCurrentTimestamp();
+          state.isDirty = true;
+
+          // Record operation for undo
+          const operation: PatternOperation = {
+            type: 'update_instance_palette',
+            instanceId,
+            roleId,
+            prevColor,
+            nextColor: null,
+          };
+          state.undoManager = recordOperation(state.undoManager, operation);
+        }
+      });
+    },
+
+    resetInstancePalette: (instanceId) => {
+      const instance = get().pattern.blockInstances.find((b) => b.id === instanceId);
+      if (!instance || !instance.paletteOverrides) return;
+
+      const prevOverrides = { ...instance.paletteOverrides };
+
+      set((state) => {
+        const stateInstance = state.pattern.blockInstances.find((b) => b.id === instanceId);
+        if (stateInstance) {
+          delete stateInstance.paletteOverrides;
+          state.pattern.updatedAt = getCurrentTimestamp();
+          state.isDirty = true;
+
+          // Record operation for undo
+          const operation: PatternOperation = {
+            type: 'reset_instance_palette',
+            instanceId,
+            prevOverrides,
+          };
+          state.undoManager = recordOperation(state.undoManager, operation);
+        }
+      });
+    },
+
+    placeBlockWithOverrides: (blockId, position, overrides, rotation = 0) => {
+      const id = generateUUID();
+      const operations: PatternOperation[] = [];
+
+      // Check if position is already occupied
+      const existing = get().getBlockInstanceAt(position);
+      if (existing) {
+        // Store removal operation for undo
+        operations.push({ type: 'remove_block_instance', instance: { ...existing } });
+      }
+
+      const newInstance: BlockInstance = {
+        id,
+        blockId,
+        position,
+        rotation,
+        flipHorizontal: false,
+        flipVertical: false,
+        paletteOverrides: Object.keys(overrides).length > 0 ? overrides : undefined,
+      };
+      operations.push({ type: 'add_block_instance', instance: newInstance });
+
+      set((state) => {
+        // Remove existing if present
+        if (existing) {
+          const index = state.pattern.blockInstances.findIndex((b) => b.id === existing.id);
+          if (index !== -1) {
+            state.pattern.blockInstances.splice(index, 1);
+          }
+        }
+        state.pattern.blockInstances.push(newInstance);
+        state.pattern.updatedAt = getCurrentTimestamp();
+        state.isDirty = true;
+        // Record as batch if replacing, single op otherwise
+        const operation: PatternOperation = operations.length > 1
+          ? { type: 'batch', operations }
+          : operations[0];
+        state.undoManager = recordOperation(state.undoManager, operation);
+      });
+
+      return id;
     },
 
     // Grid management
@@ -1444,3 +1635,63 @@ export const usePlacementRotation = () => usePatternDesignerStore((state) => sta
 
 /** Get the current range fill anchor position */
 export const useRangeFillAnchor = () => usePatternDesignerStore((state) => state.rangeFillAnchor);
+
+// =============================================================================
+// Instance Palette Override Selector Hooks
+// =============================================================================
+
+/** Check if selected block instance has any color overrides */
+export const useSelectedInstanceHasOverrides = () => {
+  return usePatternDesignerStore((state) => {
+    if (!state.selectedBlockInstanceId) return false;
+    const instance = state.pattern.blockInstances.find(
+      (b) => b.id === state.selectedBlockInstanceId
+    );
+    return instance?.paletteOverrides !== undefined &&
+           Object.keys(instance.paletteOverrides).length > 0;
+  });
+};
+
+/**
+ * Get effective color for a role in a specific block instance
+ * Returns { color, isOverride } or null if instance not found
+ */
+export const useInstanceRoleColor = (instanceId: UUID | null, roleId: FabricRoleId) => {
+  return usePatternDesignerStore((state) => {
+    if (!instanceId) return null;
+    const instance = state.pattern.blockInstances.find((b) => b.id === instanceId);
+    if (!instance) return null;
+
+    // Check for override first
+    if (instance.paletteOverrides?.[roleId]) {
+      return { color: instance.paletteOverrides[roleId], isOverride: true };
+    }
+
+    // Fall back to pattern palette
+    const role = state.pattern.palette.roles.find((r) => r.id === roleId);
+    return role ? { color: role.color, isOverride: false } : null;
+  });
+};
+
+/**
+ * Get unique palette override variants for a block
+ * Returns array of unique PaletteOverrides from instances of this block
+ */
+export const useBlockVariants = (blockId: UUID) => {
+  return usePatternDesignerStore((state) => {
+    const instances = state.pattern.blockInstances.filter(
+      (i) => i.blockId === blockId && i.paletteOverrides
+    );
+
+    // Deduplicate by unique override combinations
+    const uniqueOverrides = new Map<string, Record<string, string>>();
+    for (const instance of instances) {
+      if (instance.paletteOverrides && Object.keys(instance.paletteOverrides).length > 0) {
+        const key = JSON.stringify(instance.paletteOverrides);
+        uniqueOverrides.set(key, instance.paletteOverrides);
+      }
+    }
+
+    return Array.from(uniqueOverrides.values());
+  });
+};

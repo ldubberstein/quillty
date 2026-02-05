@@ -113,6 +113,29 @@ describe('invertPatternOperation', () => {
       expect(inverted.prevColor).toBe('#00FF00');
       expect(inverted.nextColor).toBe('#FF0000');
     });
+
+    it('inverts update_palette with affectedOverrides', () => {
+      const op: UpdatePaletteOperation = {
+        type: 'update_palette',
+        roleId: 'accent1',
+        prevColor: '#FF0000',
+        nextColor: '#00FF00',
+        affectedOverrides: [
+          { instanceId: 'inst-1', roleId: 'accent1', prevColor: '#FF0000' },
+          { instanceId: 'inst-2', roleId: 'accent2', prevColor: '#ff0000' },
+        ],
+      };
+
+      const inverted = invertPatternOperation(op) as UpdatePaletteOperation;
+
+      expect(inverted.type).toBe('update_palette');
+      expect(inverted.prevColor).toBe('#00FF00');
+      expect(inverted.nextColor).toBe('#FF0000');
+      expect(inverted.affectedOverrides).toHaveLength(2);
+      // When inverting, affected overrides should have prevColor set to the nextColor of original
+      expect(inverted.affectedOverrides![0].prevColor).toBe('#00FF00');
+      expect(inverted.affectedOverrides![1].prevColor).toBe('#00FF00');
+    });
   });
 
   describe('grid operations', () => {
@@ -343,7 +366,7 @@ describe('applyOperationToBlockInstances', () => {
     expect(result).toHaveLength(2);
   });
 
-  it('returns unchanged instances for unrelated operations', () => {
+  it('returns unchanged instances for update_palette without affectedOverrides', () => {
     const instances: BlockInstance[] = [mockInstance];
     const op: UpdatePaletteOperation = {
       type: 'update_palette',
@@ -355,6 +378,59 @@ describe('applyOperationToBlockInstances', () => {
     const result = applyOperationToBlockInstances(instances, op);
 
     expect(result).toBe(instances);
+  });
+
+  it('updates instance overrides for update_palette with affectedOverrides', () => {
+    const instanceWithOverride: BlockInstance = {
+      ...mockInstance,
+      paletteOverrides: { accent1: '#FF0000', accent2: '#0000FF' },
+    };
+    const instances: BlockInstance[] = [instanceWithOverride, mockInstance2];
+    const op: UpdatePaletteOperation = {
+      type: 'update_palette',
+      roleId: 'accent1',
+      prevColor: '#FF0000',
+      nextColor: '#00FF00',
+      affectedOverrides: [
+        { instanceId: 'inst-1', roleId: 'accent1', prevColor: '#FF0000' },
+      ],
+    };
+
+    const result = applyOperationToBlockInstances(instances, op);
+
+    // The affected override should be updated to the new color
+    expect(result[0].paletteOverrides!['accent1']).toBe('#00FF00');
+    // Other overrides should be unchanged
+    expect(result[0].paletteOverrides!['accent2']).toBe('#0000FF');
+    // Other instances should be unchanged
+    expect(result[1]).toEqual(mockInstance2);
+  });
+
+  it('updates multiple instances for update_palette with affectedOverrides', () => {
+    const instance1: BlockInstance = {
+      ...mockInstance,
+      paletteOverrides: { accent1: '#FF0000' },
+    };
+    const instance2: BlockInstance = {
+      ...mockInstance2,
+      paletteOverrides: { accent2: '#FF0000' },
+    };
+    const instances: BlockInstance[] = [instance1, instance2];
+    const op: UpdatePaletteOperation = {
+      type: 'update_palette',
+      roleId: 'accent1',
+      prevColor: '#FF0000',
+      nextColor: '#00FF00',
+      affectedOverrides: [
+        { instanceId: 'inst-1', roleId: 'accent1', prevColor: '#FF0000' },
+        { instanceId: 'inst-2', roleId: 'accent2', prevColor: '#FF0000' },
+      ],
+    };
+
+    const result = applyOperationToBlockInstances(instances, op);
+
+    expect(result[0].paletteOverrides!['accent1']).toBe('#00FF00');
+    expect(result[1].paletteOverrides!['accent2']).toBe('#00FF00');
   });
 });
 

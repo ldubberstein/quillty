@@ -24,6 +24,8 @@ export type {
   PiecedBorderConfig,
   Border,
   BorderConfig,
+  // Per-block color overrides
+  PaletteOverrides,
 } from './types';
 
 // Constants
@@ -55,6 +57,8 @@ export {
   CreatePatternInputSchema,
   UpdatePatternInputSchema,
   PublishPatternInputSchema,
+  // Per-block color overrides
+  PaletteOverridesSchema,
 } from './schemas';
 
 export type {
@@ -104,6 +108,10 @@ export {
   usePlacementRotation,
   // Range fill selector hook
   useRangeFillAnchor,
+  // Instance palette override selector hooks
+  useSelectedInstanceHasOverrides,
+  useInstanceRoleColor,
+  useBlockVariants,
 } from './store';
 
 export type { PatternDesignerStore } from './store';

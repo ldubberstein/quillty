@@ -11,4 +11,4 @@
 export { SidebarProvider, useSidebarPanel } from '../shared/SidebarContext';
 
 /** Available sidebar panels for Pattern Designer */
-export type SidebarPanel = 'colors' | 'borders' | 'grid';
+export type SidebarPanel = 'colors' | 'borders' | 'grid' | 'instance-colors';

@@ -47,6 +47,12 @@ const BorderPanel = dynamic(
   { ssr: false }
 );
 
+// InstanceColorPanel for per-block color customization
+const InstanceColorPanel = dynamic(
+  () => import('@/components/pattern-designer/InstanceColorPanel').then((mod) => mod.InstanceColorPanel),
+  { ssr: false }
+);
+
 /** Auto-save debounce delay in milliseconds */
 const AUTO_SAVE_DELAY = 30000;
 
@@ -375,9 +381,10 @@ export default function PatternDesignerPage() {
           <PatternCanvas />
         </div>
 
-        {/* Right Sidebar - Colors/Palette + Borders + Grid Size */}
+        {/* Right Sidebar - Block Colors + Pattern Palette + Borders + Grid Size */}
         <aside className="w-48 bg-white border-l border-gray-200 flex-shrink-0 overflow-y-auto">
-          <SidebarProvider defaultPanel="colors">
+          <SidebarProvider defaultPanel="colors" mode="multi">
+            <InstanceColorPanel />
             <PalettePanel />
             <BorderPanel />
             <GridSizePanel />

@@ -82,6 +82,12 @@ export const PaletteSchema = z.object({
   roles: z.array(FabricRoleSchema).min(1),
 });
 
+/**
+ * Palette overrides schema (sparse record of roleId → hex color)
+ * Used for per-block-instance color customization
+ */
+export const PaletteOverridesSchema = z.record(FabricRoleIdSchema, HexColorSchema);
+
 // =============================================================================
 // Block Instance Schemas
 // =============================================================================
@@ -94,6 +100,7 @@ export const BlockInstanceSchema = z.object({
   rotation: RotationSchema,
   flipHorizontal: z.boolean(),
   flipVertical: z.boolean(),
+  paletteOverrides: PaletteOverridesSchema.optional(),
 });
 
 /** Create block instance input schema */
@@ -103,6 +110,7 @@ export const CreateBlockInstanceInputSchema = z.object({
   rotation: RotationSchema.optional().default(0),
   flipHorizontal: z.boolean().optional().default(false),
   flipVertical: z.boolean().optional().default(false),
+  paletteOverrides: PaletteOverridesSchema.optional(),
 });
 
 /** Block instance update schema */
@@ -110,6 +118,7 @@ export const BlockInstanceUpdateSchema = z.object({
   rotation: RotationSchema.optional(),
   flipHorizontal: z.boolean().optional(),
   flipVertical: z.boolean().optional(),
+  paletteOverrides: PaletteOverridesSchema.nullable().optional(),
 });
 
 // =============================================================================

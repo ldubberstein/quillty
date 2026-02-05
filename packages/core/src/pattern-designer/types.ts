@@ -43,6 +43,13 @@ export type PatternCategory = 'traditional' | 'modern' | 'art' | 'seasonal' | 'o
 /** Rotation in degrees (90° increments) */
 export type Rotation = 0 | 90 | 180 | 270;
 
+/**
+ * Per-instance color overrides
+ * Maps fabric role IDs to hex colors
+ * Only overridden roles are stored; missing roles fall back to pattern palette
+ */
+export type PaletteOverrides = Record<FabricRoleId, string>;
+
 // =============================================================================
 // Border Types
 // =============================================================================
@@ -119,6 +126,12 @@ export interface BlockInstance {
   flipHorizontal: boolean;
   /** Whether this instance is flipped vertically */
   flipVertical: boolean;
+  /**
+   * Per-instance color overrides (optional, sparse)
+   * Maps fabric role IDs to hex colors
+   * Roles not in this map use the pattern's palette
+   */
+  paletteOverrides?: PaletteOverrides;
 }
 
 // =============================================================================
@@ -187,6 +200,8 @@ export interface CreateBlockInstanceInput {
   rotation?: Rotation;
   flipHorizontal?: boolean;
   flipVertical?: boolean;
+  /** Optional initial palette overrides */
+  paletteOverrides?: PaletteOverrides;
 }
 
 /** Updates allowed on a BlockInstance */
@@ -194,6 +209,8 @@ export interface BlockInstanceUpdate {
   rotation?: Rotation;
   flipHorizontal?: boolean;
   flipVertical?: boolean;
+  /** Set to update overrides, null to clear all overrides */
+  paletteOverrides?: PaletteOverrides | null;
 }
 
 /**

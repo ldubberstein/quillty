@@ -1975,4 +1975,123 @@ describe('PatternDesignerStore', () => {
     });
   });
 
+  // ===========================================================================
+  // Linked Override Colors (Phase 7)
+  // ===========================================================================
+
+  describe('linked override colors', () => {
+    describe('addRole', () => {
+      it('does not create duplicate colors in palette', () => {
+        const store = usePatternDesignerStore.getState();
+        const initialRoleCount = store.pattern.palette.roles.length;
+
+        // Add a new color
+        const firstId = store.addRole('Test Color', '#abcdef');
+        expect(usePatternDesignerStore.getState().pattern.palette.roles).toHaveLength(initialRoleCount + 1);
+
+        // Try to add the same color again (should return existing ID, not create duplicate)
+        const secondId = store.addRole('Another Name', '#ABCDEF'); // Different case
+        expect(secondId).toBe(firstId);
+        expect(usePatternDesignerStore.getState().pattern.palette.roles).toHaveLength(initialRoleCount + 1);
+      });
+
+      it('allows adding different colors', () => {
+        const store = usePatternDesignerStore.getState();
+        const initialRoleCount = store.pattern.palette.roles.length;
+
+        store.addRole('Color 1', '#111111');
+        store.addRole('Color 2', '#222222');
+
+        expect(usePatternDesignerStore.getState().pattern.palette.roles).toHaveLength(initialRoleCount + 2);
+      });
+    });
+
+    describe('setInstanceRoleColor', () => {
+      it('auto-adds override color to palette if not present', () => {
+        const store = usePatternDesignerStore.getState();
+
+        // Add a block instance
+        const instanceId = store.addBlockInstance('block-1', { row: 0, col: 0 });
+        const initialRoleCount = store.pattern.palette.roles.length;
+
+        // Set an override with a new color
+        store.setInstanceRoleColor(instanceId, 'accent1', '#987654');
+
+        // Color should be added to palette
+        const { palette } = usePatternDesignerStore.getState().pattern;
+        expect(palette.roles).toHaveLength(initialRoleCount + 1);
+        expect(palette.roles.some((r) => r.color.toLowerCase() === '#987654')).toBe(true);
+      });
+
+      it('does not add color to palette if it already exists', () => {
+        const store = usePatternDesignerStore.getState();
+
+        // Add a block instance
+        const instanceId = store.addBlockInstance('block-1', { row: 0, col: 0 });
+        const existingColor = store.pattern.palette.roles[0].color;
+        const initialRoleCount = store.pattern.palette.roles.length;
+
+        // Set an override with an existing color
+        store.setInstanceRoleColor(instanceId, 'accent1', existingColor);
+
+        // Palette should not have new role
+        expect(usePatternDesignerStore.getState().pattern.palette.roles).toHaveLength(initialRoleCount);
+      });
+    });
+
+    describe('setRoleColor', () => {
+      it('cascades palette color change to matching overrides', () => {
+        const store = usePatternDesignerStore.getState();
+
+        // Add block instances
+        const instanceId1 = store.addBlockInstance('block-1', { row: 0, col: 0 });
+        const instanceId2 = store.addBlockInstance('block-1', { row: 0, col: 1 });
+
+        // Set overrides with the same color
+        const sharedColor = '#123456';
+        store.setInstanceRoleColor(instanceId1, 'accent1', sharedColor);
+        store.setInstanceRoleColor(instanceId2, 'accent2', sharedColor);
+
+        // Find the role with our color
+        const roleWithColor = usePatternDesignerStore.getState().pattern.palette.roles.find(
+          (r) => r.color.toLowerCase() === sharedColor.toLowerCase()
+        );
+        expect(roleWithColor).toBeDefined();
+
+        // Change that palette color
+        const newColor = '#fedcba';
+        store.setRoleColor(roleWithColor!.id, newColor);
+
+        // Both overrides should be updated to the new color
+        const { blockInstances } = usePatternDesignerStore.getState().pattern;
+        const instance1 = blockInstances.find((i) => i.id === instanceId1);
+        const instance2 = blockInstances.find((i) => i.id === instanceId2);
+
+        expect(instance1?.paletteOverrides?.['accent1'].toLowerCase()).toBe(newColor.toLowerCase());
+        expect(instance2?.paletteOverrides?.['accent2'].toLowerCase()).toBe(newColor.toLowerCase());
+      });
+
+      it('does not affect overrides with different colors', () => {
+        const store = usePatternDesignerStore.getState();
+
+        // Add block instance
+        const instanceId = store.addBlockInstance('block-1', { row: 0, col: 0 });
+
+        // Set override with a unique color
+        const uniqueColor = '#aabbcc';
+        store.setInstanceRoleColor(instanceId, 'accent1', uniqueColor);
+
+        // Change a different palette color
+        const existingRole = store.pattern.palette.roles[0];
+        store.setRoleColor(existingRole.id, '#000000');
+
+        // Our unique override should be unchanged
+        const { blockInstances } = usePatternDesignerStore.getState().pattern;
+        const instance = blockInstances.find((i) => i.id === instanceId);
+
+        expect(instance?.paletteOverrides?.['accent1'].toLowerCase()).toBe(uniqueColor.toLowerCase());
+      });
+    });
+  });
+
 });

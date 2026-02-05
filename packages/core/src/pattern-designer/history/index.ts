@@ -9,6 +9,8 @@ export type {
   AddBlockInstanceOperation,
   RemoveBlockInstanceOperation,
   UpdateBlockInstanceOperation,
+  UpdateInstancePaletteOperation,
+  ResetInstancePaletteOperation,
   UpdatePaletteOperation,
   ResizeGridOperation,
   AddBorderOperation,

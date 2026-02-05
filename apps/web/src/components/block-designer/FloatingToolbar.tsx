@@ -1,8 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
 import { RotateCw, FlipHorizontal2, FlipVertical2, Trash2 } from 'lucide-react';
-import { useClickOutsideDismiss } from '@/hooks/useClickOutsideDismiss';
 import { useEscapeDismiss } from '@/hooks/useEscapeDismiss';
 
 interface FloatingToolbarProps {
@@ -43,9 +41,7 @@ export function FloatingToolbar({
   onDelete,
   onDismiss,
 }: FloatingToolbarProps) {
-  const toolbarRef = useRef<HTMLDivElement>(null);
-
-  useClickOutsideDismiss(toolbarRef, onDismiss);
+  // Dismiss on Escape key (canvas click is handled by the parent component)
   useEscapeDismiss(onDismiss);
 
   // Calculate position to keep toolbar within viewport
@@ -56,7 +52,6 @@ export function FloatingToolbar({
 
   return (
     <div
-      ref={toolbarRef}
       className="absolute z-50 flex gap-1 bg-white rounded-lg shadow-lg border border-gray-200 p-1"
       style={{
         left: adjustedPosition.x,

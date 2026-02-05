@@ -11,7 +11,9 @@ import type {
   BorderConfig,
   QuiltGridSize,
   FabricRoleId,
+  FabricRole,
   Palette,
+  PaletteOverrides,
   UUID,
 } from '../types';
 
@@ -45,18 +47,81 @@ export interface UpdateBlockInstanceOperation {
   next: Partial<BlockInstance>;
 }
 
+/**
+ * Operation to update a single role's color override for a block instance
+ */
+export interface UpdateInstancePaletteOperation {
+  type: 'update_instance_palette';
+  instanceId: UUID;
+  roleId: FabricRoleId;
+  /** Previous color override (null = was using pattern palette) */
+  prevColor: string | null;
+  /** New color override (null = reset to pattern palette) */
+  nextColor: string | null;
+}
+
+/**
+ * Operation to reset all palette overrides for a block instance
+ */
+export interface ResetInstancePaletteOperation {
+  type: 'reset_instance_palette';
+  instanceId: UUID;
+  /** Previous overrides (for undo - restore all these overrides) */
+  prevOverrides: PaletteOverrides;
+}
+
 // =============================================================================
 // Palette Operations
 // =============================================================================
 
 /**
+ * Tracks an override that was updated when a palette color changed
+ */
+export interface AffectedOverride {
+  instanceId: UUID;
+  roleId: FabricRoleId;
+  /** The color value before the palette change (for undo) */
+  prevColor: string;
+}
+
+/**
  * Operation to change a palette role's color
+ * Also tracks any overrides that were updated due to color linkage
  */
 export interface UpdatePaletteOperation {
   type: 'update_palette';
   roleId: FabricRoleId;
   prevColor: string;
   nextColor: string;
+  /** Overrides that had the same color value and were also updated */
+  affectedOverrides?: AffectedOverride[];
+}
+
+/**
+ * Operation to add a fabric role to the palette
+ */
+export interface AddRoleOperation {
+  type: 'add_role';
+  role: FabricRole;
+}
+
+/**
+ * Operation to remove a fabric role from the palette
+ */
+export interface RemoveRoleOperation {
+  type: 'remove_role';
+  role: FabricRole;
+  index: number;
+}
+
+/**
+ * Operation to rename a fabric role
+ */
+export interface RenameRoleOperation {
+  type: 'rename_role';
+  roleId: FabricRoleId;
+  prevName: string;
+  nextName: string;
 }
 
 // =============================================================================
@@ -152,7 +217,12 @@ export type PatternOperation =
   | AddBlockInstanceOperation
   | RemoveBlockInstanceOperation
   | UpdateBlockInstanceOperation
+  | UpdateInstancePaletteOperation
+  | ResetInstancePaletteOperation
   | UpdatePaletteOperation
+  | AddRoleOperation
+  | RemoveRoleOperation
+  | RenameRoleOperation
   | ResizeGridOperation
   | AddBorderOperation
   | RemoveBorderOperation
@@ -184,12 +254,66 @@ export function invertPatternOperation(op: PatternOperation): PatternOperation {
         next: op.prev,
       };
 
-    case 'update_palette':
+    case 'update_instance_palette':
+      return {
+        type: 'update_instance_palette',
+        instanceId: op.instanceId,
+        roleId: op.roleId,
+        prevColor: op.nextColor,
+        nextColor: op.prevColor,
+      };
+
+    case 'reset_instance_palette': {
+      // Restore previous overrides by applying each as an update
+      const restoreOps: PatternOperation[] = Object.entries(op.prevOverrides).map(
+        ([roleId, color]) => ({
+          type: 'update_instance_palette' as const,
+          instanceId: op.instanceId,
+          roleId,
+          prevColor: null,
+          nextColor: color,
+        })
+      );
+      return { type: 'batch', operations: restoreOps };
+    }
+
+    case 'update_palette': {
+      // When inverting, the affected overrides need to be restored to their previous colors
+      const invertedAffectedOverrides: AffectedOverride[] | undefined = op.affectedOverrides?.map(
+        (affected) => ({
+          instanceId: affected.instanceId,
+          roleId: affected.roleId,
+          prevColor: op.nextColor, // They were updated to nextColor, so restore from there
+        })
+      );
       return {
         type: 'update_palette',
         roleId: op.roleId,
         prevColor: op.nextColor,
         nextColor: op.prevColor,
+        affectedOverrides: invertedAffectedOverrides,
+      };
+    }
+
+    case 'add_role':
+      return {
+        type: 'remove_role',
+        role: op.role,
+        index: -1,
+      };
+
+    case 'remove_role':
+      return {
+        type: 'add_role',
+        role: op.role,
+      };
+
+    case 'rename_role':
+      return {
+        type: 'rename_role',
+        roleId: op.roleId,
+        prevName: op.nextName,
+        nextName: op.prevName,
       };
 
     case 'resize_grid':
@@ -275,6 +399,40 @@ export function applyOperationToBlockInstances(
       });
     }
 
+    case 'update_instance_palette': {
+      return instances.map((i) => {
+        if (i.id === op.instanceId) {
+          const currentOverrides = i.paletteOverrides ?? {};
+          if (op.nextColor === null) {
+            // Remove override for this role
+            const { [op.roleId]: _, ...rest } = currentOverrides;
+            return {
+              ...i,
+              paletteOverrides: Object.keys(rest).length > 0 ? rest : undefined,
+            };
+          } else {
+            // Set override for this role
+            return {
+              ...i,
+              paletteOverrides: { ...currentOverrides, [op.roleId]: op.nextColor },
+            };
+          }
+        }
+        return i;
+      });
+    }
+
+    case 'reset_instance_palette': {
+      return instances.map((i) => {
+        if (i.id === op.instanceId) {
+          // Remove all overrides
+          const { paletteOverrides: _, ...rest } = i;
+          return rest as BlockInstance;
+        }
+        return i;
+      });
+    }
+
     case 'resize_grid': {
       let result = instances;
       // If shrinking, remove instances that would be out of bounds
@@ -303,6 +461,29 @@ export function applyOperationToBlockInstances(
       return result;
     }
 
+    case 'update_palette': {
+      // When a palette color changes, update any linked overrides
+      if (!op.affectedOverrides || op.affectedOverrides.length === 0) {
+        return instances;
+      }
+      return instances.map((instance) => {
+        // Check if this instance has any affected overrides
+        const affected = op.affectedOverrides!.filter((a) => a.instanceId === instance.id);
+        if (affected.length === 0) {
+          return instance;
+        }
+        // Update the overrides for this instance
+        const updatedOverrides = { ...instance.paletteOverrides };
+        for (const a of affected) {
+          updatedOverrides[a.roleId] = op.nextColor;
+        }
+        return {
+          ...instance,
+          paletteOverrides: updatedOverrides,
+        };
+      });
+    }
+
     case 'batch':
       return op.operations.reduce(applyOperationToBlockInstances, instances);
 
@@ -325,6 +506,29 @@ export function applyOperationToPalette(
         roles: palette.roles.map((role) => {
           if (role.id === op.roleId) {
             return { ...role, color: op.nextColor };
+          }
+          return role;
+        }),
+      };
+
+    case 'add_role':
+      return {
+        ...palette,
+        roles: [...palette.roles, op.role],
+      };
+
+    case 'remove_role':
+      return {
+        ...palette,
+        roles: palette.roles.filter((role) => role.id !== op.role.id),
+      };
+
+    case 'rename_role':
+      return {
+        ...palette,
+        roles: palette.roles.map((role) => {
+          if (role.id === op.roleId) {
+            return { ...role, name: op.nextName };
           }
           return role;
         }),
