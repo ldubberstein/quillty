@@ -788,7 +788,7 @@ describe('BlockDesignerStore', () => {
       expect(useBlockDesignerStore.getState().block.shapes[0].type).toBe('flying_geese');
     });
 
-    it('returns null and cancels for invalid position', () => {
+    it('returns null and cancels for invalid position, staying in placing_shape mode', () => {
       const store = useBlockDesignerStore.getState();
       store.startFlyingGeesePlacement({ row: 0, col: 0 });
 
@@ -796,7 +796,8 @@ describe('BlockDesignerStore', () => {
 
       expect(id).toBeNull();
       expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
-      expect(useBlockDesignerStore.getState().mode).toBe('idle');
+      // Returns to placing_shape so user can try again
+      expect(useBlockDesignerStore.getState().mode).toBe('placing_shape');
     });
 
     it('determines correct direction for rightward placement', () => {
@@ -862,7 +863,7 @@ describe('BlockDesignerStore', () => {
   });
 
   describe('cancelFlyingGeesePlacement', () => {
-    it('cancels placement and returns to idle', () => {
+    it('cancels placement and returns to placing_shape mode', () => {
       const store = useBlockDesignerStore.getState();
       store.startFlyingGeesePlacement({ row: 0, col: 0 });
 
@@ -870,7 +871,8 @@ describe('BlockDesignerStore', () => {
 
       const state = useBlockDesignerStore.getState();
       expect(state.flyingGeesePlacement).toBeNull();
-      expect(state.mode).toBe('idle');
+      // Returns to placing_shape so user can try placing again
+      expect(state.mode).toBe('placing_shape');
     });
   });
 

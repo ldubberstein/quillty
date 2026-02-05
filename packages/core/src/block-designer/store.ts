@@ -630,7 +630,8 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
 
       set((state) => {
         state.flyingGeesePlacement = null;
-        state.mode = 'idle';
+        // Return to placing_shape mode so user can place another Flying Geese
+        state.mode = 'placing_shape';
       });
 
       return id;
@@ -639,7 +640,8 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
     cancelFlyingGeesePlacement: () => {
       set((state) => {
         state.flyingGeesePlacement = null;
-        state.mode = 'idle';
+        // Return to placing_shape mode so user can try placing again
+        state.mode = 'placing_shape';
       });
     },
 
