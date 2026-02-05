@@ -5,6 +5,7 @@ import { useClickOutsideDismiss } from './useClickOutsideDismiss';
 describe('useClickOutsideDismiss', () => {
   let container: HTMLDivElement;
   let targetElement: HTMLDivElement;
+  let rafCallbacks: FrameRequestCallback[] = [];
 
   beforeEach(() => {
     // Create DOM elements for testing
@@ -13,14 +14,24 @@ describe('useClickOutsideDismiss', () => {
     container.appendChild(targetElement);
     document.body.appendChild(container);
 
-    // Use fake timers for setTimeout
-    vi.useFakeTimers();
+    // Mock requestAnimationFrame
+    rafCallbacks = [];
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
+      rafCallbacks.push(cb);
+      return rafCallbacks.length;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
   });
 
   afterEach(() => {
     document.body.removeChild(container);
-    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
+
+  const flushRaf = () => {
+    rafCallbacks.forEach((cb) => cb(0));
+    rafCallbacks = [];
+  };
 
   it('calls onDismiss when clicking outside the element', () => {
     const onDismiss = vi.fn();
@@ -28,11 +39,11 @@ describe('useClickOutsideDismiss', () => {
 
     renderHook(() => useClickOutsideDismiss(ref, onDismiss));
 
-    // Advance timers to allow the event listener to be added
-    vi.runAllTimers();
+    // Flush requestAnimationFrame to allow the event listener to be added
+    flushRaf();
 
     // Click outside the target element
-    const outsideClick = new MouseEvent('mousedown', { bubbles: true });
+    const outsideClick = new MouseEvent('click', { bubbles: true });
     document.body.dispatchEvent(outsideClick);
 
     expect(onDismiss).toHaveBeenCalledTimes(1);
@@ -44,11 +55,11 @@ describe('useClickOutsideDismiss', () => {
 
     renderHook(() => useClickOutsideDismiss(ref, onDismiss));
 
-    // Advance timers to allow the event listener to be added
-    vi.runAllTimers();
+    // Flush requestAnimationFrame to allow the event listener to be added
+    flushRaf();
 
     // Click inside the target element
-    const insideClick = new MouseEvent('mousedown', { bubbles: true });
+    const insideClick = new MouseEvent('click', { bubbles: true });
     targetElement.dispatchEvent(insideClick);
 
     expect(onDismiss).not.toHaveBeenCalled();
@@ -60,15 +71,15 @@ describe('useClickOutsideDismiss', () => {
 
     renderHook(() => useClickOutsideDismiss(ref, onDismiss));
 
-    // Click before timers advance (simulating immediate click)
-    const outsideClick = new MouseEvent('mousedown', { bubbles: true });
+    // Click before RAF flushes (simulating immediate click)
+    const outsideClick = new MouseEvent('click', { bubbles: true });
     document.body.dispatchEvent(outsideClick);
 
     // Should not be called yet because listener hasn't been added
     expect(onDismiss).not.toHaveBeenCalled();
 
-    // Now advance timers
-    vi.runAllTimers();
+    // Now flush RAF
+    flushRaf();
 
     // Click again - now it should work
     document.body.dispatchEvent(outsideClick);
@@ -81,9 +92,9 @@ describe('useClickOutsideDismiss', () => {
 
     renderHook(() => useClickOutsideDismiss(ref, onDismiss));
 
-    vi.runAllTimers();
+    flushRaf();
 
-    const outsideClick = new MouseEvent('mousedown', { bubbles: true });
+    const outsideClick = new MouseEvent('click', { bubbles: true });
     document.body.dispatchEvent(outsideClick);
 
     expect(onDismiss).not.toHaveBeenCalled();
@@ -95,11 +106,11 @@ describe('useClickOutsideDismiss', () => {
 
     const { unmount } = renderHook(() => useClickOutsideDismiss(ref, onDismiss));
 
-    vi.runAllTimers();
+    flushRaf();
     unmount();
 
     // Click after unmount should not trigger callback
-    const outsideClick = new MouseEvent('mousedown', { bubbles: true });
+    const outsideClick = new MouseEvent('click', { bubbles: true });
     document.body.dispatchEvent(outsideClick);
 
     expect(onDismiss).not.toHaveBeenCalled();
