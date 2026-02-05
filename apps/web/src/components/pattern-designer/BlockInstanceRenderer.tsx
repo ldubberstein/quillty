@@ -10,6 +10,7 @@ import type {
   SquareShape,
   HstShape,
   FlyingGeeseShape,
+  QstShape,
 } from '@quillty/core';
 
 interface BlockInstanceRendererProps {
@@ -172,6 +173,40 @@ function renderFlyingGeese(
   );
 }
 
+/** Render a QST (Quarter-Square Triangle) shape */
+function renderQst(
+  shape: QstShape,
+  unitSize: number,
+  palette: Palette,
+  instanceOverrides?: PaletteOverrides
+): JSX.Element {
+  const topColor = getColor(palette, shape.partFabricRoles.top, instanceOverrides);
+  const rightColor = getColor(palette, shape.partFabricRoles.right, instanceOverrides);
+  const bottomColor = getColor(palette, shape.partFabricRoles.bottom, instanceOverrides);
+  const leftColor = getColor(palette, shape.partFabricRoles.left, instanceOverrides);
+  const x = shape.position.col * unitSize;
+  const y = shape.position.row * unitSize;
+
+  // Center point
+  const cx = unitSize / 2;
+  const cy = unitSize / 2;
+
+  // Triangle points for each quarter (no padding for seamless appearance)
+  const topPoints = [0, 0, unitSize, 0, cx, cy];
+  const rightPoints = [unitSize, 0, unitSize, unitSize, cx, cy];
+  const bottomPoints = [unitSize, unitSize, 0, unitSize, cx, cy];
+  const leftPoints = [0, unitSize, 0, 0, cx, cy];
+
+  return (
+    <Group key={shape.id} x={x} y={y} listening={false}>
+      <Line points={topPoints} fill={topColor} closed />
+      <Line points={rightPoints} fill={rightColor} closed />
+      <Line points={bottomPoints} fill={bottomColor} closed />
+      <Line points={leftPoints} fill={leftColor} closed />
+    </Group>
+  );
+}
+
 /**
  * BlockInstanceRenderer - Renders a placed block instance on the pattern canvas
  *
@@ -223,6 +258,8 @@ export function BlockInstanceRenderer({
           return renderHst(shape as HstShape, unitSize, palette, instance.paletteOverrides);
         case 'flying_geese':
           return renderFlyingGeese(shape as FlyingGeeseShape, unitSize, palette, instance.paletteOverrides);
+        case 'qst':
+          return renderQst(shape as QstShape, unitSize, palette, instance.paletteOverrides);
         default:
           return null;
       }

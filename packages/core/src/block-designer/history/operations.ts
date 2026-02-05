@@ -5,7 +5,7 @@
  * Operations store the data needed to apply and invert each change.
  */
 
-import type { Shape, FabricRoleId, FabricRole, Palette, GridSize, FlyingGeeseShape } from '../types';
+import type { Shape, FabricRoleId, FabricRole, Palette, GridSize, FlyingGeeseShape, QstShape } from '../types';
 
 /**
  * Operation to add a shape
@@ -80,6 +80,12 @@ export interface ShapeRoleState {
     goose: FabricRoleId;
     sky1: FabricRoleId;
     sky2: FabricRoleId;
+  };
+  qstPartFabricRoles?: {
+    top: FabricRoleId;
+    right: FabricRoleId;
+    bottom: FabricRoleId;
+    left: FabricRoleId;
   };
 }
 
@@ -387,6 +393,12 @@ export function extractRolesFromShape(shape: Shape): ShapeRoleState {
       partFabricRoles: { ...fg.partFabricRoles },
     };
   }
+  if (shape.type === 'qst') {
+    const qst = shape as QstShape;
+    return {
+      qstPartFabricRoles: { ...qst.partFabricRoles },
+    };
+  }
   return {};
 }
 
@@ -407,6 +419,17 @@ export function getShapesUsingRole(shapes: Shape[], roleId: FabricRoleId): Shape
         fg.partFabricRoles.goose === roleId ||
         fg.partFabricRoles.sky1 === roleId ||
         fg.partFabricRoles.sky2 === roleId
+      ) {
+        return true;
+      }
+    }
+    if (shape.type === 'qst') {
+      const qst = shape as QstShape;
+      if (
+        qst.partFabricRoles.top === roleId ||
+        qst.partFabricRoles.right === roleId ||
+        qst.partFabricRoles.bottom === roleId ||
+        qst.partFabricRoles.left === roleId
       ) {
         return true;
       }

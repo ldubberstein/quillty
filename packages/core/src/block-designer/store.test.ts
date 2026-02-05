@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useBlockDesignerStore } from './store';
 import { DEFAULT_GRID_SIZE, DEFAULT_PALETTE } from './constants';
-import type { Block, GridPosition, HstVariant, FlyingGeeseDirection, SquareShape, HstShape, FlyingGeeseShape } from './types';
+import type { Block, GridPosition, HstVariant, FlyingGeeseDirection, SquareShape, HstShape, FlyingGeeseShape, QstShape } from './types';
 import { createUndoManagerState } from './history/undoManager';
 
 // Helper to reset store state before each test
@@ -316,6 +316,72 @@ describe('BlockDesignerStore', () => {
     });
   });
 
+  describe('addQst', () => {
+    it('adds a QST shape at specified position', () => {
+      const store = useBlockDesignerStore.getState();
+      const position: GridPosition = { row: 0, col: 0 };
+
+      const id = store.addQst(position);
+
+      const { block } = useBlockDesignerStore.getState();
+      expect(block.shapes).toHaveLength(1);
+      expect(block.shapes[0].type).toBe('qst');
+      expect(block.shapes[0].id).toBe(id);
+    });
+
+    it('creates a 1x1 span shape', () => {
+      const store = useBlockDesignerStore.getState();
+      store.addQst({ row: 0, col: 0 });
+
+      const shape = useBlockDesignerStore.getState().block.shapes[0];
+      expect(shape.span).toEqual({ rows: 1, cols: 1 });
+    });
+
+    it('uses default fabric roles (all background)', () => {
+      const store = useBlockDesignerStore.getState();
+      store.addQst({ row: 0, col: 0 });
+
+      const shape = useBlockDesignerStore.getState().block.shapes[0];
+      if (shape.type === 'qst') {
+        expect(shape.partFabricRoles.top).toBe('background');
+        expect(shape.partFabricRoles.right).toBe('background');
+        expect(shape.partFabricRoles.bottom).toBe('background');
+        expect(shape.partFabricRoles.left).toBe('background');
+      }
+    });
+
+    it('accepts custom fabric roles', () => {
+      const store = useBlockDesignerStore.getState();
+      store.addQst({ row: 0, col: 0 }, {
+        top: 'feature',
+        right: 'accent1',
+        bottom: 'feature',
+        left: 'accent1',
+      });
+
+      const shape = useBlockDesignerStore.getState().block.shapes[0];
+      if (shape.type === 'qst') {
+        expect(shape.partFabricRoles.top).toBe('feature');
+        expect(shape.partFabricRoles.right).toBe('accent1');
+        expect(shape.partFabricRoles.bottom).toBe('feature');
+        expect(shape.partFabricRoles.left).toBe('accent1');
+      }
+    });
+
+    it('accepts partial fabric roles and uses background for missing', () => {
+      const store = useBlockDesignerStore.getState();
+      store.addQst({ row: 0, col: 0 }, { top: 'feature' });
+
+      const shape = useBlockDesignerStore.getState().block.shapes[0];
+      if (shape.type === 'qst') {
+        expect(shape.partFabricRoles.top).toBe('feature');
+        expect(shape.partFabricRoles.right).toBe('background');
+        expect(shape.partFabricRoles.bottom).toBe('background');
+        expect(shape.partFabricRoles.left).toBe('background');
+      }
+    });
+  });
+
   describe('addShapesBatch', () => {
     it('adds multiple square shapes at specified positions', () => {
       const store = useBlockDesignerStore.getState();
@@ -349,6 +415,30 @@ describe('BlockDesignerStore', () => {
         expect(shape.type).toBe('hst');
         if (shape.type === 'hst') {
           expect(shape.variant).toBe('ne');
+        }
+      });
+    });
+
+    it('adds multiple QST shapes', () => {
+      const store = useBlockDesignerStore.getState();
+      const positions: GridPosition[] = [
+        { row: 0, col: 0 },
+        { row: 1, col: 1 },
+      ];
+
+      const ids = store.addShapesBatch(positions, { type: 'qst' });
+
+      const { block } = useBlockDesignerStore.getState();
+      expect(ids).toHaveLength(2);
+      expect(block.shapes).toHaveLength(2);
+      block.shapes.forEach((shape) => {
+        expect(shape.type).toBe('qst');
+        if (shape.type === 'qst') {
+          // Should use default background for all parts
+          expect(shape.partFabricRoles.top).toBe('background');
+          expect(shape.partFabricRoles.right).toBe('background');
+          expect(shape.partFabricRoles.bottom).toBe('background');
+          expect(shape.partFabricRoles.left).toBe('background');
         }
       });
     });
@@ -668,6 +758,46 @@ describe('BlockDesignerStore', () => {
 
       const shape = useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape;
       expect(shape.partFabricRoles.sky2).toBe('feature');
+    });
+
+    it('assigns top fabric role to QST', () => {
+      const store = useBlockDesignerStore.getState();
+      const id = store.addQst({ row: 0, col: 0 });
+
+      store.assignFabricRole(id, 'accent1', 'top');
+
+      const shape = useBlockDesignerStore.getState().block.shapes[0] as QstShape;
+      expect(shape.partFabricRoles.top).toBe('accent1');
+    });
+
+    it('assigns right fabric role to QST', () => {
+      const store = useBlockDesignerStore.getState();
+      const id = store.addQst({ row: 0, col: 0 });
+
+      store.assignFabricRole(id, 'accent2', 'right');
+
+      const shape = useBlockDesignerStore.getState().block.shapes[0] as QstShape;
+      expect(shape.partFabricRoles.right).toBe('accent2');
+    });
+
+    it('assigns bottom fabric role to QST', () => {
+      const store = useBlockDesignerStore.getState();
+      const id = store.addQst({ row: 0, col: 0 });
+
+      store.assignFabricRole(id, 'feature', 'bottom');
+
+      const shape = useBlockDesignerStore.getState().block.shapes[0] as QstShape;
+      expect(shape.partFabricRoles.bottom).toBe('feature');
+    });
+
+    it('assigns left fabric role to QST', () => {
+      const store = useBlockDesignerStore.getState();
+      const id = store.addQst({ row: 0, col: 0 });
+
+      store.assignFabricRole(id, 'background', 'left');
+
+      const shape = useBlockDesignerStore.getState().block.shapes[0] as QstShape;
+      expect(shape.partFabricRoles.left).toBe('background');
     });
   });
 
@@ -1401,6 +1531,51 @@ describe('BlockDesignerStore', () => {
       });
     });
 
+    describe('QST rotation', () => {
+      it('rotates QST by cycling part colors clockwise: left->top, top->right, right->bottom, bottom->left', () => {
+        const id = useBlockDesignerStore.getState().addQst({ row: 0, col: 0 }, {
+          top: 'feature',
+          right: 'accent1',
+          bottom: 'accent2',
+          left: 'background',
+        });
+
+        useBlockDesignerStore.getState().rotateShape(id);
+
+        const shape = useBlockDesignerStore.getState().block.shapes[0];
+        if (shape.type === 'qst') {
+          // After one rotation: left->top, top->right, right->bottom, bottom->left
+          expect(shape.partFabricRoles.top).toBe('background'); // was left
+          expect(shape.partFabricRoles.right).toBe('feature'); // was top
+          expect(shape.partFabricRoles.bottom).toBe('accent1'); // was right
+          expect(shape.partFabricRoles.left).toBe('accent2'); // was bottom
+        }
+      });
+
+      it('returns to original colors after 4 rotations', () => {
+        const id = useBlockDesignerStore.getState().addQst({ row: 0, col: 0 }, {
+          top: 'feature',
+          right: 'accent1',
+          bottom: 'accent2',
+          left: 'background',
+        });
+
+        // Rotate 4 times
+        useBlockDesignerStore.getState().rotateShape(id);
+        useBlockDesignerStore.getState().rotateShape(id);
+        useBlockDesignerStore.getState().rotateShape(id);
+        useBlockDesignerStore.getState().rotateShape(id);
+
+        const shape = useBlockDesignerStore.getState().block.shapes[0];
+        if (shape.type === 'qst') {
+          expect(shape.partFabricRoles.top).toBe('feature');
+          expect(shape.partFabricRoles.right).toBe('accent1');
+          expect(shape.partFabricRoles.bottom).toBe('accent2');
+          expect(shape.partFabricRoles.left).toBe('background');
+        }
+      });
+    });
+
     it('does nothing for square shapes', () => {
       const id = useBlockDesignerStore.getState().addSquare({ row: 0, col: 0 });
       const originalShape = { ...useBlockDesignerStore.getState().block.shapes[0] };
@@ -1461,6 +1636,45 @@ describe('BlockDesignerStore', () => {
         expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('up');
       });
     });
+
+    describe('QST horizontal flip', () => {
+      it('swaps left and right part colors', () => {
+        const id = useBlockDesignerStore.getState().addQst({ row: 0, col: 0 }, {
+          top: 'feature',
+          right: 'accent1',
+          bottom: 'accent2',
+          left: 'background',
+        });
+
+        useBlockDesignerStore.getState().flipShapeHorizontal(id);
+
+        const shape = useBlockDesignerStore.getState().block.shapes[0];
+        if (shape.type === 'qst') {
+          expect(shape.partFabricRoles.top).toBe('feature'); // unchanged
+          expect(shape.partFabricRoles.right).toBe('background'); // was left
+          expect(shape.partFabricRoles.bottom).toBe('accent2'); // unchanged
+          expect(shape.partFabricRoles.left).toBe('accent1'); // was right
+        }
+      });
+
+      it('returns to original after two horizontal flips', () => {
+        const id = useBlockDesignerStore.getState().addQst({ row: 0, col: 0 }, {
+          top: 'feature',
+          right: 'accent1',
+          bottom: 'accent2',
+          left: 'background',
+        });
+
+        useBlockDesignerStore.getState().flipShapeHorizontal(id);
+        useBlockDesignerStore.getState().flipShapeHorizontal(id);
+
+        const shape = useBlockDesignerStore.getState().block.shapes[0];
+        if (shape.type === 'qst') {
+          expect(shape.partFabricRoles.right).toBe('accent1');
+          expect(shape.partFabricRoles.left).toBe('background');
+        }
+      });
+    });
   });
 
   describe('flipShapeVertical', () => {
@@ -1502,6 +1716,45 @@ describe('BlockDesignerStore', () => {
 
         useBlockDesignerStore.getState().flipShapeVertical(id);
         expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('right');
+      });
+    });
+
+    describe('QST vertical flip', () => {
+      it('swaps top and bottom part colors', () => {
+        const id = useBlockDesignerStore.getState().addQst({ row: 0, col: 0 }, {
+          top: 'feature',
+          right: 'accent1',
+          bottom: 'accent2',
+          left: 'background',
+        });
+
+        useBlockDesignerStore.getState().flipShapeVertical(id);
+
+        const shape = useBlockDesignerStore.getState().block.shapes[0];
+        if (shape.type === 'qst') {
+          expect(shape.partFabricRoles.top).toBe('accent2'); // was bottom
+          expect(shape.partFabricRoles.right).toBe('accent1'); // unchanged
+          expect(shape.partFabricRoles.bottom).toBe('feature'); // was top
+          expect(shape.partFabricRoles.left).toBe('background'); // unchanged
+        }
+      });
+
+      it('returns to original after two vertical flips', () => {
+        const id = useBlockDesignerStore.getState().addQst({ row: 0, col: 0 }, {
+          top: 'feature',
+          right: 'accent1',
+          bottom: 'accent2',
+          left: 'background',
+        });
+
+        useBlockDesignerStore.getState().flipShapeVertical(id);
+        useBlockDesignerStore.getState().flipShapeVertical(id);
+
+        const shape = useBlockDesignerStore.getState().block.shapes[0];
+        if (shape.type === 'qst') {
+          expect(shape.partFabricRoles.top).toBe('feature');
+          expect(shape.partFabricRoles.bottom).toBe('accent2');
+        }
       });
     });
   });

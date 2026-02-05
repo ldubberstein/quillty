@@ -18,3 +18,8 @@ export {
   FLYING_GEESE_DIRECTION_INFO,
   type FlyingGeeseTriangles,
 } from './flyingGeese';
+
+export {
+  getQstTriangles,
+  type QstTriangles,
+} from './qst';

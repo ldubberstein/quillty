@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { Stage, Layer, Rect, Line, Group } from 'react-konva';
-import type { Palette, Shape, SquareShape, HstShape, FlyingGeeseShape } from '@quillty/core';
+import type { Palette, Shape, SquareShape, HstShape, FlyingGeeseShape, QstShape } from '@quillty/core';
 
 interface BlockThumbnailProps {
   /** Block's design data containing shapes */
@@ -149,6 +149,41 @@ function renderFlyingGeese(
   );
 }
 
+/** Render a QST (Quarter-Square Triangle) shape */
+function renderQst(
+  shape: QstShape,
+  cellSize: number,
+  palette: Palette,
+  offsetX: number,
+  offsetY: number
+) {
+  const topColor = getColor(palette, shape.partFabricRoles.top);
+  const rightColor = getColor(palette, shape.partFabricRoles.right);
+  const bottomColor = getColor(palette, shape.partFabricRoles.bottom);
+  const leftColor = getColor(palette, shape.partFabricRoles.left);
+  const x = offsetX + shape.position.col * cellSize;
+  const y = offsetY + shape.position.row * cellSize;
+
+  // Center point
+  const cx = cellSize / 2;
+  const cy = cellSize / 2;
+
+  // Triangle points for each quarter (no padding for seamless appearance)
+  const topPoints = [0, 0, cellSize, 0, cx, cy];
+  const rightPoints = [cellSize, 0, cellSize, cellSize, cx, cy];
+  const bottomPoints = [cellSize, cellSize, 0, cellSize, cx, cy];
+  const leftPoints = [0, cellSize, 0, 0, cx, cy];
+
+  return (
+    <Group key={shape.id} x={x} y={y} listening={false}>
+      <Line points={topPoints} fill={topColor} closed />
+      <Line points={rightPoints} fill={rightColor} closed />
+      <Line points={bottomPoints} fill={bottomColor} closed />
+      <Line points={leftPoints} fill={leftColor} closed />
+    </Group>
+  );
+}
+
 export function BlockThumbnail({
   shapes,
   gridSize,
@@ -169,6 +204,8 @@ export function BlockThumbnail({
           return renderHst(shape as HstShape, cellSize, palette, 0, 0);
         case 'flying_geese':
           return renderFlyingGeese(shape as FlyingGeeseShape, cellSize, palette, 0, 0);
+        case 'qst':
+          return renderQst(shape as QstShape, cellSize, palette, 0, 0);
         default:
           return null;
       }

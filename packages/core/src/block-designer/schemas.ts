@@ -47,13 +47,16 @@ export const RotationSchema = z.union([
 // =============================================================================
 
 /** Shape type enum schema */
-export const ShapeTypeSchema = z.enum(['square', 'hst', 'flying_geese']);
+export const ShapeTypeSchema = z.enum(['square', 'hst', 'flying_geese', 'qst']);
 
 /** HST variant schema */
 export const HstVariantSchema = z.enum(['nw', 'ne', 'sw', 'se']);
 
 /** Flying Geese direction schema */
 export const FlyingGeeseDirectionSchema = z.enum(['up', 'down', 'left', 'right']);
+
+/** QST part ID schema */
+export const QstPartIdSchema = z.enum(['top', 'right', 'bottom', 'left']);
 
 // =============================================================================
 // Grid & Position Schemas
@@ -156,11 +159,32 @@ export const FlyingGeeseShapeSchema = z.object({
   partFabricRoles: FlyingGeesePartRolesSchema,
 });
 
+/** QST part roles schema - fabric role for each of the 4 triangles */
+export const QstPartRolesSchema = z.object({
+  top: FabricRoleIdSchema,
+  right: FabricRoleIdSchema,
+  bottom: FabricRoleIdSchema,
+  left: FabricRoleIdSchema,
+});
+
+/** QST shape schema - uses partFabricRoles for independent coloring of 4 triangles */
+export const QstShapeSchema = z.object({
+  id: UUIDSchema,
+  type: z.literal('qst'),
+  position: GridPositionSchema,
+  span: z.object({
+    rows: z.literal(1),
+    cols: z.literal(1),
+  }),
+  partFabricRoles: QstPartRolesSchema,
+});
+
 /** Union schema for all shapes */
 export const ShapeSchema = z.discriminatedUnion('type', [
   SquareShapeSchema,
   HstShapeSchema,
   FlyingGeeseShapeSchema,
+  QstShapeSchema,
 ]);
 
 // =============================================================================
@@ -214,6 +238,12 @@ export const CreateFlyingGeeseInputSchema = z.object({
   position: GridPositionSchema,
   direction: FlyingGeeseDirectionSchema,
   partFabricRoles: FlyingGeesePartRolesSchema,
+});
+
+/** Input schema for creating QST */
+export const CreateQstInputSchema = z.object({
+  position: GridPositionSchema,
+  partFabricRoles: QstPartRolesSchema,
 });
 
 // =============================================================================

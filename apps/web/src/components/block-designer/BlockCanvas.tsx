@@ -9,12 +9,13 @@ import { ZoomControls } from './ZoomControls';
 import { SquareRenderer } from './SquareRenderer';
 import { HstRenderer } from './HstRenderer';
 import { FlyingGeeseRenderer } from './FlyingGeeseRenderer';
+import { QstRenderer } from './QstRenderer';
 import { FloatingToolbar } from './FloatingToolbar';
 import { PreviewGrid } from './PreviewGrid';
 import { EmptyCell } from './EmptyCell';
 import { useShiftKey } from '../../hooks';
 import { useBlockDesignerStore, useSelectedShapeType, useHoveredCell, useIsPlacingShape, useBlockRangeFillAnchor } from '@quillty/core';
-import type { GridPosition, SquareShape, HstShape, FlyingGeeseShape, Shape, ShapeSelectionType } from '@quillty/core';
+import type { GridPosition, SquareShape, HstShape, FlyingGeeseShape, QstShape, Shape, ShapeSelectionType } from '@quillty/core';
 
 /** Canvas sizing constants */
 const CANVAS_PADDING = 40;
@@ -32,6 +33,7 @@ export function BlockCanvas() {
   const activeFabricRole = useBlockDesignerStore((state) => state.activeFabricRole);
   const addSquare = useBlockDesignerStore((state) => state.addSquare);
   const addHst = useBlockDesignerStore((state) => state.addHst);
+  const addQst = useBlockDesignerStore((state) => state.addQst);
   const isCellOccupied = useBlockDesignerStore((state) => state.isCellOccupied);
   const clearSelection = useBlockDesignerStore((state) => state.clearSelection);
   const getValidAdjacentCells = useBlockDesignerStore((state) => state.getValidAdjacentCells);
@@ -252,6 +254,8 @@ export function BlockCanvas() {
         addSquare(gridPos, 'background');
       } else if (shapeType.type === 'hst') {
         addHst(gridPos, shapeType.variant, 'background', 'background');
+      } else if (shapeType.type === 'qst') {
+        addQst(gridPos);
       } else if (shapeType.type === 'flying_geese') {
         // Check if there are valid adjacent cells
         const validCells = getValidAdjacentCells(gridPos);
@@ -263,7 +267,7 @@ export function BlockCanvas() {
         startFlyingGeesePlacement(gridPos);
       }
     },
-    [addSquare, addHst, getValidAdjacentCells, startFlyingGeesePlacement]
+    [addSquare, addHst, addQst, getValidAdjacentCells, startFlyingGeesePlacement]
   );
 
   // Handle click on empty cell (for placing shapes from library)
@@ -395,6 +399,7 @@ export function BlockCanvas() {
   const squareShapes = shapes.filter((s): s is SquareShape => s.type === 'square');
   const hstShapes = shapes.filter((s): s is HstShape => s.type === 'hst');
   const flyingGeeseShapes = shapes.filter((s): s is FlyingGeeseShape => s.type === 'flying_geese');
+  const qstShapes = shapes.filter((s): s is QstShape => s.type === 'qst');
 
   // Compute empty cell positions for rendering EmptyCell components
   const getEmptyCellPositions = useCallback((): GridPosition[] => {
@@ -525,6 +530,20 @@ export function BlockCanvas() {
                 />
               ))}
 
+              {/* Render QST shapes */}
+              {qstShapes.map((shape) => (
+                <QstRenderer
+                  key={shape.id}
+                  shape={shape}
+                  cellSize={cellSize}
+                  offsetX={gridOffsetX}
+                  offsetY={gridOffsetY}
+                  palette={previewPalette}
+                  isSelected={shape.id === selectedShapeId}
+                  onClick={(partId) => handleShapeClick(shape.id, partId)}
+                />
+              ))}
+
               {/* Highlight first cell during Flying Geese placement */}
               {mode === 'placing_flying_geese_second' && flyingGeesePlacement && (
                 <Rect
@@ -594,6 +613,27 @@ export function BlockCanvas() {
                       isSelected={false}
                     />
                   )}
+                  {selectedShapeType.type === 'qst' && (
+                    <QstRenderer
+                      shape={{
+                        id: 'ghost-preview',
+                        type: 'qst',
+                        position: hoveredCell,
+                        span: { rows: 1, cols: 1 },
+                        partFabricRoles: {
+                          top: 'background',
+                          right: 'background',
+                          bottom: 'background',
+                          left: 'background',
+                        },
+                      }}
+                      cellSize={cellSize}
+                      offsetX={gridOffsetX}
+                      offsetY={gridOffsetY}
+                      palette={previewPalette}
+                      isSelected={false}
+                    />
+                  )}
                   {/* Flying Geese doesn't show ghost preview - uses two-tap flow */}
                 </Group>
               )}
@@ -629,6 +669,27 @@ export function BlockCanvas() {
                           variant: selectedShapeType.variant,
                           fabricRole: 'background',
                           secondaryFabricRole: 'background',
+                        }}
+                        cellSize={cellSize}
+                        offsetX={gridOffsetX}
+                        offsetY={gridOffsetY}
+                        palette={previewPalette}
+                        isSelected={false}
+                      />
+                    ) : selectedShapeType.type === 'qst' ? (
+                      <QstRenderer
+                        key={`ghost-range-${row}-${col}`}
+                        shape={{
+                          id: `ghost-range-${row}-${col}`,
+                          type: 'qst',
+                          position: { row, col },
+                          span: { rows: 1, cols: 1 },
+                          partFabricRoles: {
+                            top: 'background',
+                            right: 'background',
+                            bottom: 'background',
+                            left: 'background',
+                          },
                         }}
                         cellSize={cellSize}
                         offsetX={gridOffsetX}
@@ -702,8 +763,8 @@ export function BlockCanvas() {
           {selectedShape && !isPaintMode && (
             <FloatingToolbar
               position={getToolbarPosition(selectedShape)}
-              canRotate={selectedShape.type === 'hst' || selectedShape.type === 'flying_geese'}
-              canFlip={selectedShape.type === 'hst' || selectedShape.type === 'flying_geese'}
+              canRotate={selectedShape.type === 'hst' || selectedShape.type === 'flying_geese' || selectedShape.type === 'qst'}
+              canFlip={selectedShape.type === 'hst' || selectedShape.type === 'flying_geese' || selectedShape.type === 'qst'}
               onRotate={handleRotate}
               onFlipHorizontal={handleFlipHorizontal}
               onFlipVertical={handleFlipVertical}

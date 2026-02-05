@@ -84,6 +84,7 @@ export const FLYING_GEESE_DIRECTIONS: readonly {
   { id: 'right', label: 'Points Right' },
 ] as const;
 
+
 // =============================================================================
 // Validation Constants
 // =============================================================================

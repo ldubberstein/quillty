@@ -72,6 +72,20 @@ export const SHAPE_OPTIONS: ShapeOption[] = [
     ),
   },
   {
+    id: 'qst',
+    label: 'QST',
+    selection: { type: 'qst' },
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-8 h-8">
+        {/* 4 triangles meeting at center */}
+        <polygon points="3,3 21,3 12,12" fill="currentColor" />
+        <polygon points="21,3 21,21 12,12" fill="#E5E7EB" />
+        <polygon points="21,21 3,21 12,12" fill="currentColor" />
+        <polygon points="3,21 3,3 12,12" fill="#E5E7EB" />
+      </svg>
+    ),
+  },
+  {
     id: 'flying-geese',
     label: 'Geese',
     selection: { type: 'flying_geese' },

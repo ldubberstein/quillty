@@ -2,8 +2,7 @@
  * Block Designer Types
  *
  * Shape-centric data model per DATA_MODEL.md
- * MVP shapes: SquareShape, HstShape, FlyingGeeseShape
- * QstShape deferred to post-MVP
+ * Shapes: SquareShape, HstShape, FlyingGeeseShape, QstShape
  */
 
 // =============================================================================
@@ -30,14 +29,13 @@ export type Rotation = 0 | 90 | 180 | 270;
 // =============================================================================
 
 /**
- * Shape types for MVP
+ * Shape types
  * - square: 1×1 solid square
  * - hst: Half-square triangle (2 triangles in 1 cell)
  * - flying_geese: 2:1 ratio rectangle with center + side triangles
- *
- * Note: 'qst' (quarter-square triangle) exists in DATA_MODEL.md but is deferred to post-MVP
+ * - qst: Quarter-square triangle (4 triangles in 1 cell)
  */
-export type ShapeType = 'square' | 'hst' | 'flying_geese';
+export type ShapeType = 'square' | 'hst' | 'flying_geese' | 'qst';
 
 /**
  * HST variants (pre-rotated orientations for shape picker)
@@ -52,6 +50,24 @@ export type HstVariant = 'nw' | 'ne' | 'sw' | 'se';
  * Flying Geese direction (the direction the center triangle points toward)
  */
 export type FlyingGeeseDirection = 'up' | 'down' | 'left' | 'right';
+
+/**
+ * QST part names for fabric role assignment
+ * Named by compass direction from center
+ */
+export type QstPartId = 'top' | 'right' | 'bottom' | 'left';
+
+/** Fabric roles for each part of a QST shape */
+export interface QstPartRoles {
+  /** Top triangle */
+  top: FabricRoleId;
+  /** Right triangle */
+  right: FabricRoleId;
+  /** Bottom triangle */
+  bottom: FabricRoleId;
+  /** Left triangle */
+  left: FabricRoleId;
+}
 
 // =============================================================================
 // Grid & Position
@@ -161,8 +177,22 @@ export interface FlyingGeeseShape extends Omit<BaseShape, 'fabricRole'> {
   partFabricRoles: FlyingGeesePartRoles;
 }
 
-/** Union type for all MVP shapes */
-export type Shape = SquareShape | HstShape | FlyingGeeseShape;
+/**
+ * Quarter-Square Triangle - 4 triangles in one cell with independently colorable parts
+ *
+ * Note: QST has no variants - the shape geometry is always the same (4 triangles meeting at center).
+ * Visual variety comes from coloring the 4 triangles differently. The shape has 2-fold rotational
+ * symmetry, so rotation is achieved by cycling the part colors.
+ */
+export interface QstShape extends Omit<BaseShape, 'fabricRole'> {
+  type: 'qst';
+  span: { rows: 1; cols: 1 };
+  /** Fabric roles for each of the 4 triangles */
+  partFabricRoles: QstPartRoles;
+}
+
+/** Union type for all shapes */
+export type Shape = SquareShape | HstShape | FlyingGeeseShape | QstShape;
 
 // =============================================================================
 // Block
@@ -234,8 +264,15 @@ export interface CreateFlyingGeeseInput {
   partFabricRoles: FlyingGeesePartRoles;
 }
 
+/** Input for creating a new QstShape */
+export interface CreateQstInput {
+  position: GridPosition;
+  /** Fabric roles for each part (top, right, bottom, left) */
+  partFabricRoles: QstPartRoles;
+}
+
 /** Union of all shape creation inputs */
-export type CreateShapeInput = CreateSquareInput | CreateHstInput | CreateFlyingGeeseInput;
+export type CreateShapeInput = CreateSquareInput | CreateHstInput | CreateFlyingGeeseInput | CreateQstInput;
 
 // =============================================================================
 // Block Designer State Types
@@ -275,4 +312,5 @@ export interface FlyingGeesePlacementState {
 export type ShapeSelectionType =
   | { type: 'square' }
   | { type: 'hst'; variant: HstVariant }
-  | { type: 'flying_geese' };
+  | { type: 'flying_geese' }
+  | { type: 'qst' };

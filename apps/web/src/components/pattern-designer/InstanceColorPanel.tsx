@@ -58,6 +58,11 @@ function getRolesUsedByBlock(block: Block | null): Set<string> {
       roles.add(shape.partFabricRoles.goose);
       roles.add(shape.partFabricRoles.sky1);
       roles.add(shape.partFabricRoles.sky2);
+    } else if (shape.type === 'qst') {
+      roles.add(shape.partFabricRoles.top);
+      roles.add(shape.partFabricRoles.right);
+      roles.add(shape.partFabricRoles.bottom);
+      roles.add(shape.partFabricRoles.left);
     }
   }
 
@@ -78,6 +83,7 @@ export function InstanceColorPanel() {
 
   const blockCache = usePatternDesignerStore((s) => s.blockCache);
   const setInstanceRoleColor = usePatternDesignerStore((s) => s.setInstanceRoleColor);
+  const previewInstanceRoleColor = usePatternDesignerStore((s) => s.previewInstanceRoleColor);
   const resetInstanceRoleColor = usePatternDesignerStore((s) => s.resetInstanceRoleColor);
   const resetInstancePalette = usePatternDesignerStore((s) => s.resetInstancePalette);
 
@@ -105,11 +111,34 @@ export function InstanceColorPanel() {
   const hasOverrides = Object.keys(overrides).length > 0;
   const overrideCount = Object.keys(overrides).length;
 
-  // Handle color change
-  const handleColorChange = useCallback(
+  // Get effective color for a role (override or pattern palette)
+  const getEffectiveColor = useCallback(
+    (roleId: string): string => {
+      if (overrides[roleId]) {
+        return overrides[roleId];
+      }
+      const role = palette.roles.find((r) => r.id === roleId);
+      return role?.color ?? '#CCCCCC';
+    },
+    [overrides, palette.roles]
+  );
+
+  // Handle live color preview (while dragging in color picker)
+  const handleColorPreview = useCallback(
     (roleId: FabricRoleId, color: string) => {
       if (instance) {
-        setInstanceRoleColor(instance.id, roleId, color);
+        previewInstanceRoleColor(instance.id, roleId, color);
+      }
+    },
+    [instance, previewInstanceRoleColor]
+  );
+
+  // Handle color change complete (when picker closes) - records to undo history
+  const handleColorChangeComplete = useCallback(
+    (roleId: FabricRoleId, color: string, startColor: string) => {
+      if (instance) {
+        // Use the start color from when picker opened for proper undo
+        setInstanceRoleColor(instance.id, roleId, color, startColor);
       }
     },
     [instance, setInstanceRoleColor]
@@ -131,18 +160,6 @@ export function InstanceColorPanel() {
       resetInstancePalette(instance.id);
     }
   }, [instance, resetInstancePalette]);
-
-  // Get effective color for a role (override or pattern palette)
-  const getEffectiveColor = useCallback(
-    (roleId: string): string => {
-      if (overrides[roleId]) {
-        return overrides[roleId];
-      }
-      const role = palette.roles.find((r) => r.id === roleId);
-      return role?.color ?? '#CCCCCC';
-    },
-    [overrides, palette.roles]
-  );
 
   // Don't render if no block instance is selected or block not in cache
   if (!instance || !block) return null;
@@ -207,7 +224,8 @@ export function InstanceColorPanel() {
               <ColorSwatch
                 color={effectiveColor}
                 size="sm"
-                onChange={(color) => handleColorChange(role.id, color)}
+                onChange={(color) => handleColorPreview(role.id, color)}
+                onChangeComplete={(color, startColor) => handleColorChangeComplete(role.id, color, startColor)}
                 aria-label={`Change ${role.name} color for this block`}
                 className="w-6 h-6"
               />

@@ -18,6 +18,8 @@ export type {
   FlyingGeeseDirection,
   FlyingGeesePartId,
   FlyingGeesePartRoles,
+  QstPartId,
+  QstPartRoles,
   // Grid & position
   GridPosition,
   Span,
@@ -31,6 +33,7 @@ export type {
   SquareShape,
   HstShape,
   FlyingGeeseShape,
+  QstShape,
   Shape,
   // Block
   BlockStatus,
@@ -39,6 +42,7 @@ export type {
   CreateSquareInput,
   CreateHstInput,
   CreateFlyingGeeseInput,
+  CreateQstInput,
   CreateShapeInput,
   // Designer state
   DesignerMode,
@@ -61,6 +65,8 @@ export {
   FlyingGeeseDirectionSchema,
   FlyingGeesePartIdSchema,
   FlyingGeesePartRolesSchema,
+  QstPartIdSchema,
+  QstPartRolesSchema,
   // Grid & position schemas
   GridPositionSchema,
   SpanSchema,
@@ -73,6 +79,7 @@ export {
   SquareShapeSchema,
   HstShapeSchema,
   FlyingGeeseShapeSchema,
+  QstShapeSchema,
   ShapeSchema,
   // Block schemas
   BlockStatusSchema,
@@ -81,6 +88,7 @@ export {
   CreateSquareInputSchema,
   CreateHstInputSchema,
   CreateFlyingGeeseInputSchema,
+  CreateQstInputSchema,
   // Inferred types
   type ValidatedShape,
   type ValidatedBlock,
@@ -138,10 +146,12 @@ export {
   HST_VARIANT_INFO,
   getFlyingGeeseTriangles,
   FLYING_GEESE_DIRECTION_INFO,
+  getQstTriangles,
   type Point,
   type Triangle,
   type HstTriangles,
   type FlyingGeeseTriangles,
+  type QstTriangles,
 } from './geometry';
 
 // Persistence

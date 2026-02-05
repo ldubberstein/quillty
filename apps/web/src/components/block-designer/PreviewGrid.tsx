@@ -11,18 +11,20 @@ import {
   type SquareShape,
   type HstShape,
   type FlyingGeeseShape,
+  type QstShape,
   type Palette,
   type GridSize,
   getHstTriangles,
   triangleToFlatPoints,
   getFlyingGeeseTriangles,
+  getQstTriangles,
 } from '@quillty/core';
 
 /** Padding around the preview grid */
 const PREVIEW_PADDING = 20;
 
 /** Gap between block instances in the grid */
-const BLOCK_GAP = 4;
+const BLOCK_GAP = 0;
 
 /** Calculate rotation for each position in the 3x3 grid based on preset */
 function getRotationsForPreset(preset: PreviewRotationPreset): Rotation[][] {
@@ -174,6 +176,38 @@ function PreviewBlock({
           <Line points={sky1Points} fill={sky1Color} stroke="#9CA3AF" strokeWidth={1} closed />
           <Line points={sky2Points} fill={sky2Color} stroke="#9CA3AF" strokeWidth={1} closed />
           <Line points={goosePoints} fill={gooseColor} stroke="#9CA3AF" strokeWidth={1} closed />
+        </Group>
+      );
+    }
+
+    if (shape.type === 'qst') {
+      const qstShape = shape as QstShape;
+      const topRole = palette.roles.find((r) => r.id === qstShape.partFabricRoles.top);
+      const rightRole = palette.roles.find((r) => r.id === qstShape.partFabricRoles.right);
+      const bottomRole = palette.roles.find((r) => r.id === qstShape.partFabricRoles.bottom);
+      const leftRole = palette.roles.find((r) => r.id === qstShape.partFabricRoles.left);
+      const topColor = topRole?.color ?? '#CCCCCC';
+      const rightColor = rightRole?.color ?? '#FFFFFF';
+      const bottomColor = bottomRole?.color ?? '#CCCCCC';
+      const leftColor = leftRole?.color ?? '#FFFFFF';
+
+      // Use relative coordinates (within the block)
+      const x = shape.position.col * cellSize;
+      const y = shape.position.row * cellSize;
+      const size = cellSize - padding * 2;
+
+      const triangles = getQstTriangles(size, size);
+      const topPoints = triangleToFlatPoints(triangles.top);
+      const rightPoints = triangleToFlatPoints(triangles.right);
+      const bottomPoints = triangleToFlatPoints(triangles.bottom);
+      const leftPoints = triangleToFlatPoints(triangles.left);
+
+      return (
+        <Group key={shape.id} x={x + padding} y={y + padding}>
+          <Line points={topPoints} fill={topColor} stroke="#9CA3AF" strokeWidth={1} closed />
+          <Line points={rightPoints} fill={rightColor} stroke="#9CA3AF" strokeWidth={1} closed />
+          <Line points={bottomPoints} fill={bottomColor} stroke="#9CA3AF" strokeWidth={1} closed />
+          <Line points={leftPoints} fill={leftColor} stroke="#9CA3AF" strokeWidth={1} closed />
         </Group>
       );
     }

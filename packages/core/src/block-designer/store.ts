@@ -14,6 +14,8 @@ import type {
   HstShape,
   FlyingGeeseShape,
   FlyingGeesePartId,
+  QstShape,
+  QstPartId,
   GridSize,
   GridPosition,
   FabricRoleId,
@@ -148,6 +150,11 @@ interface BlockDesignerActions {
     direction: FlyingGeeseDirection,
     partFabricRoles?: Partial<FlyingGeeseShape['partFabricRoles']>
   ) => UUID;
+  /** Add a QST (Quarter-Square Triangle) shape at position */
+  addQst: (
+    position: GridPosition,
+    partFabricRoles?: Partial<QstShape['partFabricRoles']>
+  ) => UUID;
   /** Remove a shape by ID */
   removeShape: (shapeId: UUID) => void;
   /** Add multiple shapes in a batch (single undo operation) - Flying Geese not supported */
@@ -168,8 +175,10 @@ interface BlockDesignerActions {
   assignFabricRole: (shapeId: UUID, roleId: FabricRoleId, partId?: string) => void;
 
   // Palette
-  /** Change a palette role's color */
-  setRoleColor: (roleId: FabricRoleId, color: string) => void;
+  /** Change a palette role's color (records undo) */
+  setRoleColor: (roleId: FabricRoleId, color: string, startColor?: string) => void;
+  /** Preview a palette role's color without recording to undo history (for live color picker updates) */
+  previewRoleColor: (roleId: FabricRoleId, color: string) => void;
   /** Add a new fabric role to the palette */
   addRole: (name?: string, color?: string) => string;
   /** Remove a fabric role from the palette (reassigns shapes to fallback role) */
@@ -407,6 +416,30 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
       return id;
     },
 
+    addQst: (position, partFabricRoles) => {
+      const id = generateUUID();
+      const shape: QstShape = {
+        id,
+        type: 'qst',
+        position,
+        span: { rows: 1, cols: 1 },
+        partFabricRoles: {
+          top: partFabricRoles?.top ?? 'background',
+          right: partFabricRoles?.right ?? 'background',
+          bottom: partFabricRoles?.bottom ?? 'background',
+          left: partFabricRoles?.left ?? 'background',
+        },
+      };
+      set((state) => {
+        state.block.shapes.push(shape);
+        state.block.updatedAt = getCurrentTimestamp();
+        // Record operation for undo
+        const operation: Operation = { type: 'add_shape', shape };
+        state.undoManager = recordOperation(state.undoManager, operation);
+      });
+      return id;
+    },
+
     removeShape: (shapeId) => {
       const shapeToRemove = get().block.shapes.find((s) => s.id === shapeId);
       if (!shapeToRemove) return;
@@ -437,7 +470,7 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
       }
 
       // Create shapes for each position
-      const shapes: (SquareShape | HstShape)[] = positions.map((position) => {
+      const shapes: (SquareShape | HstShape | QstShape)[] = positions.map((position) => {
         const id = generateUUID();
         if (shapeType.type === 'square') {
           return {
@@ -447,8 +480,7 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
             span: { rows: 1 as const, cols: 1 as const },
             fabricRole: 'background' as const,
           };
-        } else {
-          // HST
+        } else if (shapeType.type === 'hst') {
           return {
             id,
             type: 'hst' as const,
@@ -457,6 +489,20 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
             fabricRole: 'background' as const,
             variant: shapeType.variant,
             secondaryFabricRole: 'background' as const,
+          };
+        } else {
+          // QST
+          return {
+            id,
+            type: 'qst' as const,
+            position,
+            span: { rows: 1 as const, cols: 1 as const },
+            partFabricRoles: {
+              top: 'background' as const,
+              right: 'background' as const,
+              bottom: 'background' as const,
+              left: 'background' as const,
+            },
           };
         }
       });
@@ -533,6 +579,14 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
           : 'goose';
         prev = { partFabricRoles: { ...fgShape.partFabricRoles } };
         next = { partFabricRoles: { ...fgShape.partFabricRoles, [targetPartId]: roleId } };
+      } else if (shape.type === 'qst') {
+        const qstShape = shape as QstShape;
+        const validPartIds: QstPartId[] = ['top', 'right', 'bottom', 'left'];
+        const targetPartId = partId && validPartIds.includes(partId as QstPartId)
+          ? (partId as QstPartId)
+          : 'top';
+        prev = { partFabricRoles: { ...qstShape.partFabricRoles } };
+        next = { partFabricRoles: { ...qstShape.partFabricRoles, [targetPartId]: roleId } };
       } else if (shape.type === 'hst') {
         const hstShape = shape as HstShape;
         if (partId === 'secondary') {
@@ -558,6 +612,14 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
             } else {
               fgShape.partFabricRoles.goose = roleId;
             }
+          } else if (stateShape.type === 'qst') {
+            const qstShape = stateShape as QstShape;
+            const validPartIds: QstPartId[] = ['top', 'right', 'bottom', 'left'];
+            if (partId && validPartIds.includes(partId as QstPartId)) {
+              qstShape.partFabricRoles[partId as QstPartId] = roleId;
+            } else {
+              qstShape.partFabricRoles.top = roleId;
+            }
           } else if (stateShape.type === 'hst') {
             const hstShape = stateShape as HstShape;
             if (partId === 'secondary') {
@@ -577,11 +639,12 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
     },
 
     // Palette
-    setRoleColor: (roleId, color) => {
+    setRoleColor: (roleId, color, startColor) => {
       const role = get().block.previewPalette.roles.find((r) => r.id === roleId);
       if (!role) return;
 
-      const prevColor = role.color;
+      // Use provided startColor for undo, or capture current if not provided
+      const prevColor = startColor ?? role.color;
 
       set((state) => {
         const stateRole = state.block.previewPalette.roles.find((r) => r.id === roleId);
@@ -591,6 +654,16 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
           // Record operation for undo
           const operation: Operation = { type: 'update_palette', roleId, prevColor, nextColor: color };
           state.undoManager = recordOperation(state.undoManager, operation);
+        }
+      });
+    },
+
+    previewRoleColor: (roleId, color) => {
+      set((state) => {
+        const stateRole = state.block.previewPalette.roles.find((r) => r.id === roleId);
+        if (stateRole) {
+          stateRole.color = color;
+          // Don't update timestamps or record undo - this is just a preview
         }
       });
     },
@@ -679,6 +752,13 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
             if (fg.partFabricRoles.goose === roleId) fg.partFabricRoles.goose = fallback;
             if (fg.partFabricRoles.sky1 === roleId) fg.partFabricRoles.sky1 = fallback;
             if (fg.partFabricRoles.sky2 === roleId) fg.partFabricRoles.sky2 = fallback;
+          }
+          if (shape.type === 'qst') {
+            const qst = shape as QstShape;
+            if (qst.partFabricRoles.top === roleId) qst.partFabricRoles.top = fallback;
+            if (qst.partFabricRoles.right === roleId) qst.partFabricRoles.right = fallback;
+            if (qst.partFabricRoles.bottom === roleId) qst.partFabricRoles.bottom = fallback;
+            if (qst.partFabricRoles.left === roleId) qst.partFabricRoles.left = fallback;
           }
         }
 
@@ -869,6 +949,31 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
             state.undoManager = recordOperation(state.undoManager, operation);
           }
         });
+      } else if (shape.type === 'qst') {
+        // For QST, rotate by cycling the part colors clockwise: top→right→bottom→left→top
+        const qstShape = shape as QstShape;
+        const prevRoles = { ...qstShape.partFabricRoles };
+        const nextRoles = {
+          top: prevRoles.left,
+          right: prevRoles.top,
+          bottom: prevRoles.right,
+          left: prevRoles.bottom,
+        };
+
+        set((state) => {
+          const stateShape = state.block.shapes.find((s) => s.id === shapeId);
+          if (stateShape?.type === 'qst') {
+            (stateShape as QstShape).partFabricRoles = nextRoles;
+            state.block.updatedAt = getCurrentTimestamp();
+            const operation: Operation = {
+              type: 'update_shape',
+              shapeId,
+              prev: { partFabricRoles: prevRoles },
+              next: { partFabricRoles: nextRoles },
+            };
+            state.undoManager = recordOperation(state.undoManager, operation);
+          }
+        });
       }
       // Squares don't rotate (they're symmetric)
     },
@@ -946,6 +1051,30 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
             }
           });
         }
+      } else if (shape.type === 'qst') {
+        // For QST, horizontal flip swaps left and right
+        const qstShape = shape as QstShape;
+        const prevRoles = { ...qstShape.partFabricRoles };
+        const nextRoles = {
+          ...qstShape.partFabricRoles,
+          left: qstShape.partFabricRoles.right,
+          right: qstShape.partFabricRoles.left,
+        };
+
+        set((state) => {
+          const stateShape = state.block.shapes.find((s) => s.id === shapeId);
+          if (stateShape?.type === 'qst') {
+            (stateShape as QstShape).partFabricRoles = nextRoles;
+            state.block.updatedAt = getCurrentTimestamp();
+            const operation: Operation = {
+              type: 'update_shape',
+              shapeId,
+              prev: { partFabricRoles: prevRoles },
+              next: { partFabricRoles: nextRoles },
+            };
+            state.undoManager = recordOperation(state.undoManager, operation);
+          }
+        });
       }
       // Squares don't flip (they're symmetric)
     },
@@ -1023,6 +1152,30 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
             }
           });
         }
+      } else if (shape.type === 'qst') {
+        // For QST, vertical flip swaps top and bottom
+        const qstShape = shape as QstShape;
+        const prevRoles = { ...qstShape.partFabricRoles };
+        const nextRoles = {
+          ...qstShape.partFabricRoles,
+          top: qstShape.partFabricRoles.bottom,
+          bottom: qstShape.partFabricRoles.top,
+        };
+
+        set((state) => {
+          const stateShape = state.block.shapes.find((s) => s.id === shapeId);
+          if (stateShape?.type === 'qst') {
+            (stateShape as QstShape).partFabricRoles = nextRoles;
+            state.block.updatedAt = getCurrentTimestamp();
+            const operation: Operation = {
+              type: 'update_shape',
+              shapeId,
+              prev: { partFabricRoles: prevRoles },
+              next: { partFabricRoles: nextRoles },
+            };
+            state.undoManager = recordOperation(state.undoManager, operation);
+          }
+        });
       }
       // Squares don't flip (they're symmetric)
     },
