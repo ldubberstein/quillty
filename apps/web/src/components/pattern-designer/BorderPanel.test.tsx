@@ -25,7 +25,7 @@ let mockSelectedBorderId: string | null = null;
 let mockFinalWidth = 48;
 let mockFinalHeight = 48;
 let mockCanAddBorder = true;
-let mockPalette = {
+const mockPalette = {
   roles: [
     { id: 'background' as FabricRoleId, name: 'Background', color: '#FFFFFF' },
     { id: 'feature' as FabricRoleId, name: 'Feature', color: '#1E3A5F' },

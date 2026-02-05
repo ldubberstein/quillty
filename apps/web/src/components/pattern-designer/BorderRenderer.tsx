@@ -1,7 +1,7 @@
 'use client';
 
 import { Group, Rect, Line } from 'react-konva';
-import type { BorderConfig, Palette, Border } from '@quillty/core';
+import type { BorderConfig, Palette } from '@quillty/core';
 
 interface BorderRendererProps {
   /** Border configuration from the pattern */
@@ -66,7 +66,7 @@ export function BorderRenderer({
   const borderElements: JSX.Element[] = [];
   const bordersReversed = [...borderConfig.borders].reverse();
 
-  bordersReversed.forEach((border, reversedIndex) => {
+  bordersReversed.forEach((border, _reversedIndex) => {
     const borderWidthPx = border.widthInches * pixelsPerInch;
     const color = getColor(palette, border.fabricRole);
     const cornerstoneColor = border.cornerstoneFabricRole

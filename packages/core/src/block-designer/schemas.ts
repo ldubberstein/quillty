@@ -5,6 +5,7 @@
  */
 
 import { z } from 'zod';
+import { MAX_PALETTE_ROLES, MIN_PALETTE_ROLES } from './constants';
 
 // =============================================================================
 // Primitive Schemas
@@ -94,7 +95,7 @@ export const FabricRoleSchema = z.object({
 
 /** Palette schema */
 export const PaletteSchema = z.object({
-  roles: z.array(FabricRoleSchema).min(1),
+  roles: z.array(FabricRoleSchema).min(MIN_PALETTE_ROLES).max(MAX_PALETTE_ROLES),
 });
 
 // =============================================================================

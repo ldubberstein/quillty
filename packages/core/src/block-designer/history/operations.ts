@@ -5,7 +5,7 @@
  * Operations store the data needed to apply and invert each change.
  */
 
-import type { Shape, FabricRoleId, Palette, GridSize } from '../types';
+import type { Shape, FabricRoleId, FabricRole, Palette, GridSize, FlyingGeeseShape } from '../types';
 
 /**
  * Operation to add a shape
@@ -63,6 +63,55 @@ export interface BatchOperation {
 }
 
 /**
+ * Operation to add a fabric role to the palette
+ */
+export interface AddRoleOperation {
+  type: 'add_role';
+  role: FabricRole;
+}
+
+/**
+ * Captures the previous role assignments for a shape (for undo on remove role)
+ */
+export interface ShapeRoleState {
+  fabricRole?: FabricRoleId;
+  secondaryFabricRole?: FabricRoleId;
+  partFabricRoles?: {
+    goose: FabricRoleId;
+    sky1: FabricRoleId;
+    sky2: FabricRoleId;
+  };
+}
+
+/**
+ * Operation to remove a fabric role from the palette
+ * Stores affected shapes for restoring their role assignments on undo
+ */
+export interface RemoveRoleOperation {
+  type: 'remove_role';
+  role: FabricRole;
+  /** Index where the role was in the palette (for restoring position on undo) */
+  index: number;
+  /** Shapes that had their roles reassigned, with their previous role assignments */
+  affectedShapes: Array<{
+    shapeId: string;
+    prevRoles: ShapeRoleState;
+  }>;
+  /** The role that shapes were reassigned to */
+  fallbackRoleId: FabricRoleId;
+}
+
+/**
+ * Operation to rename a fabric role
+ */
+export interface RenameRoleOperation {
+  type: 'rename_role';
+  roleId: FabricRoleId;
+  prevName: string;
+  nextName: string;
+}
+
+/**
  * Union type of all operations
  */
 export type Operation =
@@ -71,7 +120,10 @@ export type Operation =
   | UpdateShapeOperation
   | UpdatePaletteOperation
   | ResizeGridOperation
-  | BatchOperation;
+  | BatchOperation
+  | AddRoleOperation
+  | RemoveRoleOperation
+  | RenameRoleOperation;
 
 /**
  * Invert an operation to create its undo counterpart
@@ -113,6 +165,63 @@ export function invertOperation(op: Operation): Operation {
         type: 'batch',
         operations: op.operations.map(invertOperation).reverse(),
       };
+
+    case 'add_role':
+      return {
+        type: 'remove_role',
+        role: op.role,
+        index: -1, // Will be determined at apply time
+        affectedShapes: [], // No shapes affected when undoing an add
+        fallbackRoleId: '', // Not used when undoing an add
+      };
+
+    case 'remove_role': {
+      // When undoing a remove, we need to both restore the role AND restore shape assignments
+      const operations: Operation[] = [
+        { type: 'add_role', role: op.role },
+      ];
+
+      // Add update operations to restore original role assignments to affected shapes
+      for (const { shapeId, prevRoles } of op.affectedShapes) {
+        if (prevRoles.fabricRole !== undefined) {
+          operations.push({
+            type: 'update_shape',
+            shapeId,
+            prev: { fabricRole: op.fallbackRoleId },
+            next: { fabricRole: prevRoles.fabricRole },
+          });
+        }
+        if (prevRoles.secondaryFabricRole !== undefined) {
+          operations.push({
+            type: 'update_shape',
+            shapeId,
+            prev: { secondaryFabricRole: op.fallbackRoleId },
+            next: { secondaryFabricRole: prevRoles.secondaryFabricRole },
+          });
+        }
+        if (prevRoles.partFabricRoles !== undefined) {
+          // Restore Flying Geese part roles
+          operations.push({
+            type: 'update_shape',
+            shapeId,
+            prev: { partFabricRoles: { goose: op.fallbackRoleId, sky1: op.fallbackRoleId, sky2: op.fallbackRoleId } },
+            next: { partFabricRoles: prevRoles.partFabricRoles },
+          });
+        }
+      }
+
+      return operations.length === 1
+        ? operations[0]
+        : { type: 'batch', operations };
+    }
+
+    case 'rename_role':
+      return {
+        type: 'rename_role',
+        roleId: op.roleId,
+        prevName: op.nextName,
+        nextName: op.prevName,
+      };
   }
 }
 
@@ -137,8 +246,18 @@ export function applyOperationToShapes(shapes: Shape[], op: Operation): Shape[] 
     }
 
     case 'update_palette':
-      // Palette operations don't affect shapes array
+    case 'add_role':
+    case 'rename_role':
+      // These palette operations don't affect shapes array
       return shapes;
+
+    case 'remove_role': {
+      // When undoing a remove (via inverted add_role), we need to restore
+      // the original role assignments to affected shapes
+      // This is handled by the store directly when applying the inverted operation
+      // For the forward remove operation, shapes are already reassigned before recording
+      return shapes;
+    }
 
     case 'resize_grid':
       // When undoing a shrink (going back to larger), restore removed shapes
@@ -215,10 +334,83 @@ export function applyOperationToPalette(palette: Palette, op: Operation): Palett
       };
     }
 
+    case 'add_role': {
+      return {
+        ...palette,
+        roles: [...palette.roles, op.role],
+      };
+    }
+
+    case 'remove_role': {
+      return {
+        ...palette,
+        roles: palette.roles.filter((role) => role.id !== op.role.id),
+      };
+    }
+
+    case 'rename_role': {
+      return {
+        ...palette,
+        roles: palette.roles.map((role) => {
+          if (role.id === op.roleId) {
+            return { ...role, name: op.nextName };
+          }
+          return role;
+        }),
+      };
+    }
+
     case 'batch':
       return op.operations.reduce(applyOperationToPalette, palette);
 
     default:
       return palette;
   }
+}
+
+/**
+ * Extract the role state from a shape for recording in undo operations
+ */
+export function extractRolesFromShape(shape: Shape): ShapeRoleState {
+  if (shape.type === 'square') {
+    return { fabricRole: shape.fabricRole };
+  }
+  if (shape.type === 'hst') {
+    return {
+      fabricRole: shape.fabricRole,
+      secondaryFabricRole: shape.secondaryFabricRole,
+    };
+  }
+  if (shape.type === 'flying_geese') {
+    const fg = shape as FlyingGeeseShape;
+    return {
+      partFabricRoles: { ...fg.partFabricRoles },
+    };
+  }
+  return {};
+}
+
+/**
+ * Get all shapes that use a specific fabric role
+ */
+export function getShapesUsingRole(shapes: Shape[], roleId: FabricRoleId): Shape[] {
+  return shapes.filter((shape) => {
+    if (shape.type === 'square' || shape.type === 'hst') {
+      if (shape.fabricRole === roleId) return true;
+    }
+    if (shape.type === 'hst') {
+      if (shape.secondaryFabricRole === roleId) return true;
+    }
+    if (shape.type === 'flying_geese') {
+      const fg = shape as FlyingGeeseShape;
+      if (
+        fg.partFabricRoles.goose === roleId ||
+        fg.partFabricRoles.sky1 === roleId ||
+        fg.partFabricRoles.sky2 === roleId
+      ) {
+        return true;
+      }
+    }
+    return false;
+  });
 }

@@ -24,6 +24,27 @@ export const DEFAULT_PALETTE: Palette = {
   ],
 };
 
+/** Maximum number of fabric roles in a palette */
+export const MAX_PALETTE_ROLES = 12;
+
+/** Minimum number of fabric roles in a palette */
+export const MIN_PALETTE_ROLES = 1;
+
+/**
+ * Default colors for additional fabric roles (beyond the 4 defaults)
+ * Colors chosen to complement common quilting fabric palettes
+ */
+export const ADDITIONAL_ROLE_COLORS: readonly string[] = [
+  '#9B2335', // Deep red
+  '#5B5EA6', // Periwinkle
+  '#9B7653', // Mocha
+  '#88B04B', // Greenery
+  '#FF6F61', // Coral
+  '#6B5B95', // Purple
+  '#DD4124', // Tangerine
+  '#009B77', // Emerald
+] as const;
+
 // =============================================================================
 // Grid Constants
 // =============================================================================

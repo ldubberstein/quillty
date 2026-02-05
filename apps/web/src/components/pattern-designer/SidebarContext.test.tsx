@@ -5,7 +5,7 @@
  * which panel is expanded (only one at a time).
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SidebarProvider, useSidebarPanel, type SidebarPanel } from './SidebarContext';
 

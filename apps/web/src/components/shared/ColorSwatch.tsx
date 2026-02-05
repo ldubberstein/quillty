@@ -3,9 +3,10 @@
 import { useCallback, useState, useRef, useEffect } from 'react';
 
 /** Size variants for the color swatch */
-export type ColorSwatchSize = 'sm' | 'md' | 'lg';
+export type ColorSwatchSize = 'xs' | 'sm' | 'md' | 'lg';
 
 const SIZE_CLASSES: Record<ColorSwatchSize, string> = {
+  xs: 'w-3 h-3',
   sm: 'w-4 h-4',
   md: 'w-8 h-8',
   lg: 'w-10 h-10',

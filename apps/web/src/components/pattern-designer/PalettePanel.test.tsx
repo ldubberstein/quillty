@@ -13,6 +13,9 @@ import type { FabricRoleId } from '@quillty/core';
 
 // Mock store functions
 const mockSetRoleColor = vi.fn();
+const mockAddRole = vi.fn(() => 'new-role-id');
+const mockRemoveRole = vi.fn();
+const mockCanRemoveRole = vi.fn(() => true);
 
 // Store state that can be modified per test
 let mockPalette = {
@@ -30,10 +33,14 @@ vi.mock('@quillty/core', () => ({
   usePatternDesignerStore: vi.fn((selector) => {
     const state = {
       setRoleColor: mockSetRoleColor,
+      addRole: mockAddRole,
+      removeRole: mockRemoveRole,
+      canRemoveRole: mockCanRemoveRole,
     };
     return selector ? selector(state) : state;
   }),
   usePatternPalette: vi.fn(() => mockPalette),
+  MAX_PALETTE_ROLES: 12,
 }));
 
 // Helper to render with SidebarProvider
@@ -48,6 +55,8 @@ const renderWithSidebar = (defaultPanel: 'colors' | 'borders' | 'grid' | null = 
 describe('PalettePanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset mock functions
+    mockCanRemoveRole.mockReturnValue(true);
     // Reset mock state
     mockPalette = {
       id: 'default-palette',
@@ -79,14 +88,6 @@ describe('PalettePanel', () => {
       renderWithSidebar('colors');
       const colorButtons = screen.getAllByRole('button', { name: /change.*color/i });
       expect(colorButtons).toHaveLength(4);
-    });
-
-    it('displays hex color values for each role when expanded', () => {
-      renderWithSidebar('colors');
-      expect(screen.getByText('#FFFFFF')).toBeInTheDocument();
-      expect(screen.getByText('#1E3A5F')).toBeInTheDocument();
-      expect(screen.getByText('#E85D04')).toBeInTheDocument();
-      expect(screen.getByText('#FAA307')).toBeInTheDocument();
     });
 
     it('displays instruction text when expanded', () => {
@@ -223,6 +224,58 @@ describe('PalettePanel', () => {
 
       const accent2ColorBtn = screen.getByRole('button', { name: /change accent 2 color/i });
       expect(accent2ColorBtn).toHaveStyle({ backgroundColor: '#FAA307' });
+    });
+  });
+
+  describe('role management', () => {
+    it('renders Add button', () => {
+      renderWithSidebar('colors');
+      expect(screen.getByRole('button', { name: /^add$/i })).toBeInTheDocument();
+    });
+
+    it('calls addRole when Add button is clicked', () => {
+      renderWithSidebar('colors');
+      const addButton = screen.getByRole('button', { name: /^add$/i });
+      fireEvent.click(addButton);
+      expect(mockAddRole).toHaveBeenCalled();
+    });
+
+    it('displays role count', () => {
+      renderWithSidebar('colors');
+      expect(screen.getByText('4/12')).toBeInTheDocument();
+    });
+
+    it('disables Add button when at max roles', () => {
+      mockPalette = {
+        ...mockPalette,
+        roles: Array.from({ length: 12 }, (_, i) => ({
+          id: `role${i}` as FabricRoleId,
+          name: `Role ${i}`,
+          color: '#000000',
+        })),
+      };
+      renderWithSidebar('colors');
+      const addButton = screen.getByRole('button', { name: /^add$/i });
+      expect(addButton).toBeDisabled();
+    });
+
+    it('renders remove buttons for each role when canRemoveRole is true', () => {
+      renderWithSidebar('colors');
+      const removeButtons = screen.getAllByRole('button', { name: /remove/i });
+      expect(removeButtons).toHaveLength(4);
+    });
+
+    it('does not render remove buttons when canRemoveRole is false', () => {
+      mockCanRemoveRole.mockReturnValue(false);
+      renderWithSidebar('colors');
+      expect(screen.queryByRole('button', { name: /remove/i })).not.toBeInTheDocument();
+    });
+
+    it('calls removeRole when remove button is clicked', () => {
+      renderWithSidebar('colors');
+      const removeButton = screen.getByRole('button', { name: /remove background/i });
+      fireEvent.click(removeButton);
+      expect(mockRemoveRole).toHaveBeenCalledWith('background');
     });
   });
 });

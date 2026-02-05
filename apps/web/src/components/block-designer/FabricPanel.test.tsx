@@ -13,6 +13,10 @@ import type { FabricRoleId } from '@quillty/core';
 // Mock store functions
 const mockSetActiveFabricRole = vi.fn();
 const mockSetRoleColor = vi.fn();
+const mockAddRole = vi.fn(() => 'new-role-id');
+const mockRemoveRole = vi.fn();
+const mockCanRemoveRole = vi.fn(() => true);
+const mockGetShapesUsingRole = vi.fn(() => []);
 
 // Store state that can be modified per test
 let mockState = {
@@ -40,14 +44,22 @@ vi.mock('@quillty/core', () => ({
       mode: mockState.mode,
       setActiveFabricRole: mockSetActiveFabricRole,
       setRoleColor: mockSetRoleColor,
+      addRole: mockAddRole,
+      removeRole: mockRemoveRole,
+      canRemoveRole: mockCanRemoveRole,
+      getShapesUsingRole: mockGetShapesUsingRole,
     };
     return selector ? selector(state) : state;
   }),
+  MAX_PALETTE_ROLES: 12,
 }));
 
 describe('FabricPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset mock functions
+    mockCanRemoveRole.mockReturnValue(true);
+    mockGetShapesUsingRole.mockReturnValue([]);
     // Reset mock state
     mockState = {
       activeFabricRole: null,
@@ -86,18 +98,10 @@ describe('FabricPanel', () => {
       expect(colorButtons).toHaveLength(4);
     });
 
-    it('displays hex color values for each role', () => {
-      render(<FabricPanel />);
-      expect(screen.getByText('#F5F5DC')).toBeInTheDocument();
-      expect(screen.getByText('#1E3A5F')).toBeInTheDocument();
-      expect(screen.getByText('#8B4513')).toBeInTheDocument();
-      expect(screen.getByText('#D4AF37')).toBeInTheDocument();
-    });
-
     it('displays instruction text when not in paint mode', () => {
       render(<FabricPanel />);
       expect(
-        screen.getByText('Select a fabric role, then tap shapes to paint')
+        screen.getByText('Select a fabric, then tap shapes to paint')
       ).toBeInTheDocument();
     });
 
@@ -284,10 +288,11 @@ describe('FabricPanel', () => {
 
     it('inactive roles have default styling', () => {
       render(<FabricPanel />);
-      // Role selector uses div with role="button"
+      // Role selector uses div with role="button", parent has the styling
       const roleButton = screen.getByRole('button', { name: /select background for painting/i });
+      const parentContainer = roleButton.parentElement;
       // Should have bg-gray-50 class (inactive state)
-      expect(roleButton.className).toContain('bg-gray-50');
+      expect(parentContainer?.className).toContain('bg-gray-50');
     });
 
     it('active role has highlighted styling', () => {
@@ -295,11 +300,12 @@ describe('FabricPanel', () => {
       mockState.activeFabricRole = 'feature';
       render(<FabricPanel />);
 
-      // Role selector uses div with role="button"
+      // Role selector uses div with role="button", parent has the styling
       const featureButton = screen.getByRole('button', { name: /select feature for painting/i });
+      const parentContainer = featureButton.parentElement;
       // Should have bg-blue-50 and ring classes (active state)
-      expect(featureButton.className).toContain('bg-blue-50');
-      expect(featureButton.className).toContain('ring-2');
+      expect(parentContainer?.className).toContain('bg-blue-50');
+      expect(parentContainer?.className).toContain('ring-2');
     });
   });
 });

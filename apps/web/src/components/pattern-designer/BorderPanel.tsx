@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import {
   usePatternDesignerStore,
@@ -150,7 +150,7 @@ export function BorderPanel() {
         <div className="mt-4 pt-3 border-t border-gray-100">
           <p className="text-xs text-gray-500 mb-1">Final quilt size:</p>
           <p className="text-sm font-medium text-gray-800">
-            {finalWidth}" × {finalHeight}"
+            {finalWidth}&quot; × {finalHeight}&quot;
           </p>
           {!bordersEnabled && (
             <p className="text-xs text-gray-400 mt-1 italic">
@@ -203,7 +203,7 @@ function BorderListItem({
           Border {index + 1}
         </p>
         <p className="text-xs text-gray-400">
-          {border.widthInches}" · {border.cornerStyle}
+          {border.widthInches}&quot; · {border.cornerStyle}
         </p>
       </div>
 
