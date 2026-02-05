@@ -1,10 +1,18 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useMyPublishedBlocks } from '@quillty/api';
-import { usePatternDesignerStore, useSelectedLibraryBlockId, DEFAULT_PALETTE } from '@quillty/core';
-import type { Block as CoreBlock, Shape, Palette } from '@quillty/core';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import {
+  usePatternDesignerStore,
+  useSelectedLibraryBlockId,
+  useBlockInstances,
+  usePatternPalette,
+  DEFAULT_PALETTE,
+} from '@quillty/core';
+import type { Block as CoreBlock, Shape, Palette, PaletteOverrides } from '@quillty/core';
 import type { Block } from '@quillty/api';
 
 // Dynamic import for BlockThumbnail (uses Konva)
@@ -25,6 +33,189 @@ const TABS: Tab[] = [
   { id: 'saved', label: 'Saved' },
   { id: 'platform', label: 'Browse' },
 ];
+
+// =============================================================================
+// "In This Pattern" Section - Shows blocks with color variants
+// =============================================================================
+
+interface VariantItemProps {
+  block: CoreBlock;
+  overrides: PaletteOverrides;
+  index: number;
+  palette: Palette;
+  onSelect: (blockId: string, overrides: PaletteOverrides) => void;
+}
+
+function VariantItem({ block, overrides, index, palette, onSelect }: VariantItemProps) {
+  // Create merged palette for preview (pattern palette + overrides)
+  const mergedPalette = useMemo(
+    () => ({
+      roles: palette.roles.map((role) => ({
+        ...role,
+        color: overrides[role.id] ?? role.color,
+      })),
+    }),
+    [palette, overrides]
+  );
+
+  const handleClick = () => {
+    onSelect(block.id, overrides);
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      className="flex items-center gap-2 p-1 rounded hover:bg-gray-100 w-full"
+      title={`Variant ${index + 1}`}
+    >
+      <BlockThumbnail
+        shapes={block.shapes}
+        gridSize={block.gridSize}
+        palette={mergedPalette}
+        size={32}
+      />
+      <span className="text-xs text-gray-500">Variant {index + 1}</span>
+      <span className="w-2 h-2 rounded-full bg-purple-500 ml-auto" title="Custom colors" />
+    </button>
+  );
+}
+
+interface BlockWithVariantsProps {
+  blockId: string;
+}
+
+function BlockInPattern({ blockId }: BlockWithVariantsProps) {
+  const block = usePatternDesignerStore((s) => s.blockCache[blockId]);
+  const selectLibraryBlock = usePatternDesignerStore((s) => s.selectLibraryBlock);
+  const selectVariantForPlacement = usePatternDesignerStore((s) => s.selectVariantForPlacement);
+  const selectedLibraryBlockId = useSelectedLibraryBlockId();
+  const palette = usePatternPalette();
+
+  // Get variants - memoize the serialized key to prevent unnecessary re-renders
+  const blockInstances = useBlockInstances();
+  const variants = useMemo(() => {
+    const instances = blockInstances.filter(
+      (i) => i.blockId === blockId && i.paletteOverrides
+    );
+    const uniqueOverrides = new Map<string, PaletteOverrides>();
+    for (const instance of instances) {
+      if (instance.paletteOverrides && Object.keys(instance.paletteOverrides).length > 0) {
+        const key = JSON.stringify(instance.paletteOverrides);
+        uniqueOverrides.set(key, instance.paletteOverrides);
+      }
+    }
+    return Array.from(uniqueOverrides.values());
+  }, [blockInstances, blockId]);
+
+  // Debounce variants to prevent flicker during rapid color changes (100ms)
+  // Serialize to string for stable comparison, then parse back
+  const variantsKey = useMemo(() => JSON.stringify(variants), [variants]);
+  const debouncedKey = useDebouncedValue(variantsKey, 100);
+  const debouncedVariants = useMemo<PaletteOverrides[]>(() => {
+    try {
+      return JSON.parse(debouncedKey);
+    } catch {
+      return [];
+    }
+  }, [debouncedKey]);
+
+  // Don't render if block isn't cached or has no shapes
+  if (!block || !block.shapes) return null;
+
+  const isSelected = selectedLibraryBlockId === blockId;
+
+  const handleSelectBlock = () => {
+    selectLibraryBlock(blockId);
+  };
+
+  const handleSelectVariant = useCallback(
+    (variantBlockId: string, overrides: PaletteOverrides) => {
+      selectVariantForPlacement(variantBlockId, overrides);
+    },
+    [selectVariantForPlacement]
+  );
+
+  return (
+    <div className="space-y-1">
+      {/* Parent block (pattern palette) - clickable to select for placement */}
+      <button
+        onClick={handleSelectBlock}
+        className={`flex items-center gap-2 px-1 py-1 rounded w-full hover:bg-gray-100 ${
+          isSelected ? 'bg-blue-50 ring-1 ring-blue-500' : ''
+        }`}
+      >
+        <BlockThumbnail
+          shapes={block.shapes}
+          gridSize={block.gridSize}
+          palette={palette}
+          size={40}
+        />
+        <span className="text-xs text-gray-600 truncate flex-1 text-left">{block.title}</span>
+      </button>
+
+      {/* Variants (with overrides) - shown if any exist, debounced to prevent flicker */}
+      {debouncedVariants.length > 0 && (
+        <div className="ml-4 space-y-1">
+          {debouncedVariants.map((overrides, i) => (
+            <VariantItem
+              key={JSON.stringify(overrides)}
+              block={block}
+              overrides={overrides}
+              index={i + 1}
+              palette={palette}
+              onSelect={handleSelectVariant}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InThisPatternSection() {
+  const [isExpanded, setIsExpanded] = useState(true);
+  const blockInstances = useBlockInstances();
+  const blockCache = usePatternDesignerStore((s) => s.blockCache);
+
+  // Get unique blocks used in pattern
+  const uniqueBlockIds = useMemo(() => {
+    return [...new Set(blockInstances.map((i) => i.blockId))];
+  }, [blockInstances]);
+
+  // Don't render if no blocks in pattern
+  if (uniqueBlockIds.length === 0) return null;
+
+  // Don't render if blocks aren't cached yet
+  const hasAllBlocksCached = uniqueBlockIds.every((id) => blockCache[id]);
+  if (!hasAllBlocksCached) return null;
+
+  return (
+    <div className="border-b border-gray-100">
+      {/* Collapsible header */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center gap-1 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50"
+      >
+        {isExpanded ? (
+          <ChevronDown className="w-3 h-3" />
+        ) : (
+          <ChevronRight className="w-3 h-3" />
+        )}
+        <span>In This Pattern</span>
+        <span className="ml-auto text-gray-400">{uniqueBlockIds.length}</span>
+      </button>
+
+      {/* Content */}
+      {isExpanded && (
+        <div className="px-3 pb-3 space-y-3">
+          {uniqueBlockIds.map((blockId) => (
+            <BlockInPattern key={blockId} blockId={blockId} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /**
  * BlockLibraryPanel - Vertical sidebar for selecting blocks to place
@@ -48,13 +239,48 @@ export function BlockLibraryPanel() {
   const { data: blocksResponse, isLoading, error } = useMyPublishedBlocks();
   const blocks = blocksResponse?.data ?? [];
 
+  // Parse design_data from block (stored as JSON in database)
+  const parseBlockDesignData = useCallback((block: Block): { shapes: Shape[]; previewPalette: Palette } => {
+    if (!block.design_data) {
+      return { shapes: [], previewPalette: DEFAULT_PALETTE };
+    }
+    try {
+      const designData =
+        typeof block.design_data === 'string'
+          ? JSON.parse(block.design_data)
+          : block.design_data;
+      return {
+        shapes: designData.shapes ?? [],
+        previewPalette: designData.previewPalette ?? DEFAULT_PALETTE,
+      };
+    } catch {
+      return { shapes: [], previewPalette: DEFAULT_PALETTE };
+    }
+  }, []);
+
   const handleSelectBlock = useCallback(
     (block: Block) => {
       selectLibraryBlock(block.id);
-      // Cache the block for rendering in the canvas
-      cacheBlock(block as unknown as CoreBlock);
+      // Transform API block to CoreBlock format for caching
+      const { shapes, previewPalette } = parseBlockDesignData(block);
+      const coreBlock: CoreBlock = {
+        id: block.id,
+        creatorId: block.creator_id || '',
+        derivedFromBlockId: null,
+        title: block.name,
+        description: null,
+        hashtags: [],
+        gridSize: block.grid_size || 3,
+        shapes,
+        previewPalette,
+        fabricRequirements: [],
+        cuttingInstructions: [],
+        createdAt: block.created_at || new Date().toISOString(),
+        updatedAt: block.updated_at || new Date().toISOString(),
+      };
+      cacheBlock(coreBlock);
     },
-    [selectLibraryBlock, cacheBlock]
+    [selectLibraryBlock, cacheBlock, parseBlockDesignData]
   );
 
   const handleFillEmpty = useCallback(() => {
@@ -75,24 +301,6 @@ export function BlockLibraryPanel() {
     setPreviewingFillEmpty(false);
   }, [setPreviewingFillEmpty]);
 
-  // Parse design_data from block (stored as JSON in database)
-  const getBlockDesignData = (block: Block): { shapes: Shape[]; previewPalette: Palette } => {
-    if (!block.design_data) {
-      return { shapes: [], previewPalette: DEFAULT_PALETTE };
-    }
-    try {
-      const designData =
-        typeof block.design_data === 'string'
-          ? JSON.parse(block.design_data)
-          : block.design_data;
-      return {
-        shapes: designData.shapes ?? [],
-        previewPalette: designData.previewPalette ?? DEFAULT_PALETTE,
-      };
-    } catch {
-      return { shapes: [], previewPalette: DEFAULT_PALETTE };
-    }
-  };
 
   return (
     <div className="h-full flex flex-col">
@@ -102,6 +310,9 @@ export function BlockLibraryPanel() {
           Blocks
         </h3>
       </div>
+
+      {/* "In This Pattern" section - shows blocks with color variants */}
+      <InThisPatternSection />
 
       {/* Tabs */}
       <div className="flex border-b border-gray-100">
@@ -157,7 +368,7 @@ export function BlockLibraryPanel() {
             {!isLoading && !error && blocks.length > 0 && (
               <div className="grid grid-cols-2 gap-2">
                 {blocks.map((block) => {
-                  const { shapes, previewPalette } = getBlockDesignData(block);
+                  const { shapes, previewPalette } = parseBlockDesignData(block);
                   return (
                     <div
                       key={block.id}

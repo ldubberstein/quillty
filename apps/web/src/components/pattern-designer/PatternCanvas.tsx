@@ -14,6 +14,7 @@ import {
   usePatternDesignerStore,
   useGridSize,
   useSelectedLibraryBlockId,
+  useSelectedVariantOverrides,
   usePatternPalette,
   usePreviewingGridResize,
   useGridResizePosition,
@@ -62,6 +63,7 @@ export function PatternCanvas() {
   // Get state and actions from store
   const gridSize = useGridSize();
   const selectedLibraryBlockId = useSelectedLibraryBlockId();
+  const selectedVariantOverrides = useSelectedVariantOverrides();
   const palette = usePatternPalette();
   const mode = usePatternDesignerStore((state) => state.mode);
   const blockInstances = usePatternDesignerStore((state) => state.pattern.blockInstances);
@@ -75,6 +77,7 @@ export function PatternCanvas() {
   const placementRotation = usePlacementRotation();
   const physicalSize = usePatternDesignerStore((state) => state.pattern.physicalSize);
   const addBlockInstance = usePatternDesignerStore((state) => state.addBlockInstance);
+  const placeBlockWithOverrides = usePatternDesignerStore((state) => state.placeBlockWithOverrides);
   const isPositionOccupied = usePatternDesignerStore((state) => state.isPositionOccupied);
   const clearSelections = usePatternDesignerStore((state) => state.clearSelections);
   const selectBlockInstance = usePatternDesignerStore((state) => state.selectBlockInstance);
@@ -324,11 +327,22 @@ export function PatternCanvas() {
           // Range fill: place blocks in all empty cells between anchor and clicked position
           const positions = getRangeFillPositions(pos);
           if (positions.length > 0) {
-            addBlockInstancesBatch(selectedLibraryBlockId, positions, placementRotation);
+            if (selectedVariantOverrides) {
+              // Place each block with overrides (batch doesn't support overrides yet)
+              for (const position of positions) {
+                placeBlockWithOverrides(selectedLibraryBlockId, position, selectedVariantOverrides, placementRotation);
+              }
+            } else {
+              addBlockInstancesBatch(selectedLibraryBlockId, positions, placementRotation);
+            }
           }
         } else {
           // Single placement
-          addBlockInstance(selectedLibraryBlockId, pos, placementRotation);
+          if (selectedVariantOverrides) {
+            placeBlockWithOverrides(selectedLibraryBlockId, pos, selectedVariantOverrides, placementRotation);
+          } else {
+            addBlockInstance(selectedLibraryBlockId, pos, placementRotation);
+          }
         }
         // Update anchor to clicked position for chaining
         setRangeFillAnchor(pos);
@@ -346,7 +360,7 @@ export function PatternCanvas() {
         return;
       }
     },
-    [isPlacingBlock, selectedLibraryBlockId, addBlockInstance, addBlockInstancesBatch, placementRotation, isPositionOccupied, blockInstances, selectBlockInstance, rangeFillAnchor, getRangeFillPositions, setRangeFillAnchor]
+    [isPlacingBlock, selectedLibraryBlockId, selectedVariantOverrides, addBlockInstance, addBlockInstancesBatch, placeBlockWithOverrides, placementRotation, isPositionOccupied, blockInstances, selectBlockInstance, rangeFillAnchor, getRangeFillPositions, setRangeFillAnchor]
   );
 
   // Handle click on background (outside grid)

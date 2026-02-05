@@ -77,6 +77,7 @@ export {
   useBlockInstances,
   useSelectedBlockInstance,
   useSelectedLibraryBlockId,
+  useSelectedVariantOverrides,
   usePatternDesignerMode,
   useIsDirty,
   useIsGridLarge,

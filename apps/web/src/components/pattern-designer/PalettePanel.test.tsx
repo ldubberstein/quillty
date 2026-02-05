@@ -278,4 +278,66 @@ describe('PalettePanel', () => {
       expect(mockRemoveRole).toHaveBeenCalledWith('background');
     });
   });
+
+  describe('variant color indicators', () => {
+    it('shows purple dot for variant colors when expanded', () => {
+      mockPalette = {
+        ...mockPalette,
+        roles: [
+          { id: 'background' as FabricRoleId, name: 'Background', color: '#FFFFFF' },
+          { id: 'feature' as FabricRoleId, name: 'Feature', color: '#1E3A5F' },
+          { id: 'variant1' as FabricRoleId, name: 'Variant 1', color: '#FF0000', isVariantColor: true },
+          { id: 'variant2' as FabricRoleId, name: 'Variant 2', color: '#00FF00', isVariantColor: true },
+        ],
+      };
+      renderWithSidebar('colors');
+
+      // Find purple dots (variant indicators)
+      const purpleDots = document.querySelectorAll('.bg-purple-500');
+      expect(purpleDots.length).toBe(2);
+    });
+
+    it('does not show purple dot for non-variant colors', () => {
+      mockPalette = {
+        ...mockPalette,
+        roles: [
+          { id: 'background' as FabricRoleId, name: 'Background', color: '#FFFFFF' },
+          { id: 'feature' as FabricRoleId, name: 'Feature', color: '#1E3A5F' },
+        ],
+      };
+      renderWithSidebar('colors');
+
+      // Should be no purple dots
+      const purpleDots = document.querySelectorAll('.bg-purple-500');
+      expect(purpleDots.length).toBe(0);
+    });
+
+    it('variant color indicator has correct title', () => {
+      mockPalette = {
+        ...mockPalette,
+        roles: [
+          { id: 'variant1' as FabricRoleId, name: 'Variant 1', color: '#FF0000', isVariantColor: true },
+        ],
+      };
+      renderWithSidebar('colors');
+
+      const purpleDot = document.querySelector('.bg-purple-500');
+      expect(purpleDot).toHaveAttribute('title', 'Custom block color');
+    });
+
+    it('shows purple dot in collapsed summary for variant colors', () => {
+      mockPalette = {
+        ...mockPalette,
+        roles: [
+          { id: 'background' as FabricRoleId, name: 'Background', color: '#FFFFFF' },
+          { id: 'variant1' as FabricRoleId, name: 'Variant 1', color: '#FF0000', isVariantColor: true },
+        ],
+      };
+      renderWithSidebar('borders'); // Collapsed
+
+      // Should show smaller purple dots in summary
+      const purpleDots = document.querySelectorAll('.bg-purple-500');
+      expect(purpleDots.length).toBe(1);
+    });
+  });
 });

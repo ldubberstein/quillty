@@ -14,6 +14,7 @@ import type { FabricRoleId, Palette } from '@quillty/core';
 
 // Mock store functions
 const mockSelectLibraryBlock = vi.fn();
+const mockSelectVariantForPlacement = vi.fn();
 const mockCacheBlock = vi.fn();
 const mockFillEmpty = vi.fn();
 const mockClearSelections = vi.fn();
@@ -108,15 +109,19 @@ vi.mock('@quillty/core', () => ({
   usePatternDesignerStore: vi.fn((selector) => {
     const state = {
       selectLibraryBlock: mockSelectLibraryBlock,
+      selectVariantForPlacement: mockSelectVariantForPlacement,
       cacheBlock: mockCacheBlock,
       fillEmpty: mockFillEmpty,
       clearSelections: mockClearSelections,
       setPreviewingFillEmpty: mockSetPreviewingFillEmpty,
+      blockCache: {}, // Empty block cache for tests
     };
     return selector ? selector(state) : state;
   }),
   useSelectedLibraryBlockId: vi.fn(() => mockSelectedLibraryBlockId),
   usePatternPalette: vi.fn(() => mockPatternPalette),
+  useBlockInstances: vi.fn(() => []), // No instances in tests by default
+  useBlockVariants: vi.fn(() => []), // No variants in tests by default
   DEFAULT_PALETTE: {
     roles: [
       { id: 'background' as FabricRoleId, name: 'Background', color: '#F5F5DC' },
@@ -363,6 +368,343 @@ describe('BlockLibraryPanel', () => {
       fireEvent.click(screen.getByText('Saved'));
       expect(screen.getByText('Saved').className).toContain('text-blue-600');
       expect(screen.getByText('My Blocks').className).not.toContain('text-blue-600');
+    });
+  });
+});
+
+// =============================================================================
+// "In This Pattern" Section Tests
+// =============================================================================
+
+// Import the mocked module to access mock functions
+import * as coreModule from '@quillty/core';
+
+describe('InThisPatternSection', () => {
+  // Mock block cache with CoreBlock format (has shapes directly)
+  const mockCoreBlock = {
+    id: 'cached-block-1',
+    creatorId: 'user-1',
+    derivedFromBlockId: null,
+    title: 'Cached Block',
+    description: null,
+    hashtags: [],
+    gridSize: 3,
+    shapes: [{ id: 'shape-1', type: 'square', position: { row: 0, col: 0 }, fabricRole: 'feature' }],
+    previewPalette: mockPatternPalette,
+    fabricRequirements: [],
+    cuttingInstructions: [],
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+  };
+
+  // Helper to setup mocks for "In This Pattern" tests
+  function setupInPatternMocks(
+    blockCache: Record<string, typeof mockCoreBlock>,
+    instances: Array<{ id: string; blockId: string; row: number; col: number; rotation: number; paletteOverrides?: Record<string, string> }>
+  ) {
+    vi.mocked(coreModule.usePatternDesignerStore).mockImplementation((selector) => {
+      const state = {
+        selectLibraryBlock: mockSelectLibraryBlock,
+        selectVariantForPlacement: mockSelectVariantForPlacement,
+        cacheBlock: mockCacheBlock,
+        fillEmpty: mockFillEmpty,
+        clearSelections: mockClearSelections,
+        setPreviewingFillEmpty: mockSetPreviewingFillEmpty,
+        blockCache,
+      };
+      return selector ? selector(state) : state;
+    });
+    vi.mocked(coreModule.useBlockInstances).mockReturnValue(instances);
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    thumbnailCalls.length = 0;
+    mockSelectedLibraryBlockId = null;
+    mockApiResponse = {
+      data: mockBlocks,
+      isLoading: false,
+      error: null,
+    };
+  });
+
+  describe('section visibility', () => {
+    it('does not render when no blocks are placed in pattern', () => {
+      setupInPatternMocks({}, []);
+      render(<BlockLibraryPanel />);
+      expect(screen.queryByText('In This Pattern')).not.toBeInTheDocument();
+    });
+
+    it('renders when blocks are placed in pattern', () => {
+      setupInPatternMocks(
+        { 'cached-block-1': mockCoreBlock },
+        [{ id: 'instance-1', blockId: 'cached-block-1', row: 0, col: 0, rotation: 0 }]
+      );
+      render(<BlockLibraryPanel />);
+      expect(screen.getByText('In This Pattern')).toBeInTheDocument();
+    });
+
+    it('does not render when blocks are not cached yet', () => {
+      setupInPatternMocks(
+        {}, // Empty cache
+        [{ id: 'instance-1', blockId: 'uncached-block', row: 0, col: 0, rotation: 0 }]
+      );
+      render(<BlockLibraryPanel />);
+      expect(screen.queryByText('In This Pattern')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('collapsible behavior', () => {
+    it('shows block count in header', () => {
+      setupInPatternMocks(
+        { 'cached-block-1': mockCoreBlock },
+        [{ id: 'instance-1', blockId: 'cached-block-1', row: 0, col: 0, rotation: 0 }]
+      );
+      render(<BlockLibraryPanel />);
+      // Should show count of unique block types (1 block type)
+      expect(screen.getByText('1')).toBeInTheDocument();
+    });
+
+    it('collapses and expands when header is clicked', () => {
+      setupInPatternMocks(
+        { 'cached-block-1': mockCoreBlock },
+        [{ id: 'instance-1', blockId: 'cached-block-1', row: 0, col: 0, rotation: 0 }]
+      );
+      render(<BlockLibraryPanel />);
+
+      // Section starts expanded - block title should be visible
+      expect(screen.getByText('Cached Block')).toBeInTheDocument();
+
+      // Click to collapse
+      fireEvent.click(screen.getByText('In This Pattern'));
+
+      // Block title should be hidden
+      expect(screen.queryByText('Cached Block')).not.toBeInTheDocument();
+
+      // Click to expand
+      fireEvent.click(screen.getByText('In This Pattern'));
+
+      // Block title should be visible again
+      expect(screen.getByText('Cached Block')).toBeInTheDocument();
+    });
+  });
+
+  describe('block selection', () => {
+    it('selects block for placement when clicked', () => {
+      setupInPatternMocks(
+        { 'cached-block-1': mockCoreBlock },
+        [{ id: 'instance-1', blockId: 'cached-block-1', row: 0, col: 0, rotation: 0 }]
+      );
+      render(<BlockLibraryPanel />);
+      fireEvent.click(screen.getByText('Cached Block'));
+      expect(mockSelectLibraryBlock).toHaveBeenCalledWith('cached-block-1');
+    });
+
+    it('highlights selected block', () => {
+      mockSelectedLibraryBlockId = 'cached-block-1';
+      setupInPatternMocks(
+        { 'cached-block-1': mockCoreBlock },
+        [{ id: 'instance-1', blockId: 'cached-block-1', row: 0, col: 0, rotation: 0 }]
+      );
+      render(<BlockLibraryPanel />);
+
+      // Find the button containing "Cached Block"
+      const blockButton = screen.getByText('Cached Block').closest('button');
+      expect(blockButton?.className).toContain('bg-blue-50');
+      expect(blockButton?.className).toContain('ring-1');
+      expect(blockButton?.className).toContain('ring-blue-500');
+    });
+  });
+
+  describe('color variants', () => {
+    it('displays variants with custom colors under parent block', () => {
+      setupInPatternMocks(
+        { 'cached-block-1': mockCoreBlock },
+        [
+          { id: 'instance-1', blockId: 'cached-block-1', row: 0, col: 0, rotation: 0 },
+          { id: 'instance-2', blockId: 'cached-block-1', row: 0, col: 1, rotation: 0, paletteOverrides: { feature: '#FF0000' } },
+          { id: 'instance-3', blockId: 'cached-block-1', row: 1, col: 0, rotation: 0, paletteOverrides: { feature: '#00FF00' } },
+        ]
+      );
+      render(<BlockLibraryPanel />);
+
+      // Should show 2 variants (2 unique override sets)
+      expect(screen.getByText('Variant 2')).toBeInTheDocument();
+      expect(screen.getByText('Variant 3')).toBeInTheDocument();
+    });
+
+    it('deduplicates variants with identical overrides', () => {
+      setupInPatternMocks(
+        { 'cached-block-1': mockCoreBlock },
+        [
+          { id: 'instance-1', blockId: 'cached-block-1', row: 0, col: 0, rotation: 0, paletteOverrides: { feature: '#FF0000' } },
+          { id: 'instance-2', blockId: 'cached-block-1', row: 0, col: 1, rotation: 0, paletteOverrides: { feature: '#FF0000' } },
+          { id: 'instance-3', blockId: 'cached-block-1', row: 1, col: 0, rotation: 0, paletteOverrides: { feature: '#FF0000' } },
+        ]
+      );
+      render(<BlockLibraryPanel />);
+
+      // Should only show 1 variant (all have same overrides)
+      expect(screen.getByText('Variant 2')).toBeInTheDocument();
+      expect(screen.queryByText('Variant 3')).not.toBeInTheDocument();
+    });
+
+    it('does not show variants when instances have no overrides', () => {
+      setupInPatternMocks(
+        { 'cached-block-1': mockCoreBlock },
+        [
+          { id: 'instance-1', blockId: 'cached-block-1', row: 0, col: 0, rotation: 0 },
+          { id: 'instance-2', blockId: 'cached-block-1', row: 0, col: 1, rotation: 0 },
+        ]
+      );
+      render(<BlockLibraryPanel />);
+
+      // Should not show any variant labels
+      expect(screen.queryByText(/Variant/)).not.toBeInTheDocument();
+    });
+
+    it('does not show variants with empty override objects', () => {
+      setupInPatternMocks(
+        { 'cached-block-1': mockCoreBlock },
+        [
+          { id: 'instance-1', blockId: 'cached-block-1', row: 0, col: 0, rotation: 0, paletteOverrides: {} },
+          { id: 'instance-2', blockId: 'cached-block-1', row: 0, col: 1, rotation: 0, paletteOverrides: {} },
+        ]
+      );
+      render(<BlockLibraryPanel />);
+
+      // Should not show any variant labels
+      expect(screen.queryByText(/Variant/)).not.toBeInTheDocument();
+    });
+
+    it('renders variant thumbnails with merged palette (overrides applied)', () => {
+      thumbnailCalls.length = 0;
+      setupInPatternMocks(
+        { 'cached-block-1': mockCoreBlock },
+        [
+          { id: 'instance-1', blockId: 'cached-block-1', row: 0, col: 0, rotation: 0 },
+          { id: 'instance-2', blockId: 'cached-block-1', row: 0, col: 1, rotation: 0, paletteOverrides: { feature: '#FF0000' } },
+        ]
+      );
+      render(<BlockLibraryPanel />);
+
+      // Find variant thumbnail (smaller size=32)
+      const variantThumbnails = thumbnailCalls.filter(call => call.gridSize === 3);
+
+      // Check that one of the calls has the override applied
+      const variantCall = variantThumbnails.find(call => {
+        const featureRole = call.palette.roles.find(r => r.id === 'feature');
+        return featureRole?.color === '#FF0000';
+      });
+      expect(variantCall).toBeDefined();
+    });
+
+    it('shows purple indicator dot on variant items', () => {
+      setupInPatternMocks(
+        { 'cached-block-1': mockCoreBlock },
+        [
+          { id: 'instance-1', blockId: 'cached-block-1', row: 0, col: 0, rotation: 0 },
+          { id: 'instance-2', blockId: 'cached-block-1', row: 0, col: 1, rotation: 0, paletteOverrides: { feature: '#FF0000' } },
+        ]
+      );
+      render(<BlockLibraryPanel />);
+
+      // Find the purple dot indicator
+      const purpleDots = document.querySelectorAll('.bg-purple-500');
+      expect(purpleDots.length).toBeGreaterThan(0);
+    });
+
+    it('calls selectVariantForPlacement when variant is clicked', () => {
+      setupInPatternMocks(
+        { 'cached-block-1': mockCoreBlock },
+        [
+          { id: 'instance-1', blockId: 'cached-block-1', row: 0, col: 0, rotation: 0 },
+          { id: 'instance-2', blockId: 'cached-block-1', row: 0, col: 1, rotation: 0, paletteOverrides: { feature: '#FF0000' } },
+        ]
+      );
+      render(<BlockLibraryPanel />);
+
+      fireEvent.click(screen.getByText('Variant 2'));
+
+      expect(mockSelectVariantForPlacement).toHaveBeenCalledWith(
+        'cached-block-1',
+        { feature: '#FF0000' }
+      );
+    });
+  });
+
+  describe('multiple block types', () => {
+    it('shows multiple blocks when different block types are placed', () => {
+      const mockCoreBlock2 = {
+        ...mockCoreBlock,
+        id: 'cached-block-2',
+        title: 'Second Block',
+      };
+
+      setupInPatternMocks(
+        {
+          'cached-block-1': mockCoreBlock,
+          'cached-block-2': mockCoreBlock2,
+        },
+        [
+          { id: 'instance-1', blockId: 'cached-block-1', row: 0, col: 0, rotation: 0 },
+          { id: 'instance-2', blockId: 'cached-block-2', row: 0, col: 1, rotation: 0 },
+        ]
+      );
+      render(<BlockLibraryPanel />);
+
+      // Both blocks should be visible
+      expect(screen.getByText('Cached Block')).toBeInTheDocument();
+      expect(screen.getByText('Second Block')).toBeInTheDocument();
+      // Count should show 2
+      expect(screen.getByText('2')).toBeInTheDocument();
+    });
+
+    it('shows variants for each block type independently', () => {
+      const mockCoreBlock2 = {
+        ...mockCoreBlock,
+        id: 'cached-block-2',
+        title: 'Second Block',
+      };
+
+      setupInPatternMocks(
+        {
+          'cached-block-1': mockCoreBlock,
+          'cached-block-2': mockCoreBlock2,
+        },
+        [
+          { id: 'instance-1', blockId: 'cached-block-1', row: 0, col: 0, rotation: 0 },
+          { id: 'instance-2', blockId: 'cached-block-1', row: 0, col: 1, rotation: 0, paletteOverrides: { feature: '#FF0000' } },
+          { id: 'instance-3', blockId: 'cached-block-2', row: 1, col: 0, rotation: 0 },
+          { id: 'instance-4', blockId: 'cached-block-2', row: 1, col: 1, rotation: 0, paletteOverrides: { feature: '#00FF00' } },
+        ]
+      );
+      render(<BlockLibraryPanel />);
+
+      // Both blocks and their variants should be visible
+      expect(screen.getByText('Cached Block')).toBeInTheDocument();
+      expect(screen.getByText('Second Block')).toBeInTheDocument();
+      // Should have 2 variant items (one for each block with overrides)
+      expect(screen.getAllByText(/Variant 2/)).toHaveLength(2);
+    });
+  });
+
+  describe('uses pattern palette for thumbnails', () => {
+    it('renders parent block thumbnail with pattern palette', () => {
+      thumbnailCalls.length = 0;
+      setupInPatternMocks(
+        { 'cached-block-1': mockCoreBlock },
+        [{ id: 'instance-1', blockId: 'cached-block-1', row: 0, col: 0, rotation: 0 }]
+      );
+      render(<BlockLibraryPanel />);
+
+      // The "In This Pattern" section uses pattern palette for parent blocks
+      const parentThumbnails = screen.getAllByTestId('block-thumbnail');
+      // Find one that uses the pattern palette (background = #FFFFFF)
+      const patternPaletteThumbnail = parentThumbnails.find(
+        el => el.getAttribute('data-palette-bg') === PATTERN_PALETTE_BG
+      );
+      expect(patternPaletteThumbnail).toBeDefined();
     });
   });
 });

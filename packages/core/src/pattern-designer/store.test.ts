@@ -2007,7 +2007,7 @@ describe('PatternDesignerStore', () => {
     });
 
     describe('setInstanceRoleColor', () => {
-      it('auto-adds override color to palette if not present', () => {
+      it('auto-adds override color to palette as variant color', () => {
         const store = usePatternDesignerStore.getState();
 
         // Add a block instance
@@ -2017,10 +2017,12 @@ describe('PatternDesignerStore', () => {
         // Set an override with a new color
         store.setInstanceRoleColor(instanceId, 'accent1', '#987654');
 
-        // Color should be added to palette
+        // Color should be added to palette immediately with isVariantColor flag
         const { palette } = usePatternDesignerStore.getState().pattern;
         expect(palette.roles).toHaveLength(initialRoleCount + 1);
-        expect(palette.roles.some((r) => r.color.toLowerCase() === '#987654')).toBe(true);
+        const variantRole = palette.roles.find((r) => r.color.toLowerCase() === '#987654');
+        expect(variantRole).toBeDefined();
+        expect(variantRole?.isVariantColor).toBe(true);
       });
 
       it('does not add color to palette if it already exists', () => {
@@ -2036,6 +2038,90 @@ describe('PatternDesignerStore', () => {
 
         // Palette should not have new role
         expect(usePatternDesignerStore.getState().pattern.palette.roles).toHaveLength(initialRoleCount);
+      });
+
+      it('removes variant color from palette when no longer used', () => {
+        const store = usePatternDesignerStore.getState();
+
+        // Add a block instance
+        const instanceId = store.addBlockInstance('block-1', { row: 0, col: 0 });
+        const initialRoleCount = store.pattern.palette.roles.length;
+
+        // Set an override with a new color
+        store.setInstanceRoleColor(instanceId, 'accent1', '#987654');
+        expect(usePatternDesignerStore.getState().pattern.palette.roles).toHaveLength(initialRoleCount + 1);
+
+        // Change to a different color - the old color should be removed
+        store.setInstanceRoleColor(instanceId, 'accent1', '#abcdef');
+        const { palette } = usePatternDesignerStore.getState().pattern;
+        expect(palette.roles).toHaveLength(initialRoleCount + 1);
+        expect(palette.roles.some((r) => r.color.toLowerCase() === '#987654')).toBe(false);
+        expect(palette.roles.some((r) => r.color.toLowerCase() === '#abcdef')).toBe(true);
+      });
+
+      it('keeps variant color in palette if still used by other instances', () => {
+        const store = usePatternDesignerStore.getState();
+
+        // Add two block instances
+        const instanceId1 = store.addBlockInstance('block-1', { row: 0, col: 0 });
+        const instanceId2 = store.addBlockInstance('block-1', { row: 0, col: 1 });
+        const initialRoleCount = store.pattern.palette.roles.length;
+
+        // Set both to same custom color
+        const sharedColor = '#987654';
+        store.setInstanceRoleColor(instanceId1, 'accent1', sharedColor);
+        store.setInstanceRoleColor(instanceId2, 'accent1', sharedColor);
+        expect(usePatternDesignerStore.getState().pattern.palette.roles).toHaveLength(initialRoleCount + 1);
+
+        // Change first instance to different color
+        store.setInstanceRoleColor(instanceId1, 'accent1', '#abcdef');
+
+        // Original color should still be in palette (used by second instance)
+        const { palette } = usePatternDesignerStore.getState().pattern;
+        expect(palette.roles).toHaveLength(initialRoleCount + 2);
+        expect(palette.roles.some((r) => r.color.toLowerCase() === '#987654')).toBe(true);
+      });
+
+      it('removes variant color from palette when instance is deleted', () => {
+        const store = usePatternDesignerStore.getState();
+
+        // Add a block instance with a custom color
+        const instanceId = store.addBlockInstance('block-1', { row: 0, col: 0 });
+        const initialRoleCount = store.pattern.palette.roles.length;
+
+        // Set an override with a new color
+        store.setInstanceRoleColor(instanceId, 'accent1', '#987654');
+        expect(usePatternDesignerStore.getState().pattern.palette.roles).toHaveLength(initialRoleCount + 1);
+
+        // Delete the instance
+        store.removeBlockInstance(instanceId);
+
+        // Variant color should be removed from palette
+        const { palette } = usePatternDesignerStore.getState().pattern;
+        expect(palette.roles).toHaveLength(initialRoleCount);
+        expect(palette.roles.some((r) => r.color.toLowerCase() === '#987654')).toBe(false);
+      });
+
+      it('keeps variant color in palette when one of multiple instances is deleted', () => {
+        const store = usePatternDesignerStore.getState();
+
+        // Add two block instances with same custom color
+        const instanceId1 = store.addBlockInstance('block-1', { row: 0, col: 0 });
+        const instanceId2 = store.addBlockInstance('block-1', { row: 0, col: 1 });
+        const initialRoleCount = store.pattern.palette.roles.length;
+
+        const sharedColor = '#987654';
+        store.setInstanceRoleColor(instanceId1, 'accent1', sharedColor);
+        store.setInstanceRoleColor(instanceId2, 'accent1', sharedColor);
+        expect(usePatternDesignerStore.getState().pattern.palette.roles).toHaveLength(initialRoleCount + 1);
+
+        // Delete first instance
+        store.removeBlockInstance(instanceId1);
+
+        // Color should still be in palette (used by second instance)
+        const { palette } = usePatternDesignerStore.getState().pattern;
+        expect(palette.roles).toHaveLength(initialRoleCount + 1);
+        expect(palette.roles.some((r) => r.color.toLowerCase() === '#987654')).toBe(true);
       });
     });
 

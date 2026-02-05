@@ -88,6 +88,8 @@ export interface FabricRole {
   id: FabricRoleId;
   name: string;
   color: HexColor;
+  /** True if this color was auto-added from a block instance override */
+  isVariantColor?: boolean;
   // Future: texture_url?: string;
 }
 

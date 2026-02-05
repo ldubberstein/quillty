@@ -75,6 +75,7 @@ export const FabricRoleSchema = z.object({
   id: FabricRoleIdSchema,
   name: z.string().min(1),
   color: HexColorSchema,
+  isVariantColor: z.boolean().optional(),
 });
 
 /** Palette schema */

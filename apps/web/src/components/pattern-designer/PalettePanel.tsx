@@ -53,12 +53,16 @@ export function PalettePanel() {
   const collapsedSummary = (
     <div className="flex gap-1 flex-wrap">
       {palette.roles.slice(0, 8).map((role) => (
-        <ColorSwatch
-          key={role.id}
-          color={role.color}
-          size="sm"
-          aria-label={role.name}
-        />
+        <div key={role.id} className="relative">
+          <ColorSwatch
+            color={role.color}
+            size="sm"
+            aria-label={role.name}
+          />
+          {role.isVariantColor && (
+            <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-purple-500" />
+          )}
+        </div>
       ))}
       {palette.roles.length > 8 && (
         <span className="text-xs text-gray-400 self-center">+{palette.roles.length - 8}</span>
@@ -97,6 +101,14 @@ export function PalettePanel() {
             <span className="text-xs font-medium text-gray-700 truncate flex-1">
               {role.name}
             </span>
+
+            {/* Variant color indicator (purple dot) */}
+            {role.isVariantColor && (
+              <span
+                className="w-2 h-2 rounded-full bg-purple-500 flex-shrink-0"
+                title="Custom block color"
+              />
+            )}
 
             {/* Remove button */}
             {canRemove && (

@@ -118,6 +118,9 @@ interface PatternDesignerState {
   /** ID of the block selected in the library for placement (null if none) */
   selectedLibraryBlockId: UUID | null;
 
+  /** Palette overrides to apply when placing a block (for variant placement) */
+  selectedVariantOverrides: Record<string, string> | null;
+
   /** ID of the currently selected border for editing (null if none) */
   selectedBorderId: UUID | null;
 
@@ -179,6 +182,8 @@ interface PatternDesignerActions {
   selectBlockInstance: (instanceId: UUID | null) => void;
   /** Select a block in the library for placement */
   selectLibraryBlock: (blockId: UUID | null) => void;
+  /** Select a block variant for placement (block + color overrides) */
+  selectVariantForPlacement: (blockId: UUID, overrides: Record<string, string>) => void;
   /** Clear all selections */
   clearSelections: () => void;
 
@@ -217,6 +222,8 @@ interface PatternDesignerActions {
   resetInstancePalette: (instanceId: UUID) => void;
   /** Place a block with pre-set palette overrides (for variant placement) */
   placeBlockWithOverrides: (blockId: UUID, position: GridPosition, overrides: Record<string, string>, rotation?: Rotation) => UUID;
+  /** Sync variant colors in palette - adds missing override colors, removes unused variant colors */
+  syncVariantColors: () => void;
 
   // Grid management
   /** Add a row to the grid (uses gridResizePosition for placement) */
@@ -301,6 +308,7 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
     pattern: createEmptyPattern(),
     selectedBlockInstanceId: null,
     selectedLibraryBlockId: null,
+    selectedVariantOverrides: null,
     selectedBorderId: null,
     blockCache: {},
     mode: 'idle',
@@ -484,6 +492,9 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
           state.undoManager = recordOperation(state.undoManager, operation);
         }
       });
+
+      // After removing instance, sync variant colors (remove unused variant colors)
+      get().syncVariantColors();
     },
 
     updateBlockInstance: (instanceId, updates) => {
@@ -551,6 +562,8 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
     selectLibraryBlock: (blockId) => {
       set((state) => {
         state.selectedLibraryBlockId = blockId;
+        // Clear variant overrides when selecting a regular block
+        state.selectedVariantOverrides = null;
         // Clear canvas selection when selecting from library
         if (blockId !== null) {
           state.selectedBlockInstanceId = null;
@@ -563,10 +576,21 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
       });
     },
 
+    selectVariantForPlacement: (blockId, overrides) => {
+      set((state) => {
+        state.selectedLibraryBlockId = blockId;
+        state.selectedVariantOverrides = Object.keys(overrides).length > 0 ? overrides : null;
+        state.selectedBlockInstanceId = null;
+        state.mode = 'placing_block';
+        state.placementRotation = 0;
+      });
+    },
+
     clearSelections: () => {
       set((state) => {
         state.selectedBlockInstanceId = null;
         state.selectedLibraryBlockId = null;
+        state.selectedVariantOverrides = null;
         state.mode = 'idle';
         state.placementRotation = 0;
         state.rangeFillAnchor = null;
@@ -837,17 +861,6 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
       if (!instance) return;
 
       const prevColor = instance.paletteOverrides?.[roleId] ?? null;
-      const palette = get().pattern.palette;
-
-      // Check if this color already exists in the palette (case-insensitive)
-      const colorLower = color.toLowerCase();
-      const existingRole = palette.roles.find((r) => r.color.toLowerCase() === colorLower);
-
-      // If color doesn't exist in palette and we have room, add it as a new role
-      // Do this before recording the override operation so it's a separate undo step
-      if (!existingRole && palette.roles.length < MAX_PALETTE_ROLES) {
-        get().addRole(undefined, color);
-      }
 
       set((state) => {
         const stateInstance = state.pattern.blockInstances.find((b) => b.id === instanceId);
@@ -871,6 +884,9 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
           state.undoManager = recordOperation(state.undoManager, operation);
         }
       });
+
+      // After setting the override, sync variant colors in palette
+      get().syncVariantColors();
     },
 
     resetInstanceRoleColor: (instanceId, roleId) => {
@@ -901,6 +917,9 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
           state.undoManager = recordOperation(state.undoManager, operation);
         }
       });
+
+      // After resetting the override, sync variant colors in palette
+      get().syncVariantColors();
     },
 
     resetInstancePalette: (instanceId) => {
@@ -925,6 +944,9 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
           state.undoManager = recordOperation(state.undoManager, operation);
         }
       });
+
+      // After resetting all overrides, sync variant colors in palette
+      get().syncVariantColors();
     },
 
     placeBlockWithOverrides: (blockId, position, overrides, rotation = 0) => {
@@ -968,6 +990,73 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
       });
 
       return id;
+    },
+
+    syncVariantColors: () => {
+      const palette = get().pattern.palette;
+      const instances = get().pattern.blockInstances;
+
+      // Collect all colors currently used in overrides (case-insensitive)
+      const usedOverrideColors = new Set<string>();
+      for (const instance of instances) {
+        if (instance.paletteOverrides) {
+          for (const color of Object.values(instance.paletteOverrides)) {
+            usedOverrideColors.add(color.toLowerCase());
+          }
+        }
+      }
+
+      // Find variant colors that are no longer used
+      const variantColorsToRemove: FabricRoleId[] = [];
+      for (const role of palette.roles) {
+        if (role.isVariantColor && !usedOverrideColors.has(role.color.toLowerCase())) {
+          variantColorsToRemove.push(role.id);
+        }
+      }
+
+      // Find override colors that are not in the palette
+      const existingColors = new Set(palette.roles.map((r) => r.color.toLowerCase()));
+      const colorsToAdd: string[] = [];
+      for (const color of usedOverrideColors) {
+        if (!existingColors.has(color)) {
+          colorsToAdd.push(color);
+        }
+      }
+
+      // Apply changes if needed
+      if (variantColorsToRemove.length > 0 || colorsToAdd.length > 0) {
+        set((state) => {
+          // Remove unused variant colors
+          for (const roleId of variantColorsToRemove) {
+            const index = state.pattern.palette.roles.findIndex((r) => r.id === roleId);
+            if (index !== -1) {
+              state.pattern.palette.roles.splice(index, 1);
+            }
+          }
+
+          // Add new variant colors
+          for (const color of colorsToAdd) {
+            if (state.pattern.palette.roles.length >= MAX_PALETTE_ROLES) break;
+
+            // Generate unique ID
+            const existingIds = new Set(state.pattern.palette.roles.map((r) => r.id));
+            let newId = `accent${state.pattern.palette.roles.length - 1}`;
+            let counter = state.pattern.palette.roles.length;
+            while (existingIds.has(newId)) {
+              newId = `accent${counter++}`;
+            }
+
+            state.pattern.palette.roles.push({
+              id: newId,
+              name: `Variant ${state.pattern.palette.roles.length - 3}`,
+              color,
+              isVariantColor: true,
+            });
+          }
+
+          state.pattern.updatedAt = getCurrentTimestamp();
+        });
+      }
     },
 
     // Grid management
@@ -1458,6 +1547,10 @@ export const useSelectedBlockInstance = () => {
 /** Get the selected library block ID */
 export const useSelectedLibraryBlockId = () =>
   usePatternDesignerStore((state) => state.selectedLibraryBlockId);
+
+/** Get selected variant overrides (for placement with custom colors) */
+export const useSelectedVariantOverrides = () =>
+  usePatternDesignerStore((state) => state.selectedVariantOverrides);
 
 /** Get the current designer mode */
 export const usePatternDesignerMode = () => usePatternDesignerStore((state) => state.mode);
