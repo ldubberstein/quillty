@@ -9,6 +9,7 @@ import { useAuth, useCreatePattern, useUpdatePattern } from '@quillty/api';
 import { SizePicker } from '@/components/pattern-designer/SizePicker';
 import { PublishModal } from '@/components/pattern-designer/PublishModal';
 import { SidebarProvider } from '@/components/pattern-designer/SidebarContext';
+import { usePatternDeleteKeyboard } from '@/hooks';
 
 // Dynamic imports for components that use Konva
 const PatternCanvas = dynamic(
@@ -64,6 +65,9 @@ export default function PatternDesignerPage() {
 
   const createPattern = useCreatePattern();
   const updatePattern = useUpdatePattern();
+
+  // Enable Delete/Backspace key to delete selected block instance
+  usePatternDeleteKeyboard();
 
   // Track if we're showing the size picker (on initial load)
   const [showSizePicker, setShowSizePicker] = useState(true);

@@ -12,6 +12,7 @@ import { PreviewControls } from '@/components/block-designer/PreviewControls';
 import { SaveControls } from '@/components/block-designer/SaveControls';
 import { ShapeLibraryPanel } from '@/components/block-designer/ShapeLibraryPanel';
 import { SidebarProvider } from '@/components/shared';
+import { useDeleteKeyboard } from '@/hooks';
 
 // Dynamic import for BlockCanvas (Konva requires browser APIs)
 const BlockCanvas = dynamic(
@@ -45,6 +46,9 @@ export default function BlockDesignerPage() {
   const handlePublished = useCallback((blockId: string) => {
     router.push(`/blocks/${blockId}`);
   }, [router]);
+
+  // Enable Delete/Backspace key to delete selected shape
+  useDeleteKeyboard();
 
   // Initialize a new block on mount (only once)
   useEffect(() => {
