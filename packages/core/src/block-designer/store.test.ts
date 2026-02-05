@@ -315,6 +315,146 @@ describe('BlockDesignerStore', () => {
     });
   });
 
+  describe('addShapesBatch', () => {
+    it('adds multiple square shapes at specified positions', () => {
+      const store = useBlockDesignerStore.getState();
+      const positions: GridPosition[] = [
+        { row: 0, col: 0 },
+        { row: 0, col: 1 },
+        { row: 1, col: 0 },
+      ];
+
+      const ids = store.addShapesBatch(positions, { type: 'square' });
+
+      const { block } = useBlockDesignerStore.getState();
+      expect(ids).toHaveLength(3);
+      expect(block.shapes).toHaveLength(3);
+      expect(block.shapes.every((s) => s.type === 'square')).toBe(true);
+    });
+
+    it('adds multiple HST shapes with correct variant', () => {
+      const store = useBlockDesignerStore.getState();
+      const positions: GridPosition[] = [
+        { row: 0, col: 0 },
+        { row: 1, col: 1 },
+      ];
+
+      const ids = store.addShapesBatch(positions, { type: 'hst', variant: 'ne' });
+
+      const { block } = useBlockDesignerStore.getState();
+      expect(ids).toHaveLength(2);
+      expect(block.shapes).toHaveLength(2);
+      block.shapes.forEach((shape) => {
+        expect(shape.type).toBe('hst');
+        if (shape.type === 'hst') {
+          expect(shape.variant).toBe('ne');
+        }
+      });
+    });
+
+    it('returns empty array for flying_geese (not supported)', () => {
+      const store = useBlockDesignerStore.getState();
+      const positions: GridPosition[] = [
+        { row: 0, col: 0 },
+        { row: 0, col: 1 },
+      ];
+
+      const ids = store.addShapesBatch(positions, { type: 'flying_geese' });
+
+      expect(ids).toHaveLength(0);
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+    });
+
+    it('returns empty array for empty positions', () => {
+      const store = useBlockDesignerStore.getState();
+      const ids = store.addShapesBatch([], { type: 'square' });
+
+      expect(ids).toHaveLength(0);
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+    });
+
+    it('places shapes at correct positions', () => {
+      const store = useBlockDesignerStore.getState();
+      const positions: GridPosition[] = [
+        { row: 0, col: 2 },
+        { row: 2, col: 1 },
+      ];
+
+      store.addShapesBatch(positions, { type: 'square' });
+
+      const { block } = useBlockDesignerStore.getState();
+      expect(block.shapes[0].position).toEqual({ row: 0, col: 2 });
+      expect(block.shapes[1].position).toEqual({ row: 2, col: 1 });
+    });
+
+    it('uses default fabric role (background)', () => {
+      const store = useBlockDesignerStore.getState();
+      store.addShapesBatch([{ row: 0, col: 0 }], { type: 'square' });
+
+      const shape = useBlockDesignerStore.getState().block.shapes[0] as SquareShape;
+      expect(shape.fabricRole).toBe('background');
+    });
+
+    it('undoes entire batch as single operation', () => {
+      const store = useBlockDesignerStore.getState();
+      const positions: GridPosition[] = [
+        { row: 0, col: 0 },
+        { row: 0, col: 1 },
+        { row: 0, col: 2 },
+      ];
+
+      store.addShapesBatch(positions, { type: 'square' });
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(3);
+
+      store.undo();
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+    });
+
+    it('redoes entire batch as single operation', () => {
+      const store = useBlockDesignerStore.getState();
+      const positions: GridPosition[] = [
+        { row: 0, col: 0 },
+        { row: 1, col: 1 },
+      ];
+
+      store.addShapesBatch(positions, { type: 'hst', variant: 'sw' });
+      store.undo();
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+
+      store.redo();
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(2);
+    });
+
+    it('generates unique IDs for each shape', () => {
+      const store = useBlockDesignerStore.getState();
+      const positions: GridPosition[] = [
+        { row: 0, col: 0 },
+        { row: 0, col: 1 },
+        { row: 0, col: 2 },
+      ];
+
+      const ids = store.addShapesBatch(positions, { type: 'square' });
+
+      const uniqueIds = new Set(ids);
+      expect(uniqueIds.size).toBe(3);
+    });
+
+    it('updates updatedAt timestamp', () => {
+      const store = useBlockDesignerStore.getState();
+      const beforeUpdate = store.block.updatedAt;
+
+      // Small delay to ensure time difference
+      const start = Date.now();
+      while (Date.now() - start < 5) {
+        // spin wait
+      }
+
+      store.addShapesBatch([{ row: 0, col: 0 }], { type: 'square' });
+
+      expect(useBlockDesignerStore.getState().block.updatedAt).not.toBe(beforeUpdate);
+    });
+  });
+
   describe('removeShape', () => {
     it('removes a shape by ID', () => {
       const store = useBlockDesignerStore.getState();

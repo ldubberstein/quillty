@@ -1,13 +1,12 @@
 /**
- * Block Designer Undo Manager
+ * Pattern Designer Undo Manager
  *
- * Re-exports from the shared generic undo manager with Block Designer-specific types.
- * Maintains backward compatibility by wrapping the generic undo function
- * with the domain-specific invertOperation function.
+ * Re-exports from the shared generic undo manager with Pattern Designer-specific types.
+ * Maintains the same API as Block Designer for consistency.
  */
 
-import type { Operation } from './operations';
-import { invertOperation } from './operations';
+import type { PatternOperation } from './operations';
+import { invertPatternOperation } from './operations';
 import {
   UndoManagerState as GenericUndoManagerState,
   MAX_HISTORY_SIZE,
@@ -21,9 +20,9 @@ import {
 } from '../../history/undoManager';
 
 /**
- * State for the undo manager (typed for Block Designer operations)
+ * State for the undo manager (typed for Pattern Designer operations)
  */
-export type UndoManagerState = GenericUndoManagerState<Operation>;
+export type UndoManagerState = GenericUndoManagerState<PatternOperation>;
 
 // Re-export shared constants
 export { MAX_HISTORY_SIZE };
@@ -32,7 +31,7 @@ export { MAX_HISTORY_SIZE };
  * Create an initial undo manager state
  */
 export function createUndoManagerState(): UndoManagerState {
-  return createGenericState<Operation>();
+  return createGenericState<PatternOperation>();
 }
 
 /**
@@ -41,20 +40,20 @@ export function createUndoManagerState(): UndoManagerState {
  */
 export function recordOperation(
   state: UndoManagerState,
-  operation: Operation
+  operation: PatternOperation
 ): UndoManagerState {
   return genericRecordOp(state, operation);
 }
 
 /**
  * Get the operation to undo (if any) and update stacks.
- * Uses Block Designer's invertOperation to create the inverse.
+ * Uses Pattern Designer's invertPatternOperation to create the inverse.
  */
 export function undo(state: UndoManagerState): {
   state: UndoManagerState;
-  operation: Operation;
+  operation: PatternOperation;
 } | null {
-  return genericUndo(state, invertOperation);
+  return genericUndo(state, invertPatternOperation);
 }
 
 /**
@@ -62,7 +61,7 @@ export function undo(state: UndoManagerState): {
  */
 export function redo(state: UndoManagerState): {
   state: UndoManagerState;
-  operation: Operation;
+  operation: PatternOperation;
 } | null {
   return genericRedo(state);
 }
@@ -85,5 +84,5 @@ export function canRedo(state: UndoManagerState): boolean {
  * Clear all history
  */
 export function clearHistory(): UndoManagerState {
-  return genericClearHistory<Operation>();
+  return genericClearHistory<PatternOperation>();
 }

@@ -12,6 +12,7 @@ import { FlyingGeeseRenderer } from './FlyingGeeseRenderer';
 import { FloatingToolbar } from './FloatingToolbar';
 import { PreviewGrid } from './PreviewGrid';
 import { EmptyCell } from './EmptyCell';
+import { useDragToFill } from '../../hooks';
 import { useBlockDesignerStore, useSelectedShapeType, useHoveredCell, useIsPlacingShape } from '@quillty/core';
 import type { GridPosition, SquareShape, HstShape, FlyingGeeseShape, Shape, ShapeSelectionType } from '@quillty/core';
 
@@ -53,6 +54,7 @@ export function BlockCanvas() {
   const selectShapeForPlacement = useBlockDesignerStore((state) => state.selectShapeForPlacement);
   const setHoveredCell = useBlockDesignerStore((state) => state.setHoveredCell);
   const clearShapeSelection = useBlockDesignerStore((state) => state.clearShapeSelection);
+  const addShapesBatch = useBlockDesignerStore((state) => state.addShapesBatch);
 
   const { gridSize, shapes, previewPalette } = block;
   const isPaintMode = mode === 'paint_mode';
@@ -264,6 +266,31 @@ export function BlockCanvas() {
     [gridOffsetX, gridOffsetY, gridPixelSize, cellSize, gridSize]
   );
 
+  // Handle drag complete callback for batch shape placement
+  const handleDragFillComplete = useCallback(
+    (cells: GridPosition[]) => {
+      if (selectedShapeType && selectedShapeType.type !== 'flying_geese') {
+        addShapesBatch(cells, selectedShapeType);
+      }
+    },
+    [selectedShapeType, addShapesBatch]
+  );
+
+  // Drag-to-fill hook - enabled for square/HST shapes only (not Flying Geese)
+  const dragToFillEnabled = isPlacingShape && selectedShapeType !== null && selectedShapeType.type !== 'flying_geese';
+  const {
+    handleMouseDown: handleDragMouseDown,
+    handleMouseMove: handleDragMouseMove,
+    handleMouseUp: handleDragMouseUp,
+    draggedCells,
+    isDragging,
+  } = useDragToFill({
+    stageToGrid,
+    isCellOccupied,
+    onDragComplete: handleDragFillComplete,
+    enabled: dragToFillEnabled,
+  });
+
   // Convert stage position to screen position
   const stageToScreen = useCallback(
     (stageX: number, stageY: number): { x: number; y: number } => {
@@ -457,10 +484,14 @@ export function BlockCanvas() {
             scaleY={scale}
             x={position.x}
             y={position.y}
-            draggable
+            draggable={!isDragging}
             dragBoundFunc={dragBoundFunc}
             onWheel={handleWheel}
             onDragEnd={handleDragEnd}
+            onMouseDown={handleDragMouseDown}
+            onMouseMove={handleDragMouseMove}
+            onMouseUp={handleDragMouseUp}
+            onMouseLeave={handleDragMouseUp}
           >
             <Layer>
               {/* Background rect to capture clicks outside the grid */}
@@ -555,8 +586,8 @@ export function BlockCanvas() {
                 />
               ))}
 
-              {/* Ghost preview for shape placement */}
-              {isPlacingShape && hoveredCell && selectedShapeType && !isCellOccupied(hoveredCell) && (
+              {/* Ghost preview for shape placement (single cell hover) */}
+              {isPlacingShape && !isDragging && hoveredCell && selectedShapeType && !isCellOccupied(hoveredCell) && (
                 <Group opacity={0.5} listening={false}>
                   {selectedShapeType.type === 'square' && (
                     <SquareRenderer
@@ -595,6 +626,22 @@ export function BlockCanvas() {
                   {/* Flying Geese doesn't show ghost preview - uses two-tap flow */}
                 </Group>
               )}
+
+              {/* Drag-to-fill preview - show cells that will be filled */}
+              {isDragging && draggedCells.map(({ row, col }) => (
+                <Rect
+                  key={`drag-preview-${row}-${col}`}
+                  x={gridOffsetX + col * cellSize + 2}
+                  y={gridOffsetY + row * cellSize + 2}
+                  width={cellSize - 4}
+                  height={cellSize - 4}
+                  fill="rgba(59, 130, 246, 0.2)"
+                  stroke="#3B82F6"
+                  strokeWidth={1}
+                  dash={[4, 4]}
+                  listening={false}
+                />
+              ))}
             </Layer>
           </Stage>
 

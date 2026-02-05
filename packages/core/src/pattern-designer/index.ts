@@ -97,6 +97,11 @@ export {
   useFinalQuiltHeight,
   useFinalQuiltSize,
   useCanAddBorder,
+  // Undo/Redo selector hooks (aliased to avoid conflict with block-designer)
+  useCanUndo as usePatternCanUndo,
+  useCanRedo as usePatternCanRedo,
+  // Placement rotation selector hook
+  usePlacementRotation,
 } from './store';
 
 export type { PatternDesignerStore } from './store';

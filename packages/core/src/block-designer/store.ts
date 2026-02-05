@@ -26,7 +26,7 @@ import type {
   UUID,
 } from './types';
 import { DEFAULT_PALETTE, DEFAULT_GRID_SIZE } from './constants';
-import type { Operation } from './history/operations';
+import type { Operation, BatchOperation } from './history/operations';
 import {
   applyOperationToShapes,
   applyOperationToPalette,
@@ -139,6 +139,8 @@ interface BlockDesignerActions {
   ) => UUID;
   /** Remove a shape by ID */
   removeShape: (shapeId: UUID) => void;
+  /** Add multiple shapes in a batch (single undo operation) - Flying Geese not supported */
+  addShapesBatch: (positions: GridPosition[], shapeType: ShapeSelectionType) => UUID[];
   /** Update a shape's properties */
   updateShape: (shapeId: UUID, updates: Partial<Shape>) => void;
 
@@ -353,6 +355,57 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
           state.undoManager = recordOperation(state.undoManager, operation);
         }
       });
+    },
+
+    addShapesBatch: (positions, shapeType) => {
+      // Flying Geese not supported for batch (requires two-tap placement)
+      if (shapeType.type === 'flying_geese') {
+        return [];
+      }
+
+      if (positions.length === 0) {
+        return [];
+      }
+
+      // Create shapes for each position
+      const shapes: (SquareShape | HstShape)[] = positions.map((position) => {
+        const id = generateUUID();
+        if (shapeType.type === 'square') {
+          return {
+            id,
+            type: 'square' as const,
+            position,
+            span: { rows: 1 as const, cols: 1 as const },
+            fabricRole: 'background' as const,
+          };
+        } else {
+          // HST
+          return {
+            id,
+            type: 'hst' as const,
+            position,
+            span: { rows: 1 as const, cols: 1 as const },
+            fabricRole: 'background' as const,
+            variant: shapeType.variant,
+            secondaryFabricRole: 'background' as const,
+          };
+        }
+      });
+
+      set((state) => {
+        // Add all shapes
+        state.block.shapes.push(...shapes);
+        state.block.updatedAt = getCurrentTimestamp();
+
+        // Record as batch operation for single undo
+        const batchOperation: BatchOperation = {
+          type: 'batch',
+          operations: shapes.map((shape) => ({ type: 'add_shape' as const, shape })),
+        };
+        state.undoManager = recordOperation(state.undoManager, batchOperation);
+      });
+
+      return shapes.map((s) => s.id);
     },
 
     updateShape: (shapeId, updates) => {

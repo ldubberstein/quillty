@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Stage, Layer, Rect, Group } from 'react-konva';
+import { Stage, Layer, Rect, Group, Text } from 'react-konva';
 import type Konva from 'konva';
 import { EmptySlot } from './EmptySlot';
 import { PatternGridLines } from './PatternGridLines';
@@ -9,6 +9,7 @@ import { BlockInstanceRenderer } from './BlockInstanceRenderer';
 import { BorderRenderer } from './BorderRenderer';
 import { ZoomControls } from '../block-designer/ZoomControls';
 import { FloatingToolbar } from '../block-designer/FloatingToolbar';
+import { useDragToFill, useRotationKeyboard } from '../../hooks';
 import {
   usePatternDesignerStore,
   useGridSize,
@@ -18,6 +19,7 @@ import {
   useGridResizePosition,
   useBorderConfig,
   useTotalBorderWidth,
+  usePlacementRotation,
 } from '@quillty/core';
 import type { GridPosition, Shape, BlockInstance } from '@quillty/core';
 
@@ -69,8 +71,10 @@ export function PatternCanvas() {
   const gridResizePosition = useGridResizePosition();
   const borderConfig = useBorderConfig();
   const totalBorderWidth = useTotalBorderWidth();
+  const placementRotation = usePlacementRotation();
   const physicalSize = usePatternDesignerStore((state) => state.pattern.physicalSize);
   const addBlockInstance = usePatternDesignerStore((state) => state.addBlockInstance);
+  const addBlockInstancesBatch = usePatternDesignerStore((state) => state.addBlockInstancesBatch);
   const isPositionOccupied = usePatternDesignerStore((state) => state.isPositionOccupied);
   const clearSelections = usePatternDesignerStore((state) => state.clearSelections);
   const selectBlockInstance = usePatternDesignerStore((state) => state.selectBlockInstance);
@@ -81,6 +85,9 @@ export function PatternCanvas() {
 
   const { rows, cols } = gridSize;
   const isPlacingBlock = mode === 'placing_block' && selectedLibraryBlockId !== null;
+
+  // Enable R key for rotation (placement mode and editing selected blocks)
+  useRotationKeyboard();
 
   // Canvas state
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -299,6 +306,55 @@ export function PatternCanvas() {
     [scale, gridPixelWidth, gridPixelHeight, gridOffsetX, gridOffsetY, dimensions.width, dimensions.height]
   );
 
+  // Convert stage coordinates to grid position
+  const stageToGrid = useCallback(
+    (stageX: number, stageY: number): GridPosition | null => {
+      // Convert to local grid coordinates
+      const localX = stageX - gridOffsetX;
+      const localY = stageY - gridOffsetY;
+
+      // Check if within grid bounds
+      if (localX < 0 || localY < 0 || localX >= gridPixelWidth || localY >= gridPixelHeight) {
+        return null;
+      }
+
+      const col = Math.floor(localX / cellSize);
+      const row = Math.floor(localY / cellSize);
+
+      // Validate bounds
+      if (row < 0 || row >= rows || col < 0 || col >= cols) {
+        return null;
+      }
+
+      return { row, col };
+    },
+    [gridOffsetX, gridOffsetY, gridPixelWidth, gridPixelHeight, cellSize, rows, cols]
+  );
+
+  // Handle drag complete callback for batch block placement
+  const handleDragFillComplete = useCallback(
+    (cells: GridPosition[]) => {
+      if (selectedLibraryBlockId) {
+        addBlockInstancesBatch(selectedLibraryBlockId, cells, placementRotation);
+      }
+    },
+    [selectedLibraryBlockId, addBlockInstancesBatch, placementRotation]
+  );
+
+  // Drag-to-fill hook - enabled when placing blocks
+  const {
+    handleMouseDown: handleDragMouseDown,
+    handleMouseMove: handleDragMouseMove,
+    handleMouseUp: handleDragMouseUp,
+    draggedCells,
+    isDragging,
+  } = useDragToFill({
+    stageToGrid,
+    isCellOccupied: isPositionOccupied,
+    onDragComplete: handleDragFillComplete,
+    enabled: isPlacingBlock,
+  });
+
   // Handle slot click
   const handleSlotClick = useCallback(
     (row: number, col: number) => {
@@ -306,7 +362,7 @@ export function PatternCanvas() {
 
       // If we're in placing mode and have a selected library block
       if (isPlacingBlock && selectedLibraryBlockId) {
-        addBlockInstance(selectedLibraryBlockId, pos);
+        addBlockInstance(selectedLibraryBlockId, pos, placementRotation);
         return;
       }
 
@@ -321,7 +377,7 @@ export function PatternCanvas() {
         return;
       }
     },
-    [isPlacingBlock, selectedLibraryBlockId, addBlockInstance, isPositionOccupied, blockInstances, selectBlockInstance]
+    [isPlacingBlock, selectedLibraryBlockId, addBlockInstance, placementRotation, isPositionOccupied, blockInstances, selectBlockInstance]
   );
 
   // Handle click on background (outside grid)
@@ -426,10 +482,14 @@ export function PatternCanvas() {
             scaleY={scale}
             x={position.x}
             y={position.y}
-            draggable
+            draggable={!isDragging}
             dragBoundFunc={dragBoundFunc}
             onWheel={handleWheel}
             onDragEnd={handleDragEnd}
+            onMouseDown={handleDragMouseDown}
+            onMouseMove={handleDragMouseMove}
+            onMouseUp={handleDragMouseUp}
+            onMouseLeave={handleDragMouseUp}
           >
             <Layer>
               {/* Background rect to capture clicks outside the grid */}
@@ -509,15 +569,15 @@ export function PatternCanvas() {
                 );
               })}
 
-              {/* Ghost preview when hovering empty slot in placement mode */}
-              {isPlacingBlock && hoveredSlot && !isPreviewingFillEmpty && selectedBlock && selectedBlockShapes.length > 0 && (
+              {/* Ghost preview when hovering empty slot in placement mode (not during drag) */}
+              {isPlacingBlock && !isDragging && hoveredSlot && !isPreviewingFillEmpty && selectedBlock && selectedBlockShapes.length > 0 && (
                 <Group opacity={0.5} listening={false}>
                   <BlockInstanceRenderer
                     instance={{
                       id: 'ghost-preview',
                       blockId: selectedLibraryBlockId!,
                       position: hoveredSlot,
-                      rotation: 0,
+                      rotation: placementRotation,
                       flipHorizontal: false,
                       flipVertical: false,
                     }}
@@ -529,8 +589,36 @@ export function PatternCanvas() {
                     offsetY={gridOffsetY}
                     isSelected={false}
                   />
+                  {/* Rotation badge */}
+                  {placementRotation !== 0 && (
+                    <Text
+                      x={gridOffsetX + hoveredSlot.col * cellSize + cellSize - 28}
+                      y={gridOffsetY + hoveredSlot.row * cellSize + 4}
+                      text={`${placementRotation}°`}
+                      fontSize={12}
+                      fontStyle="bold"
+                      fill="#3B82F6"
+                      listening={false}
+                    />
+                  )}
                 </Group>
               )}
+
+              {/* Drag-to-fill preview - show cells that will be filled */}
+              {isDragging && draggedCells.map(({ row, col }) => (
+                <Rect
+                  key={`drag-preview-${row}-${col}`}
+                  x={gridOffsetX + col * cellSize + 2}
+                  y={gridOffsetY + row * cellSize + 2}
+                  width={cellSize - 4}
+                  height={cellSize - 4}
+                  fill="rgba(59, 130, 246, 0.2)"
+                  stroke="#3B82F6"
+                  strokeWidth={1}
+                  dash={[4, 4]}
+                  listening={false}
+                />
+              ))}
 
               {/* Ghost preview for all empty slots when hovering "Fill Empty" button */}
               {isPreviewingFillEmpty && selectedBlock && selectedBlockShapes.length > 0 && (
@@ -633,7 +721,7 @@ export function PatternCanvas() {
           {/* Placement mode indicator */}
           {isPlacingBlock && (
             <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2">
-              Tap a slot to place the selected block
+              Tap a slot to place • Press R to rotate
               <button
                 onClick={clearSelections}
                 className="ml-1 p-1 text-blue-100 hover:text-white hover:bg-blue-600 rounded"

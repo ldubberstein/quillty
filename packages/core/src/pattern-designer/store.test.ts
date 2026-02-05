@@ -10,6 +10,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { usePatternDesignerStore } from './store';
 import { DEFAULT_PALETTE } from '../block-designer/constants';
 import type { Block } from '../block-designer/types';
+import { createUndoManagerState } from './history/undoManager';
 
 // Helper to reset store state before each test
 function resetStore() {
@@ -48,6 +49,8 @@ function resetStore() {
     isPreviewingFillEmpty: false,
     previewingGridResize: null,
     gridResizePosition: 'end',
+    undoManager: createUndoManagerState(),
+    placementRotation: 0,
   });
 }
 
@@ -261,6 +264,112 @@ describe('PatternDesignerStore', () => {
       const { pattern } = usePatternDesignerStore.getState();
       expect(pattern.blockInstances).toHaveLength(1);
       expect(pattern.blockInstances[0].blockId).toBe('block-2');
+    });
+  });
+
+  describe('addBlockInstancesBatch', () => {
+    it('adds multiple block instances at specified positions', () => {
+      const store = usePatternDesignerStore.getState();
+      const positions = [
+        { row: 0, col: 0 },
+        { row: 0, col: 1 },
+        { row: 1, col: 0 },
+      ];
+
+      const ids = store.addBlockInstancesBatch('block-123', positions);
+
+      const { pattern } = usePatternDesignerStore.getState();
+      expect(ids).toHaveLength(3);
+      expect(pattern.blockInstances).toHaveLength(3);
+      expect(pattern.blockInstances.every((b) => b.blockId === 'block-123')).toBe(true);
+    });
+
+    it('returns empty array for empty positions', () => {
+      const store = usePatternDesignerStore.getState();
+
+      const ids = store.addBlockInstancesBatch('block-123', []);
+
+      expect(ids).toHaveLength(0);
+      expect(usePatternDesignerStore.getState().pattern.blockInstances).toHaveLength(0);
+    });
+
+    it('places blocks at correct positions', () => {
+      const store = usePatternDesignerStore.getState();
+      const positions = [
+        { row: 0, col: 2 },
+        { row: 2, col: 1 },
+      ];
+
+      store.addBlockInstancesBatch('block-123', positions);
+
+      const { pattern } = usePatternDesignerStore.getState();
+      expect(pattern.blockInstances[0].position).toEqual({ row: 0, col: 2 });
+      expect(pattern.blockInstances[1].position).toEqual({ row: 2, col: 1 });
+    });
+
+    it('generates unique IDs for each instance', () => {
+      const store = usePatternDesignerStore.getState();
+      const positions = [
+        { row: 0, col: 0 },
+        { row: 0, col: 1 },
+        { row: 0, col: 2 },
+      ];
+
+      const ids = store.addBlockInstancesBatch('block-123', positions);
+
+      const uniqueIds = new Set(ids);
+      expect(uniqueIds.size).toBe(3);
+    });
+
+    it('replaces existing instances at occupied positions', () => {
+      const store = usePatternDesignerStore.getState();
+      store.addBlockInstance('old-block', { row: 0, col: 0 });
+
+      store.addBlockInstancesBatch('new-block', [
+        { row: 0, col: 0 },
+        { row: 0, col: 1 },
+      ]);
+
+      const { pattern } = usePatternDesignerStore.getState();
+      expect(pattern.blockInstances).toHaveLength(2);
+      expect(pattern.blockInstances.find((b) => b.position.row === 0 && b.position.col === 0)?.blockId).toBe('new-block');
+    });
+
+    it('marks pattern as dirty', () => {
+      const store = usePatternDesignerStore.getState();
+      expect(usePatternDesignerStore.getState().isDirty).toBe(false);
+
+      store.addBlockInstancesBatch('block-123', [{ row: 0, col: 0 }]);
+
+      expect(usePatternDesignerStore.getState().isDirty).toBe(true);
+    });
+
+    it('uses specified rotation', () => {
+      const store = usePatternDesignerStore.getState();
+
+      store.addBlockInstancesBatch('block-123', [{ row: 0, col: 0 }, { row: 0, col: 1 }], 90);
+
+      const { pattern } = usePatternDesignerStore.getState();
+      expect(pattern.blockInstances.every((b) => b.rotation === 90)).toBe(true);
+    });
+
+    it('uses default rotation of 0', () => {
+      const store = usePatternDesignerStore.getState();
+
+      store.addBlockInstancesBatch('block-123', [{ row: 0, col: 0 }]);
+
+      const { pattern } = usePatternDesignerStore.getState();
+      expect(pattern.blockInstances[0].rotation).toBe(0);
+    });
+
+    it('sets default flip values to false', () => {
+      const store = usePatternDesignerStore.getState();
+
+      store.addBlockInstancesBatch('block-123', [{ row: 0, col: 0 }]);
+
+      const instance = usePatternDesignerStore.getState().pattern.blockInstances[0];
+      expect(instance.flipHorizontal).toBe(false);
+      expect(instance.flipVertical).toBe(false);
     });
   });
 
@@ -963,6 +1072,382 @@ describe('PatternDesignerStore', () => {
 
       expect(usePatternDesignerStore.getState().pattern.id).toBe('pattern-123');
       expect(usePatternDesignerStore.getState().isDirty).toBe(false);
+    });
+  });
+
+  // ===========================================================================
+  // Undo/Redo
+  // ===========================================================================
+
+  describe('undo/redo', () => {
+    describe('canUndo/canRedo', () => {
+      it('canUndo returns false initially', () => {
+        const store = usePatternDesignerStore.getState();
+        expect(store.canUndo()).toBe(false);
+      });
+
+      it('canRedo returns false initially', () => {
+        const store = usePatternDesignerStore.getState();
+        expect(store.canRedo()).toBe(false);
+      });
+
+      it('canUndo returns true after an action', () => {
+        const store = usePatternDesignerStore.getState();
+        store.addBlockInstance('block-1', { row: 0, col: 0 });
+        expect(store.canUndo()).toBe(true);
+      });
+
+      it('canRedo returns true after undo', () => {
+        const store = usePatternDesignerStore.getState();
+        store.addBlockInstance('block-1', { row: 0, col: 0 });
+        store.undo();
+        expect(store.canRedo()).toBe(true);
+      });
+    });
+
+    describe('addBlockInstance undo/redo', () => {
+      it('undoes addBlockInstance', () => {
+        const store = usePatternDesignerStore.getState();
+        store.addBlockInstance('block-1', { row: 0, col: 0 });
+        expect(usePatternDesignerStore.getState().pattern.blockInstances).toHaveLength(1);
+
+        store.undo();
+
+        expect(usePatternDesignerStore.getState().pattern.blockInstances).toHaveLength(0);
+      });
+
+      it('redoes addBlockInstance', () => {
+        const store = usePatternDesignerStore.getState();
+        store.addBlockInstance('block-1', { row: 0, col: 0 });
+        store.undo();
+        expect(usePatternDesignerStore.getState().pattern.blockInstances).toHaveLength(0);
+
+        store.redo();
+
+        expect(usePatternDesignerStore.getState().pattern.blockInstances).toHaveLength(1);
+        expect(usePatternDesignerStore.getState().pattern.blockInstances[0].blockId).toBe('block-1');
+      });
+    });
+
+    describe('removeBlockInstance undo/redo', () => {
+      it('undoes removeBlockInstance', () => {
+        const store = usePatternDesignerStore.getState();
+        store.addBlockInstance('block-1', { row: 0, col: 0 });
+        const instanceId = usePatternDesignerStore.getState().pattern.blockInstances[0].id;
+        store.removeBlockInstance(instanceId);
+        expect(usePatternDesignerStore.getState().pattern.blockInstances).toHaveLength(0);
+
+        store.undo();
+
+        expect(usePatternDesignerStore.getState().pattern.blockInstances).toHaveLength(1);
+        expect(usePatternDesignerStore.getState().pattern.blockInstances[0].id).toBe(instanceId);
+      });
+
+      it('redoes removeBlockInstance', () => {
+        const store = usePatternDesignerStore.getState();
+        store.addBlockInstance('block-1', { row: 0, col: 0 });
+        const instanceId = usePatternDesignerStore.getState().pattern.blockInstances[0].id;
+        store.removeBlockInstance(instanceId);
+        store.undo();
+        expect(usePatternDesignerStore.getState().pattern.blockInstances).toHaveLength(1);
+
+        store.redo();
+
+        expect(usePatternDesignerStore.getState().pattern.blockInstances).toHaveLength(0);
+      });
+    });
+
+    describe('updateBlockInstance undo/redo', () => {
+      it('undoes rotation change', () => {
+        const store = usePatternDesignerStore.getState();
+        store.addBlockInstance('block-1', { row: 0, col: 0 });
+        const instanceId = usePatternDesignerStore.getState().pattern.blockInstances[0].id;
+        store.rotateBlockInstance(instanceId);
+        expect(usePatternDesignerStore.getState().pattern.blockInstances[0].rotation).toBe(90);
+
+        store.undo();
+
+        expect(usePatternDesignerStore.getState().pattern.blockInstances[0].rotation).toBe(0);
+      });
+
+      it('undoes flip horizontal', () => {
+        const store = usePatternDesignerStore.getState();
+        store.addBlockInstance('block-1', { row: 0, col: 0 });
+        const instanceId = usePatternDesignerStore.getState().pattern.blockInstances[0].id;
+        store.flipBlockInstanceHorizontal(instanceId);
+        expect(usePatternDesignerStore.getState().pattern.blockInstances[0].flipHorizontal).toBe(true);
+
+        store.undo();
+
+        expect(usePatternDesignerStore.getState().pattern.blockInstances[0].flipHorizontal).toBe(false);
+      });
+
+      it('undoes flip vertical', () => {
+        const store = usePatternDesignerStore.getState();
+        store.addBlockInstance('block-1', { row: 0, col: 0 });
+        const instanceId = usePatternDesignerStore.getState().pattern.blockInstances[0].id;
+        store.flipBlockInstanceVertical(instanceId);
+        expect(usePatternDesignerStore.getState().pattern.blockInstances[0].flipVertical).toBe(true);
+
+        store.undo();
+
+        expect(usePatternDesignerStore.getState().pattern.blockInstances[0].flipVertical).toBe(false);
+      });
+    });
+
+    describe('setRoleColor undo/redo', () => {
+      it('undoes palette color change', () => {
+        const store = usePatternDesignerStore.getState();
+        const originalColor = usePatternDesignerStore.getState().pattern.palette.roles.find(r => r.id === 'background')?.color;
+        store.setRoleColor('background', '#FF0000');
+        expect(usePatternDesignerStore.getState().pattern.palette.roles.find(r => r.id === 'background')?.color).toBe('#FF0000');
+
+        store.undo();
+
+        expect(usePatternDesignerStore.getState().pattern.palette.roles.find(r => r.id === 'background')?.color).toBe(originalColor);
+      });
+
+      it('redoes palette color change', () => {
+        const store = usePatternDesignerStore.getState();
+        store.setRoleColor('background', '#FF0000');
+        store.undo();
+
+        store.redo();
+
+        expect(usePatternDesignerStore.getState().pattern.palette.roles.find(r => r.id === 'background')?.color).toBe('#FF0000');
+      });
+    });
+
+    describe('batch operations undo/redo', () => {
+      it('undoes batch addBlockInstancesBatch as single operation', () => {
+        const store = usePatternDesignerStore.getState();
+        store.addBlockInstancesBatch('block-1', [
+          { row: 0, col: 0 },
+          { row: 0, col: 1 },
+          { row: 1, col: 0 },
+        ]);
+        expect(usePatternDesignerStore.getState().pattern.blockInstances).toHaveLength(3);
+
+        store.undo();
+
+        expect(usePatternDesignerStore.getState().pattern.blockInstances).toHaveLength(0);
+      });
+
+      it('redoes batch addBlockInstancesBatch as single operation', () => {
+        const store = usePatternDesignerStore.getState();
+        store.addBlockInstancesBatch('block-1', [
+          { row: 0, col: 0 },
+          { row: 0, col: 1 },
+        ]);
+        store.undo();
+
+        store.redo();
+
+        expect(usePatternDesignerStore.getState().pattern.blockInstances).toHaveLength(2);
+      });
+    });
+
+    describe('multiple undo/redo cycles', () => {
+      it('supports multiple undo operations in sequence', () => {
+        const store = usePatternDesignerStore.getState();
+        store.addBlockInstance('block-1', { row: 0, col: 0 });
+        store.addBlockInstance('block-2', { row: 1, col: 0 });
+        store.addBlockInstance('block-3', { row: 2, col: 0 });
+        expect(usePatternDesignerStore.getState().pattern.blockInstances).toHaveLength(3);
+
+        store.undo();
+        expect(usePatternDesignerStore.getState().pattern.blockInstances).toHaveLength(2);
+
+        store.undo();
+        expect(usePatternDesignerStore.getState().pattern.blockInstances).toHaveLength(1);
+
+        store.undo();
+        expect(usePatternDesignerStore.getState().pattern.blockInstances).toHaveLength(0);
+      });
+
+      it('new action clears redo stack', () => {
+        const store = usePatternDesignerStore.getState();
+        store.addBlockInstance('block-1', { row: 0, col: 0 });
+        store.undo();
+        expect(store.canRedo()).toBe(true);
+
+        store.addBlockInstance('block-2', { row: 1, col: 0 });
+        expect(store.canRedo()).toBe(false);
+      });
+    });
+
+    describe('undo clears selection if instance removed', () => {
+      it('clears selection when undoing addBlockInstance removes selected instance', () => {
+        const store = usePatternDesignerStore.getState();
+        store.addBlockInstance('block-1', { row: 0, col: 0 });
+        const instanceId = usePatternDesignerStore.getState().pattern.blockInstances[0].id;
+        store.selectBlockInstance(instanceId);
+        expect(usePatternDesignerStore.getState().selectedBlockInstanceId).toBe(instanceId);
+
+        store.undo();
+
+        expect(usePatternDesignerStore.getState().selectedBlockInstanceId).toBeNull();
+      });
+    });
+
+    describe('initPattern and loadPattern reset undo history', () => {
+      it('initPattern clears undo history', () => {
+        const store = usePatternDesignerStore.getState();
+        store.addBlockInstance('block-1', { row: 0, col: 0 });
+        expect(store.canUndo()).toBe(true);
+
+        store.initPattern({ rows: 3, cols: 3 });
+
+        expect(store.canUndo()).toBe(false);
+      });
+
+      it('loadPattern clears undo history', () => {
+        const store = usePatternDesignerStore.getState();
+        store.addBlockInstance('block-1', { row: 0, col: 0 });
+        expect(store.canUndo()).toBe(true);
+
+        store.loadPattern({
+          id: 'loaded-pattern',
+          creatorId: '',
+          title: 'Loaded',
+          description: null,
+          hashtags: [],
+          difficulty: 'beginner',
+          category: null,
+          gridSize: { rows: 3, cols: 3 },
+          physicalSize: { widthInches: 36, heightInches: 36, blockSizeInches: 12 },
+          palette: { ...DEFAULT_PALETTE, roles: [...DEFAULT_PALETTE.roles] },
+          blockInstances: [],
+          borderConfig: null,
+          status: 'draft',
+          isPremium: false,
+          priceCents: null,
+          publishedAt: null,
+          thumbnailUrl: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+
+        expect(store.canUndo()).toBe(false);
+      });
+    });
+  });
+
+  // ===========================================================================
+  // Placement Rotation
+  // ===========================================================================
+
+  describe('placementRotation', () => {
+    describe('rotatePlacementClockwise', () => {
+      it('cycles rotation 0 -> 90 -> 180 -> 270 -> 0', () => {
+        const store = usePatternDesignerStore.getState();
+        expect(store.placementRotation).toBe(0);
+
+        store.rotatePlacementClockwise();
+        expect(usePatternDesignerStore.getState().placementRotation).toBe(90);
+
+        store.rotatePlacementClockwise();
+        expect(usePatternDesignerStore.getState().placementRotation).toBe(180);
+
+        store.rotatePlacementClockwise();
+        expect(usePatternDesignerStore.getState().placementRotation).toBe(270);
+
+        store.rotatePlacementClockwise();
+        expect(usePatternDesignerStore.getState().placementRotation).toBe(0);
+      });
+    });
+
+    describe('resetPlacementRotation', () => {
+      it('resets rotation to 0', () => {
+        const store = usePatternDesignerStore.getState();
+        store.rotatePlacementClockwise(); // 90
+        store.rotatePlacementClockwise(); // 180
+        expect(usePatternDesignerStore.getState().placementRotation).toBe(180);
+
+        store.resetPlacementRotation();
+        expect(usePatternDesignerStore.getState().placementRotation).toBe(0);
+      });
+    });
+
+    describe('selectLibraryBlock resets placementRotation', () => {
+      it('resets rotation when selecting a new block', () => {
+        const store = usePatternDesignerStore.getState();
+        store.selectLibraryBlock('block-1');
+        store.rotatePlacementClockwise(); // 90
+        expect(usePatternDesignerStore.getState().placementRotation).toBe(90);
+
+        store.selectLibraryBlock('block-2');
+        expect(usePatternDesignerStore.getState().placementRotation).toBe(0);
+      });
+
+      it('resets rotation when deselecting block (null)', () => {
+        const store = usePatternDesignerStore.getState();
+        store.selectLibraryBlock('block-1');
+        store.rotatePlacementClockwise(); // 90
+        expect(usePatternDesignerStore.getState().placementRotation).toBe(90);
+
+        store.selectLibraryBlock(null);
+        expect(usePatternDesignerStore.getState().placementRotation).toBe(0);
+      });
+    });
+
+    describe('clearSelections resets placementRotation', () => {
+      it('resets rotation when clearing selections', () => {
+        const store = usePatternDesignerStore.getState();
+        store.selectLibraryBlock('block-1');
+        store.rotatePlacementClockwise(); // 90
+        expect(usePatternDesignerStore.getState().placementRotation).toBe(90);
+
+        store.clearSelections();
+        expect(usePatternDesignerStore.getState().placementRotation).toBe(0);
+      });
+    });
+
+    describe('addBlockInstance uses placementRotation', () => {
+      it('places block with specified rotation', () => {
+        const store = usePatternDesignerStore.getState();
+        store.addBlockInstance('block-1', { row: 0, col: 0 }, 90);
+
+        const instance = usePatternDesignerStore.getState().pattern.blockInstances[0];
+        expect(instance.rotation).toBe(90);
+      });
+
+      it('defaults to rotation 0 if not specified', () => {
+        const store = usePatternDesignerStore.getState();
+        store.addBlockInstance('block-1', { row: 0, col: 0 });
+
+        const instance = usePatternDesignerStore.getState().pattern.blockInstances[0];
+        expect(instance.rotation).toBe(0);
+      });
+    });
+
+    describe('addBlockInstancesBatch uses placementRotation', () => {
+      it('places all blocks with specified rotation', () => {
+        const store = usePatternDesignerStore.getState();
+        store.addBlockInstancesBatch('block-1', [
+          { row: 0, col: 0 },
+          { row: 0, col: 1 },
+          { row: 1, col: 0 },
+        ], 180);
+
+        const instances = usePatternDesignerStore.getState().pattern.blockInstances;
+        expect(instances).toHaveLength(3);
+        expect(instances[0].rotation).toBe(180);
+        expect(instances[1].rotation).toBe(180);
+        expect(instances[2].rotation).toBe(180);
+      });
+
+      it('defaults to rotation 0 if not specified', () => {
+        const store = usePatternDesignerStore.getState();
+        store.addBlockInstancesBatch('block-1', [
+          { row: 0, col: 0 },
+          { row: 0, col: 1 },
+        ]);
+
+        const instances = usePatternDesignerStore.getState().pattern.blockInstances;
+        expect(instances[0].rotation).toBe(0);
+        expect(instances[1].rotation).toBe(0);
+      });
     });
   });
 

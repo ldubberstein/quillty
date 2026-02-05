@@ -31,6 +31,22 @@ import {
 } from './types';
 import { DEFAULT_PALETTE } from '../block-designer/constants';
 import type { Block } from '../block-designer/types';
+import type { PatternOperation, PatternBatchOperation } from './history/operations';
+import {
+  applyOperationToBlockInstances,
+  applyOperationToPalette,
+  applyOperationToGridSize,
+  applyOperationToBorderConfig,
+} from './history/operations';
+import type { UndoManagerState } from './history/undoManager';
+import {
+  createUndoManagerState,
+  recordOperation,
+  undo as undoOp,
+  redo as redoOp,
+  canUndo as checkCanUndo,
+  canRedo as checkCanRedo,
+} from './history/undoManager';
 
 // =============================================================================
 // Utility Functions
@@ -122,6 +138,12 @@ interface PatternDesignerState {
 
   /** Where to add new rows/columns: 'start' (top/left) or 'end' (bottom/right) */
   gridResizePosition: 'start' | 'end';
+
+  /** Undo/redo history manager */
+  undoManager: UndoManagerState;
+
+  /** Rotation to apply when placing blocks (0, 90, 180, 270) */
+  placementRotation: Rotation;
 }
 
 interface PatternDesignerActions {
@@ -138,6 +160,8 @@ interface PatternDesignerActions {
   // Block instance management
   /** Add a block instance at position */
   addBlockInstance: (blockId: UUID, position: GridPosition, rotation?: Rotation) => UUID;
+  /** Add multiple block instances in a batch */
+  addBlockInstancesBatch: (blockId: UUID, positions: GridPosition[], rotation?: Rotation) => UUID[];
   /** Remove a block instance by ID */
   removeBlockInstance: (instanceId: UUID) => void;
   /** Update a block instance (rotation, flip) */
@@ -220,6 +244,22 @@ interface PatternDesignerActions {
   selectBorder: (borderId: UUID | null) => void;
   /** Reorder borders (drag and drop) */
   reorderBorders: (fromIndex: number, toIndex: number) => void;
+
+  // Undo/Redo
+  /** Undo the last operation */
+  undo: () => void;
+  /** Redo the last undone operation */
+  redo: () => void;
+  /** Check if undo is available */
+  canUndo: () => boolean;
+  /** Check if redo is available */
+  canRedo: () => boolean;
+
+  // Placement rotation
+  /** Rotate placement rotation clockwise by 90° (cycles 0 → 90 → 180 → 270 → 0) */
+  rotatePlacementClockwise: () => void;
+  /** Reset placement rotation to 0° */
+  resetPlacementRotation: () => void;
 }
 
 export type PatternDesignerStore = PatternDesignerState & PatternDesignerActions;
@@ -241,6 +281,8 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
     isPreviewingFillEmpty: false,
     previewingGridResize: null,
     gridResizePosition: 'end',
+    undoManager: createUndoManagerState(),
+    placementRotation: 0,
 
     // Pattern management
     initPattern: (gridSize, creatorId = '') => {
@@ -251,6 +293,7 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
         state.selectedBorderId = null;
         state.mode = 'idle';
         state.isDirty = false;
+        state.undoManager = createUndoManagerState();
         // Keep block cache - might reuse blocks
       });
     },
@@ -267,6 +310,7 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
         state.selectedBorderId = null;
         state.mode = 'idle';
         state.isDirty = false;
+        state.undoManager = createUndoManagerState();
       });
     },
 
@@ -294,33 +338,108 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
     // Block instance management
     addBlockInstance: (blockId, position, rotation = 0) => {
       const id = generateUUID();
+      const operations: PatternOperation[] = [];
 
       // Check if position is already occupied
-      if (get().isPositionOccupied(position)) {
-        // Replace existing block at this position
-        const existing = get().getBlockInstanceAt(position);
-        if (existing) {
-          get().removeBlockInstance(existing.id);
-        }
+      const existing = get().getBlockInstanceAt(position);
+      if (existing) {
+        // Store removal operation for undo
+        operations.push({ type: 'remove_block_instance', instance: { ...existing } });
       }
 
+      const newInstance: BlockInstance = {
+        id,
+        blockId,
+        position,
+        rotation,
+        flipHorizontal: false,
+        flipVertical: false,
+      };
+      operations.push({ type: 'add_block_instance', instance: newInstance });
+
       set((state) => {
-        state.pattern.blockInstances.push({
+        // Remove existing if present
+        if (existing) {
+          const index = state.pattern.blockInstances.findIndex((b) => b.id === existing.id);
+          if (index !== -1) {
+            state.pattern.blockInstances.splice(index, 1);
+          }
+        }
+        state.pattern.blockInstances.push(newInstance);
+        state.pattern.updatedAt = getCurrentTimestamp();
+        state.isDirty = true;
+        // Record as batch if replacing, single op otherwise
+        const operation: PatternOperation = operations.length > 1
+          ? { type: 'batch', operations }
+          : operations[0];
+        state.undoManager = recordOperation(state.undoManager, operation);
+      });
+
+      return id;
+    },
+
+    addBlockInstancesBatch: (blockId, positions, rotation = 0) => {
+      if (positions.length === 0) {
+        return [];
+      }
+
+      const ids: UUID[] = [];
+      const operations: PatternOperation[] = [];
+
+      // Build instances and track operations
+      const newInstances: BlockInstance[] = [];
+      for (const position of positions) {
+        const existing = get().pattern.blockInstances.find(
+          (b) => b.position.row === position.row && b.position.col === position.col
+        );
+        if (existing) {
+          operations.push({ type: 'remove_block_instance', instance: { ...existing } });
+        }
+
+        const id = generateUUID();
+        ids.push(id);
+
+        const newInstance: BlockInstance = {
           id,
           blockId,
           position,
           rotation,
           flipHorizontal: false,
           flipVertical: false,
-        });
+        };
+        newInstances.push(newInstance);
+        operations.push({ type: 'add_block_instance', instance: newInstance });
+      }
+
+      set((state) => {
+        for (const newInstance of newInstances) {
+          // Remove existing if present
+          const existing = state.pattern.blockInstances.find(
+            (b) => b.position.row === newInstance.position.row && b.position.col === newInstance.position.col
+          );
+          if (existing) {
+            const index = state.pattern.blockInstances.findIndex((b) => b.id === existing.id);
+            if (index !== -1) {
+              state.pattern.blockInstances.splice(index, 1);
+            }
+          }
+          state.pattern.blockInstances.push(newInstance);
+        }
+
         state.pattern.updatedAt = getCurrentTimestamp();
         state.isDirty = true;
+        // Record as batch operation for single undo
+        const batchOperation: PatternBatchOperation = { type: 'batch', operations };
+        state.undoManager = recordOperation(state.undoManager, batchOperation);
       });
 
-      return id;
+      return ids;
     },
 
     removeBlockInstance: (instanceId) => {
+      const instanceToRemove = get().pattern.blockInstances.find((b) => b.id === instanceId);
+      if (!instanceToRemove) return;
+
       set((state) => {
         const index = state.pattern.blockInstances.findIndex((b) => b.id === instanceId);
         if (index !== -1) {
@@ -330,19 +449,44 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
           if (state.selectedBlockInstanceId === instanceId) {
             state.selectedBlockInstanceId = null;
           }
+          // Record operation for undo (store full instance for restore)
+          const operation: PatternOperation = { type: 'remove_block_instance', instance: instanceToRemove };
+          state.undoManager = recordOperation(state.undoManager, operation);
         }
       });
     },
 
     updateBlockInstance: (instanceId, updates) => {
+      const instance = get().pattern.blockInstances.find((b) => b.id === instanceId);
+      if (!instance) return;
+
+      // Capture previous state for undo
+      const prev: Partial<BlockInstance> = {};
+      const next: Partial<BlockInstance> = {};
+      if (updates.rotation !== undefined) {
+        prev.rotation = instance.rotation;
+        next.rotation = updates.rotation;
+      }
+      if (updates.flipHorizontal !== undefined) {
+        prev.flipHorizontal = instance.flipHorizontal;
+        next.flipHorizontal = updates.flipHorizontal;
+      }
+      if (updates.flipVertical !== undefined) {
+        prev.flipVertical = instance.flipVertical;
+        next.flipVertical = updates.flipVertical;
+      }
+
       set((state) => {
-        const instance = state.pattern.blockInstances.find((b) => b.id === instanceId);
-        if (instance) {
-          if (updates.rotation !== undefined) instance.rotation = updates.rotation;
-          if (updates.flipHorizontal !== undefined) instance.flipHorizontal = updates.flipHorizontal;
-          if (updates.flipVertical !== undefined) instance.flipVertical = updates.flipVertical;
+        const stateInstance = state.pattern.blockInstances.find((b) => b.id === instanceId);
+        if (stateInstance) {
+          if (updates.rotation !== undefined) stateInstance.rotation = updates.rotation;
+          if (updates.flipHorizontal !== undefined) stateInstance.flipHorizontal = updates.flipHorizontal;
+          if (updates.flipVertical !== undefined) stateInstance.flipVertical = updates.flipVertical;
           state.pattern.updatedAt = getCurrentTimestamp();
           state.isDirty = true;
+          // Record operation for undo
+          const operation: PatternOperation = { type: 'update_block_instance', instanceId, prev, next };
+          state.undoManager = recordOperation(state.undoManager, operation);
         }
       });
     },
@@ -384,6 +528,8 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
         } else {
           state.mode = 'idle';
         }
+        // Reset placement rotation when selecting a different block
+        state.placementRotation = 0;
       });
     },
 
@@ -392,6 +538,7 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
         state.selectedBlockInstanceId = null;
         state.selectedLibraryBlockId = null;
         state.mode = 'idle';
+        state.placementRotation = 0;
       });
     },
 
@@ -402,6 +549,7 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
 
       const rotations: Rotation[] = [0, 90, 180, 270];
       const currentIndex = rotations.indexOf(instance.rotation);
+      const prevRotation = instance.rotation;
       const nextRotation = rotations[(currentIndex + 1) % 4];
 
       set((state) => {
@@ -410,40 +558,82 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
           stateInstance.rotation = nextRotation;
           state.pattern.updatedAt = getCurrentTimestamp();
           state.isDirty = true;
+          // Record operation for undo
+          const operation: PatternOperation = {
+            type: 'update_block_instance',
+            instanceId,
+            prev: { rotation: prevRotation },
+            next: { rotation: nextRotation },
+          };
+          state.undoManager = recordOperation(state.undoManager, operation);
         }
       });
     },
 
     flipBlockInstanceHorizontal: (instanceId) => {
+      const instance = get().pattern.blockInstances.find((b) => b.id === instanceId);
+      if (!instance) return;
+
+      const prevFlip = instance.flipHorizontal;
+      const nextFlip = !prevFlip;
+
       set((state) => {
-        const instance = state.pattern.blockInstances.find((b) => b.id === instanceId);
-        if (instance) {
-          instance.flipHorizontal = !instance.flipHorizontal;
+        const stateInstance = state.pattern.blockInstances.find((b) => b.id === instanceId);
+        if (stateInstance) {
+          stateInstance.flipHorizontal = nextFlip;
           state.pattern.updatedAt = getCurrentTimestamp();
           state.isDirty = true;
+          const operation: PatternOperation = {
+            type: 'update_block_instance',
+            instanceId,
+            prev: { flipHorizontal: prevFlip },
+            next: { flipHorizontal: nextFlip },
+          };
+          state.undoManager = recordOperation(state.undoManager, operation);
         }
       });
     },
 
     flipBlockInstanceVertical: (instanceId) => {
+      const instance = get().pattern.blockInstances.find((b) => b.id === instanceId);
+      if (!instance) return;
+
+      const prevFlip = instance.flipVertical;
+      const nextFlip = !prevFlip;
+
       set((state) => {
-        const instance = state.pattern.blockInstances.find((b) => b.id === instanceId);
-        if (instance) {
-          instance.flipVertical = !instance.flipVertical;
+        const stateInstance = state.pattern.blockInstances.find((b) => b.id === instanceId);
+        if (stateInstance) {
+          stateInstance.flipVertical = nextFlip;
           state.pattern.updatedAt = getCurrentTimestamp();
           state.isDirty = true;
+          const operation: PatternOperation = {
+            type: 'update_block_instance',
+            instanceId,
+            prev: { flipVertical: prevFlip },
+            next: { flipVertical: nextFlip },
+          };
+          state.undoManager = recordOperation(state.undoManager, operation);
         }
       });
     },
 
     // Palette
     setRoleColor: (roleId, color) => {
+      const role = get().pattern.palette.roles.find((r) => r.id === roleId);
+      if (!role) return;
+
+      const prevColor = role.color;
+
       set((state) => {
-        const role = state.pattern.palette.roles.find((r) => r.id === roleId);
-        if (role) {
-          role.color = color;
+        const stateRole = state.pattern.palette.roles.find((r) => r.id === roleId);
+        if (stateRole) {
+          stateRole.color = color;
           state.pattern.updatedAt = getCurrentTimestamp();
           state.isDirty = true;
+          // Record operation for undo
+          const operation: PatternOperation = { type: 'update_palette', roleId, prevColor, nextColor: color };
+          state.undoManager = recordOperation(state.undoManager, operation);
         }
       });
     },
@@ -811,6 +1001,99 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
         borders.splice(toIndex, 0, removed);
         state.pattern.updatedAt = getCurrentTimestamp();
         state.isDirty = true;
+        // Record operation for undo
+        const operation: PatternOperation = { type: 'reorder_borders', fromIndex, toIndex };
+        state.undoManager = recordOperation(state.undoManager, operation);
+      });
+    },
+
+    // Undo/Redo
+    undo: () => {
+      const result = undoOp(get().undoManager);
+      if (!result) return;
+
+      const { state: newUndoState, operation } = result;
+
+      set((state) => {
+        // Apply the inverse operation to all relevant state
+        state.pattern.blockInstances = applyOperationToBlockInstances(
+          state.pattern.blockInstances,
+          operation
+        );
+        state.pattern.palette = applyOperationToPalette(state.pattern.palette, operation);
+        state.pattern.gridSize = applyOperationToGridSize(state.pattern.gridSize, operation);
+        state.pattern.borderConfig = applyOperationToBorderConfig(state.pattern.borderConfig, operation);
+        // Recalculate physical size if grid changed
+        state.pattern.physicalSize = calculatePhysicalSize(
+          state.pattern.gridSize,
+          state.pattern.physicalSize.blockSizeInches
+        );
+        state.pattern.updatedAt = getCurrentTimestamp();
+        state.undoManager = newUndoState;
+        // Clear selection if the selected instance was removed
+        if (state.selectedBlockInstanceId && !state.pattern.blockInstances.find((b) => b.id === state.selectedBlockInstanceId)) {
+          state.selectedBlockInstanceId = null;
+        }
+        // Clear border selection if the selected border was removed
+        if (state.selectedBorderId && !state.pattern.borderConfig?.borders.find((b) => b.id === state.selectedBorderId)) {
+          state.selectedBorderId = null;
+        }
+      });
+    },
+
+    redo: () => {
+      const result = redoOp(get().undoManager);
+      if (!result) return;
+
+      const { state: newUndoState, operation } = result;
+
+      set((state) => {
+        // Apply the operation to all relevant state
+        state.pattern.blockInstances = applyOperationToBlockInstances(
+          state.pattern.blockInstances,
+          operation
+        );
+        state.pattern.palette = applyOperationToPalette(state.pattern.palette, operation);
+        state.pattern.gridSize = applyOperationToGridSize(state.pattern.gridSize, operation);
+        state.pattern.borderConfig = applyOperationToBorderConfig(state.pattern.borderConfig, operation);
+        // Recalculate physical size if grid changed
+        state.pattern.physicalSize = calculatePhysicalSize(
+          state.pattern.gridSize,
+          state.pattern.physicalSize.blockSizeInches
+        );
+        state.pattern.updatedAt = getCurrentTimestamp();
+        state.undoManager = newUndoState;
+        // Clear selection if the selected instance was removed
+        if (state.selectedBlockInstanceId && !state.pattern.blockInstances.find((b) => b.id === state.selectedBlockInstanceId)) {
+          state.selectedBlockInstanceId = null;
+        }
+        // Clear border selection if the selected border was removed
+        if (state.selectedBorderId && !state.pattern.borderConfig?.borders.find((b) => b.id === state.selectedBorderId)) {
+          state.selectedBorderId = null;
+        }
+      });
+    },
+
+    canUndo: () => {
+      return checkCanUndo(get().undoManager);
+    },
+
+    canRedo: () => {
+      return checkCanRedo(get().undoManager);
+    },
+
+    // Placement rotation
+    rotatePlacementClockwise: () => {
+      set((state) => {
+        const rotations: Rotation[] = [0, 90, 180, 270];
+        const currentIndex = rotations.indexOf(state.placementRotation);
+        state.placementRotation = rotations[(currentIndex + 1) % 4];
+      });
+    },
+
+    resetPlacementRotation: () => {
+      set((state) => {
+        state.placementRotation = 0;
       });
     },
   }))
@@ -996,3 +1279,20 @@ export const useCanAddBorder = () => {
     return !borders || borders.length < MAX_BORDERS;
   });
 };
+
+// =============================================================================
+// Undo/Redo Selector Hooks
+// =============================================================================
+
+/** Check if undo is available */
+export const useCanUndo = () => usePatternDesignerStore((state) => checkCanUndo(state.undoManager));
+
+/** Check if redo is available */
+export const useCanRedo = () => usePatternDesignerStore((state) => checkCanRedo(state.undoManager));
+
+// =============================================================================
+// Placement Rotation Selector Hooks
+// =============================================================================
+
+/** Get the current placement rotation */
+export const usePlacementRotation = () => usePatternDesignerStore((state) => state.placementRotation);
