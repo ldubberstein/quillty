@@ -360,8 +360,13 @@ export function PatternCanvas() {
     (row: number, col: number) => {
       const pos: GridPosition = { row, col };
 
+      // If we're in placing mode and have a selected library block
+      if (isPlacingBlock && selectedLibraryBlockId) {
+        addBlockInstance(selectedLibraryBlockId, pos, placementRotation);
+        return;
+      }
+
       // If clicking an occupied slot, select the block instance there
-      // This takes priority over placement mode to allow easy selection of placed blocks
       if (isPositionOccupied(pos)) {
         const instanceAtPos = blockInstances.find(
           (b) => b.position.row === row && b.position.col === col
@@ -369,12 +374,6 @@ export function PatternCanvas() {
         if (instanceAtPos) {
           selectBlockInstance(instanceAtPos.id);
         }
-        return;
-      }
-
-      // If we're in placing mode and have a selected library block, place on empty slot
-      if (isPlacingBlock && selectedLibraryBlockId) {
-        addBlockInstance(selectedLibraryBlockId, pos, placementRotation);
         return;
       }
     },

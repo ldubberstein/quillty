@@ -16,16 +16,14 @@ export function useClickOutsideDismiss(
       }
     }
 
-    // Use requestAnimationFrame + small delay to ensure the component is fully
-    // rendered and the initial click cycle has completed before listening.
-    // Using 'click' instead of 'mousedown' avoids timing issues with Konva canvas.
-    const frameId = requestAnimationFrame(() => {
-      document.addEventListener('click', handleClickOutside);
-    });
+    // Delay prevents immediate dismissal from the same click that opened the popup
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 0);
 
     return () => {
-      cancelAnimationFrame(frameId);
-      document.removeEventListener('click', handleClickOutside);
+      clearTimeout(timeoutId);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [ref, onDismiss]);
 }
