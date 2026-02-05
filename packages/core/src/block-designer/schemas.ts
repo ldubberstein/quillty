@@ -21,8 +21,16 @@ export const HexColorSchema = z.string().regex(/^#[0-9A-Fa-f]{6}$/, {
   message: 'Must be a valid hex color (e.g., #FF5733)',
 });
 
-/** Grid size schema - MVP allows 2, 3, or 4 */
-export const GridSizeSchema = z.union([z.literal(2), z.literal(3), z.literal(4)]);
+/** Grid size schema - allows 2 through 8 */
+export const GridSizeSchema = z.union([
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+  z.literal(5),
+  z.literal(6),
+  z.literal(7),
+  z.literal(8),
+]);
 
 /** Rotation schema - 90° increments */
 export const RotationSchema = z.union([

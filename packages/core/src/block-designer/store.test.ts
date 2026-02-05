@@ -1734,4 +1734,224 @@ describe('BlockDesignerStore', () => {
       });
     });
   });
+
+  // ===========================================================================
+  // Grid Size Management
+  // ===========================================================================
+
+  describe('setGridSize', () => {
+    it('changes grid size', () => {
+      const store = useBlockDesignerStore.getState();
+      expect(store.block.gridSize).toBe(DEFAULT_GRID_SIZE);
+
+      store.setGridSize(5);
+
+      expect(useBlockDesignerStore.getState().block.gridSize).toBe(5);
+    });
+
+    it('returns null when no shapes are removed', () => {
+      const store = useBlockDesignerStore.getState();
+      store.addSquare({ row: 0, col: 0 });
+
+      const result = store.setGridSize(5);
+
+      expect(result).toBeNull();
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+    });
+
+    it('returns null when size is unchanged', () => {
+      const store = useBlockDesignerStore.getState();
+
+      const result = store.setGridSize(DEFAULT_GRID_SIZE);
+
+      expect(result).toBeNull();
+    });
+
+    it('removes shapes outside new grid bounds when shrinking', () => {
+      const store = useBlockDesignerStore.getState();
+      store.initBlock(5);
+      store.addSquare({ row: 0, col: 0 }); // In bounds for 3x3
+      store.addSquare({ row: 4, col: 4 }); // Out of bounds for 3x3
+
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(2);
+
+      const result = store.setGridSize(3);
+
+      expect(result).not.toBeNull();
+      expect(result).toHaveLength(1);
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+      expect(useBlockDesignerStore.getState().block.shapes[0].position).toEqual({ row: 0, col: 0 });
+    });
+
+    it('clears selection if selected shape is removed', () => {
+      const store = useBlockDesignerStore.getState();
+      store.initBlock(5);
+      const id = store.addSquare({ row: 4, col: 4 });
+      store.selectShape(id);
+
+      expect(useBlockDesignerStore.getState().selectedShapeId).toBe(id);
+
+      store.setGridSize(3);
+
+      expect(useBlockDesignerStore.getState().selectedShapeId).toBeNull();
+    });
+
+    it('keeps selection if selected shape is not removed', () => {
+      const store = useBlockDesignerStore.getState();
+      store.initBlock(5);
+      const id = store.addSquare({ row: 0, col: 0 });
+      store.addSquare({ row: 4, col: 4 });
+      store.selectShape(id);
+
+      store.setGridSize(3);
+
+      expect(useBlockDesignerStore.getState().selectedShapeId).toBe(id);
+    });
+
+    it('removes Flying Geese that span outside new bounds', () => {
+      const store = useBlockDesignerStore.getState();
+      store.initBlock(5);
+      store.addFlyingGeese({ row: 3, col: 3 }, 'right'); // spans cols 3-4, out of bounds for 3x3
+
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+
+      const result = store.setGridSize(3);
+
+      expect(result).toHaveLength(1);
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+    });
+
+    it('updates updatedAt timestamp', () => {
+      const store = useBlockDesignerStore.getState();
+      const originalTime = store.block.updatedAt;
+
+      // Small delay to ensure time difference
+      const start = Date.now();
+      while (Date.now() - start < 5) {
+        // spin wait
+      }
+
+      store.setGridSize(5);
+
+      expect(useBlockDesignerStore.getState().block.updatedAt).not.toBe(originalTime);
+    });
+  });
+
+  describe('getShapesOutOfBounds', () => {
+    it('returns empty array when no shapes are out of bounds', () => {
+      const store = useBlockDesignerStore.getState();
+      store.addSquare({ row: 0, col: 0 });
+      store.addSquare({ row: 1, col: 1 });
+
+      const result = store.getShapesOutOfBounds(3);
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('returns shapes outside given grid size', () => {
+      const store = useBlockDesignerStore.getState();
+      store.initBlock(5);
+      store.addSquare({ row: 0, col: 0 }); // In bounds
+      store.addSquare({ row: 3, col: 3 }); // Out of bounds for 3x3
+      store.addSquare({ row: 4, col: 4 }); // Out of bounds for 3x3
+
+      const result = store.getShapesOutOfBounds(3);
+
+      expect(result).toHaveLength(2);
+    });
+
+    it('considers shape span when checking bounds', () => {
+      const store = useBlockDesignerStore.getState();
+      store.initBlock(5);
+      store.addFlyingGeese({ row: 2, col: 2 }, 'right'); // spans cols 2-3
+
+      // For size 3, position (2,2) is in bounds but (2,3) is out
+      const result = store.getShapesOutOfBounds(3);
+
+      expect(result).toHaveLength(1);
+    });
+
+    it('returns empty array when grid size is larger', () => {
+      const store = useBlockDesignerStore.getState();
+      store.addSquare({ row: 2, col: 2 });
+
+      const result = store.getShapesOutOfBounds(8);
+
+      expect(result).toHaveLength(0);
+    });
+  });
+
+  describe('undo/redo for setGridSize', () => {
+    it('undoes grid size change', () => {
+      const store = useBlockDesignerStore.getState();
+      expect(store.block.gridSize).toBe(DEFAULT_GRID_SIZE);
+
+      store.setGridSize(5);
+      expect(useBlockDesignerStore.getState().block.gridSize).toBe(5);
+
+      store.undo();
+      expect(useBlockDesignerStore.getState().block.gridSize).toBe(DEFAULT_GRID_SIZE);
+    });
+
+    it('redoes grid size change', () => {
+      const store = useBlockDesignerStore.getState();
+      store.setGridSize(6);
+      store.undo();
+
+      expect(useBlockDesignerStore.getState().block.gridSize).toBe(DEFAULT_GRID_SIZE);
+
+      store.redo();
+      expect(useBlockDesignerStore.getState().block.gridSize).toBe(6);
+    });
+
+    it('restores removed shapes on undo', () => {
+      const store = useBlockDesignerStore.getState();
+      store.initBlock(5);
+      store.addSquare({ row: 0, col: 0 });
+      store.addSquare({ row: 4, col: 4 });
+
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(2);
+
+      store.setGridSize(3);
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+
+      store.undo();
+      expect(useBlockDesignerStore.getState().block.gridSize).toBe(5);
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(2);
+    });
+
+    it('removes shapes again on redo after undo', () => {
+      const store = useBlockDesignerStore.getState();
+      store.initBlock(5);
+      store.addSquare({ row: 0, col: 0 });
+      store.addSquare({ row: 4, col: 4 });
+
+      store.setGridSize(3);
+      store.undo();
+
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(2);
+
+      store.redo();
+      expect(useBlockDesignerStore.getState().block.gridSize).toBe(3);
+      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+    });
+
+    it('supports multiple grid size changes with undo', () => {
+      const store = useBlockDesignerStore.getState();
+      store.setGridSize(4);
+      store.setGridSize(6);
+      store.setGridSize(8);
+
+      expect(useBlockDesignerStore.getState().block.gridSize).toBe(8);
+
+      store.undo();
+      expect(useBlockDesignerStore.getState().block.gridSize).toBe(6);
+
+      store.undo();
+      expect(useBlockDesignerStore.getState().block.gridSize).toBe(4);
+
+      store.undo();
+      expect(useBlockDesignerStore.getState().block.gridSize).toBe(DEFAULT_GRID_SIZE);
+    });
+  });
 });

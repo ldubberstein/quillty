@@ -28,8 +28,14 @@ export const DEFAULT_PALETTE: Palette = {
 // Grid Constants
 // =============================================================================
 
-/** Available grid sizes for MVP */
-export const GRID_SIZES: GridSize[] = [2, 3, 4];
+/** Available grid sizes for block design */
+export const GRID_SIZES: GridSize[] = [2, 3, 4, 5, 6, 7, 8];
+
+/** Minimum block grid size */
+export const MIN_BLOCK_GRID_SIZE: GridSize = 2;
+
+/** Maximum block grid size */
+export const MAX_BLOCK_GRID_SIZE: GridSize = 8;
 
 /** Default grid size for new blocks */
 export const DEFAULT_GRID_SIZE: GridSize = 3;

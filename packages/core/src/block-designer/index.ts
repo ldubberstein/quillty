@@ -92,6 +92,8 @@ export {
 export {
   DEFAULT_PALETTE,
   GRID_SIZES,
+  MIN_BLOCK_GRID_SIZE,
+  MAX_BLOCK_GRID_SIZE,
   DEFAULT_GRID_SIZE,
   HST_VARIANTS,
   FLYING_GEESE_DIRECTIONS,
@@ -121,6 +123,7 @@ export {
   useSelectedShapeType,
   useHoveredCell,
   useIsPlacingShape,
+  useBlockGridSize,
   type BlockDesignerStore,
 } from './store';
 

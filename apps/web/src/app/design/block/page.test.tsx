@@ -75,6 +75,8 @@ vi.mock('@quillty/core', () => ({
       selectShapeForPlacement: vi.fn(),
       setHoveredCell: vi.fn(),
       clearShapeSelection: vi.fn(),
+      setGridSize: vi.fn(),
+      getShapesOutOfBounds: vi.fn(() => []),
     };
     return selector ? selector(state) : state;
   }),
@@ -85,7 +87,9 @@ vi.mock('@quillty/core', () => ({
   useSelectedShapeType: vi.fn(() => null),
   useHoveredCell: vi.fn(() => null),
   useIsPlacingShape: vi.fn(() => false),
+  useBlockGridSize: vi.fn(() => 3),
   DEFAULT_GRID_SIZE: 3,
+  GRID_SIZES: [2, 3, 4, 5, 6, 7, 8],
   serializeBlockForDb: vi.fn(() => ({
     name: 'Test Block',
     gridSize: 3,

@@ -26,10 +26,12 @@ import type {
   UUID,
 } from './types';
 import { DEFAULT_PALETTE, DEFAULT_GRID_SIZE } from './constants';
-import type { Operation, BatchOperation } from './history/operations';
+import type { Operation, BatchOperation, ResizeGridOperation } from './history/operations';
 import {
   applyOperationToShapes,
   applyOperationToPalette,
+  applyOperationToGridSize,
+  getShapesOutOfBounds,
 } from './history/operations';
 import type { UndoManagerState } from './history/undoManager';
 import {
@@ -120,6 +122,10 @@ interface BlockDesignerActions {
   loadBlock: (block: Block) => void;
   /** Update block metadata (title, description, hashtags) */
   updateBlockMetadata: (updates: Partial<Pick<Block, 'title' | 'description' | 'hashtags'>>) => void;
+  /** Set the grid size (returns shapes that would be removed, or null if none) */
+  setGridSize: (size: GridSize) => Shape[] | null;
+  /** Get shapes that would be out of bounds for a new grid size */
+  getShapesOutOfBounds: (size: GridSize) => Shape[];
 
   // Shape management
   /** Add a square shape at position */
@@ -270,6 +276,45 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
         if (updates.hashtags !== undefined) state.block.hashtags = updates.hashtags;
         state.block.updatedAt = getCurrentTimestamp();
       });
+    },
+
+    setGridSize: (size) => {
+      const currentSize = get().block.gridSize;
+      if (size === currentSize) return null;
+
+      const shapesToRemove = getShapesOutOfBounds(get().block.shapes, size);
+
+      set((state) => {
+        // Remove out-of-bounds shapes
+        if (shapesToRemove.length > 0) {
+          state.block.shapes = state.block.shapes.filter(
+            (s) => !shapesToRemove.some((r) => r.id === s.id)
+          );
+          // Clear selection if selected shape was removed
+          if (state.selectedShapeId && shapesToRemove.some((s) => s.id === state.selectedShapeId)) {
+            state.selectedShapeId = null;
+          }
+        }
+
+        // Update grid size
+        state.block.gridSize = size;
+        state.block.updatedAt = getCurrentTimestamp();
+
+        // Record operation for undo
+        const operation: ResizeGridOperation = {
+          type: 'resize_grid',
+          prevSize: currentSize,
+          nextSize: size,
+          removedShapes: shapesToRemove,
+        };
+        state.undoManager = recordOperation(state.undoManager, operation);
+      });
+
+      return shapesToRemove.length > 0 ? shapesToRemove : null;
+    },
+
+    getShapesOutOfBounds: (size) => {
+      return getShapesOutOfBounds(get().block.shapes, size);
     },
 
     // Shape management
@@ -880,6 +925,11 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
         // Apply the inverse operation
         state.block.shapes = applyOperationToShapes(state.block.shapes, operation);
         state.block.previewPalette = applyOperationToPalette(state.block.previewPalette, operation);
+        // Apply grid size change if applicable
+        const newGridSize = applyOperationToGridSize(state.block.gridSize, operation);
+        if (newGridSize !== null) {
+          state.block.gridSize = newGridSize;
+        }
         state.block.updatedAt = getCurrentTimestamp();
         state.undoManager = newUndoState;
         // Clear selection if the selected shape was removed
@@ -899,6 +949,11 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
         // Apply the operation
         state.block.shapes = applyOperationToShapes(state.block.shapes, operation);
         state.block.previewPalette = applyOperationToPalette(state.block.previewPalette, operation);
+        // Apply grid size change if applicable
+        const newGridSize = applyOperationToGridSize(state.block.gridSize, operation);
+        if (newGridSize !== null) {
+          state.block.gridSize = newGridSize;
+        }
         state.block.updatedAt = getCurrentTimestamp();
         state.undoManager = newUndoState;
         // Clear selection if the selected shape was removed
@@ -1033,3 +1088,6 @@ export const useHoveredCell = () => useBlockDesignerStore((state) => state.hover
 /** Check if in placing shape mode */
 export const useIsPlacingShape = () =>
   useBlockDesignerStore((state) => state.mode === 'placing_shape');
+
+/** Get the current block grid size */
+export const useBlockGridSize = () => useBlockDesignerStore((state) => state.block.gridSize);

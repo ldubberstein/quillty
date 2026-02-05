@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { PanelLeft, PanelRight } from 'lucide-react';
 import { useBlockDesignerStore, DEFAULT_GRID_SIZE } from '@quillty/core';
 import { UndoRedoControls } from '@/components/block-designer/UndoRedoControls';
+import { GridSizeSelector } from '@/components/block-designer/GridSizeSelector';
 import { PreviewControls } from '@/components/block-designer/PreviewControls';
 import { SaveControls } from '@/components/block-designer/SaveControls';
 import { ShapeLibraryPanel } from '@/components/block-designer/ShapeLibraryPanel';
@@ -105,10 +106,8 @@ export default function BlockDesignerPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Grid size indicator */}
-          <span className="text-sm text-gray-500">
-            {block.gridSize}×{block.gridSize} grid
-          </span>
+          {/* Grid size selector */}
+          <GridSizeSelector />
 
           {/* Preview mode controls */}
           <PreviewControls />
