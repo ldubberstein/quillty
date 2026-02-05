@@ -262,7 +262,6 @@ export function FabricPanel() {
                   <ColorSwatch
                     color={role.color}
                     size="sm"
-                    selected={isActive}
                     onClick={(e) => e.stopPropagation()}
                     onChange={(color) => handleColorChange(role.id, color)}
                     aria-label={`Change ${role.name} color`}

@@ -83,7 +83,6 @@ export function InstanceColorPanel() {
 
   const blockCache = usePatternDesignerStore((s) => s.blockCache);
   const setInstanceRoleColor = usePatternDesignerStore((s) => s.setInstanceRoleColor);
-  const previewInstanceRoleColor = usePatternDesignerStore((s) => s.previewInstanceRoleColor);
   const resetInstanceRoleColor = usePatternDesignerStore((s) => s.resetInstanceRoleColor);
   const resetInstancePalette = usePatternDesignerStore((s) => s.resetInstancePalette);
 
@@ -123,22 +122,11 @@ export function InstanceColorPanel() {
     [overrides, palette.roles]
   );
 
-  // Handle live color preview (while dragging in color picker)
-  const handleColorPreview = useCallback(
+  // Handle color change
+  const handleColorChange = useCallback(
     (roleId: FabricRoleId, color: string) => {
       if (instance) {
-        previewInstanceRoleColor(instance.id, roleId, color);
-      }
-    },
-    [instance, previewInstanceRoleColor]
-  );
-
-  // Handle color change complete (when picker closes) - records to undo history
-  const handleColorChangeComplete = useCallback(
-    (roleId: FabricRoleId, color: string, startColor: string) => {
-      if (instance) {
-        // Use the start color from when picker opened for proper undo
-        setInstanceRoleColor(instance.id, roleId, color, startColor);
+        setInstanceRoleColor(instance.id, roleId, color);
       }
     },
     [instance, setInstanceRoleColor]
@@ -224,8 +212,7 @@ export function InstanceColorPanel() {
               <ColorSwatch
                 color={effectiveColor}
                 size="sm"
-                onChange={(color) => handleColorPreview(role.id, color)}
-                onChangeComplete={(color, startColor) => handleColorChangeComplete(role.id, color, startColor)}
+                onChange={(color) => handleColorChange(role.id, color)}
                 aria-label={`Change ${role.name} color for this block`}
                 className="w-6 h-6"
               />

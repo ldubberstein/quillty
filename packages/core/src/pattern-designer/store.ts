@@ -202,7 +202,7 @@ interface PatternDesignerActions {
   flipBlockInstanceVertical: (instanceId: UUID) => void;
 
   // Palette
-  /** Change a palette role's color */
+  /** Change a palette role's color (records undo) */
   setRoleColor: (roleId: FabricRoleId, color: string) => void;
   /** Add a new fabric role to the palette */
   addRole: (name?: string, color?: string) => string;
@@ -214,7 +214,7 @@ interface PatternDesignerActions {
   canRemoveRole: () => boolean;
 
   // Instance palette overrides
-  /** Set a color override for a specific fabric role on a block instance */
+  /** Set a color override for a specific fabric role on a block instance (records undo) */
   setInstanceRoleColor: (instanceId: UUID, roleId: FabricRoleId, color: string) => void;
   /** Reset a single fabric role override to use pattern palette */
   resetInstanceRoleColor: (instanceId: UUID, roleId: FabricRoleId) => void;

@@ -176,9 +176,7 @@ interface BlockDesignerActions {
 
   // Palette
   /** Change a palette role's color (records undo) */
-  setRoleColor: (roleId: FabricRoleId, color: string, startColor?: string) => void;
-  /** Preview a palette role's color without recording to undo history (for live color picker updates) */
-  previewRoleColor: (roleId: FabricRoleId, color: string) => void;
+  setRoleColor: (roleId: FabricRoleId, color: string) => void;
   /** Add a new fabric role to the palette */
   addRole: (name?: string, color?: string) => string;
   /** Remove a fabric role from the palette (reassigns shapes to fallback role) */
@@ -639,12 +637,11 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
     },
 
     // Palette
-    setRoleColor: (roleId, color, startColor) => {
+    setRoleColor: (roleId, color) => {
       const role = get().block.previewPalette.roles.find((r) => r.id === roleId);
       if (!role) return;
 
-      // Use provided startColor for undo, or capture current if not provided
-      const prevColor = startColor ?? role.color;
+      const prevColor = role.color;
 
       set((state) => {
         const stateRole = state.block.previewPalette.roles.find((r) => r.id === roleId);
@@ -654,16 +651,6 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
           // Record operation for undo
           const operation: Operation = { type: 'update_palette', roleId, prevColor, nextColor: color };
           state.undoManager = recordOperation(state.undoManager, operation);
-        }
-      });
-    },
-
-    previewRoleColor: (roleId, color) => {
-      set((state) => {
-        const stateRole = state.block.previewPalette.roles.find((r) => r.id === roleId);
-        if (stateRole) {
-          stateRole.color = color;
-          // Don't update timestamps or record undo - this is just a preview
         }
       });
     },
