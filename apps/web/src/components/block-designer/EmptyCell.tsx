@@ -2,6 +2,7 @@
 
 import { Rect, Group, Line } from 'react-konva';
 import { useCallback } from 'react';
+import type Konva from 'konva';
 
 interface EmptyCellProps {
   /** Row position in grid */
@@ -20,8 +21,8 @@ interface EmptyCellProps {
   isHovered?: boolean;
   /** Whether this cell is a valid target for Flying Geese second tap */
   isValidFlyingGeeseTarget?: boolean;
-  /** Called when cell is clicked/tapped */
-  onClick?: (row: number, col: number) => void;
+  /** Called when cell is clicked/tapped (shiftKey indicates if shift was held) */
+  onClick?: (row: number, col: number, shiftKey: boolean) => void;
   /** Called when mouse enters cell */
   onMouseEnter?: (row: number, col: number) => void;
   /** Called when mouse leaves cell */
@@ -53,9 +54,13 @@ export function EmptyCell({
   const x = offsetX + col * cellSize;
   const y = offsetY + row * cellSize;
 
-  const handleClick = useCallback(() => {
-    onClick?.(row, col);
-  }, [onClick, row, col]);
+  const handleClick = useCallback(
+    (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+      const shiftKey = 'shiftKey' in e.evt ? e.evt.shiftKey : false;
+      onClick?.(row, col, shiftKey);
+    },
+    [onClick, row, col]
+  );
 
   const handleMouseEnter = useCallback(() => {
     onMouseEnter?.(row, col);

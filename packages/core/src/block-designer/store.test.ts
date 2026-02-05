@@ -36,6 +36,7 @@ function resetStore() {
     previewRotationPreset: 'all_same',
     selectedShapeType: null,
     hoveredCell: null,
+    rangeFillAnchor: null,
   });
 }
 
@@ -704,6 +705,363 @@ describe('BlockDesignerStore', () => {
       for (let i = 0; i < before.length; i++) {
         expect(after[i].color).toBe(before[i].color);
       }
+    });
+  });
+
+  describe('addRole', () => {
+    it('adds a new role with auto-generated ID', () => {
+      const store = useBlockDesignerStore.getState();
+      const initialCount = store.block.previewPalette.roles.length;
+
+      const newId = store.addRole();
+
+      const state = useBlockDesignerStore.getState();
+      expect(state.block.previewPalette.roles.length).toBe(initialCount + 1);
+      expect(newId).toBeTruthy();
+      expect(state.block.previewPalette.roles.find((r) => r.id === newId)).toBeDefined();
+    });
+
+    it('uses provided name when specified', () => {
+      const store = useBlockDesignerStore.getState();
+
+      const newId = store.addRole('My Custom Color');
+
+      const state = useBlockDesignerStore.getState();
+      const newRole = state.block.previewPalette.roles.find((r) => r.id === newId);
+      expect(newRole?.name).toBe('My Custom Color');
+    });
+
+    it('uses provided color when specified', () => {
+      const store = useBlockDesignerStore.getState();
+
+      const newId = store.addRole('Custom', '#ABCDEF');
+
+      const state = useBlockDesignerStore.getState();
+      const newRole = state.block.previewPalette.roles.find((r) => r.id === newId);
+      expect(newRole?.color).toBe('#ABCDEF');
+    });
+
+    it('generates unique ID even with collisions', () => {
+      const store = useBlockDesignerStore.getState();
+
+      // Add multiple roles to cause potential ID collisions
+      const id1 = store.addRole('Test 1');
+      const id2 = store.addRole('Test 2');
+      const id3 = store.addRole('Test 3');
+
+      expect(id1).not.toBe(id2);
+      expect(id2).not.toBe(id3);
+      expect(id1).not.toBe(id3);
+    });
+
+    it('returns empty string when at maximum roles', () => {
+      const store = useBlockDesignerStore.getState();
+
+      // Add roles until we reach max (12)
+      // Start with 4, need 8 more
+      for (let i = 0; i < 8; i++) {
+        store.addRole(`Extra ${i}`);
+      }
+
+      const state = useBlockDesignerStore.getState();
+      expect(state.block.previewPalette.roles.length).toBe(12);
+
+      // Try to add one more
+      const result = store.addRole('Over limit');
+      expect(result).toBe('');
+      expect(useBlockDesignerStore.getState().block.previewPalette.roles.length).toBe(12);
+    });
+
+    it('records operation for undo', () => {
+      const store = useBlockDesignerStore.getState();
+      const undoCountBefore = store.undoManager.undoStack.length;
+
+      store.addRole();
+
+      const undoCountAfter = useBlockDesignerStore.getState().undoManager.undoStack.length;
+      expect(undoCountAfter).toBe(undoCountBefore + 1);
+    });
+
+    it('can be undone', () => {
+      const store = useBlockDesignerStore.getState();
+      const initialCount = store.block.previewPalette.roles.length;
+
+      store.addRole('To be undone');
+
+      expect(useBlockDesignerStore.getState().block.previewPalette.roles.length).toBe(
+        initialCount + 1
+      );
+
+      store.undo();
+
+      expect(useBlockDesignerStore.getState().block.previewPalette.roles.length).toBe(initialCount);
+    });
+
+    it('can be redone after undo', () => {
+      const store = useBlockDesignerStore.getState();
+      const initialCount = store.block.previewPalette.roles.length;
+
+      const newId = store.addRole('Redo test');
+      store.undo();
+
+      expect(useBlockDesignerStore.getState().block.previewPalette.roles.length).toBe(initialCount);
+
+      store.redo();
+
+      const state = useBlockDesignerStore.getState();
+      expect(state.block.previewPalette.roles.length).toBe(initialCount + 1);
+      expect(state.block.previewPalette.roles.find((r) => r.id === newId)).toBeDefined();
+    });
+  });
+
+  describe('removeRole', () => {
+    it('removes a role from the palette', () => {
+      const store = useBlockDesignerStore.getState();
+      const initialCount = store.block.previewPalette.roles.length;
+
+      store.removeRole('accent2');
+
+      const state = useBlockDesignerStore.getState();
+      expect(state.block.previewPalette.roles.length).toBe(initialCount - 1);
+      expect(state.block.previewPalette.roles.find((r) => r.id === 'accent2')).toBeUndefined();
+    });
+
+    it('does nothing when trying to remove last role', () => {
+      const store = useBlockDesignerStore.getState();
+
+      // Remove all but one role
+      store.removeRole('accent2');
+      store.removeRole('accent1');
+      store.removeRole('feature');
+
+      expect(useBlockDesignerStore.getState().block.previewPalette.roles.length).toBe(1);
+
+      // Try to remove the last one
+      store.removeRole('background');
+
+      expect(useBlockDesignerStore.getState().block.previewPalette.roles.length).toBe(1);
+    });
+
+    it('does nothing when role not found', () => {
+      const store = useBlockDesignerStore.getState();
+      const initialCount = store.block.previewPalette.roles.length;
+
+      store.removeRole('non-existent-role');
+
+      expect(useBlockDesignerStore.getState().block.previewPalette.roles.length).toBe(initialCount);
+    });
+
+    it('reassigns shapes using the removed role to fallback', () => {
+      const store = useBlockDesignerStore.getState();
+
+      // Add a square with accent2
+      const shapeId = store.addSquare({ row: 0, col: 0 });
+      store.assignFabricRole(shapeId, 'accent2');
+
+      expect((useBlockDesignerStore.getState().block.shapes[0] as SquareShape).fabricRole).toBe('accent2');
+
+      // Remove accent2, shapes should be reassigned to background (first role)
+      store.removeRole('accent2');
+
+      expect((useBlockDesignerStore.getState().block.shapes[0] as SquareShape).fabricRole).toBe('background');
+    });
+
+    it('uses specified fallback role for reassignment', () => {
+      const store = useBlockDesignerStore.getState();
+
+      // Add a square with accent2
+      const shapeId = store.addSquare({ row: 0, col: 0 });
+      store.assignFabricRole(shapeId, 'accent2');
+
+      // Remove accent2, specify feature as fallback
+      store.removeRole('accent2', 'feature');
+
+      expect((useBlockDesignerStore.getState().block.shapes[0] as SquareShape).fabricRole).toBe('feature');
+    });
+
+    it('clears active fabric role if it was the removed one', () => {
+      const store = useBlockDesignerStore.getState();
+      store.setActiveFabricRole('accent2');
+
+      expect(useBlockDesignerStore.getState().activeFabricRole).toBe('accent2');
+
+      store.removeRole('accent2');
+
+      expect(useBlockDesignerStore.getState().activeFabricRole).toBeNull();
+    });
+
+    it('exits paint mode when removing active role', () => {
+      const store = useBlockDesignerStore.getState();
+      store.setActiveFabricRole('accent2');
+
+      expect(useBlockDesignerStore.getState().mode).toBe('paint_mode');
+
+      store.removeRole('accent2');
+
+      expect(useBlockDesignerStore.getState().mode).toBe('idle');
+    });
+
+    it('can be undone', () => {
+      const store = useBlockDesignerStore.getState();
+
+      // Add a square with accent2
+      const shapeId = store.addSquare({ row: 0, col: 0 });
+      store.assignFabricRole(shapeId, 'accent2');
+
+      const initialCount = useBlockDesignerStore.getState().block.previewPalette.roles.length;
+      store.removeRole('accent2');
+
+      expect(useBlockDesignerStore.getState().block.previewPalette.roles.length).toBe(
+        initialCount - 1
+      );
+
+      store.undo();
+
+      const state = useBlockDesignerStore.getState();
+      expect(state.block.previewPalette.roles.length).toBe(initialCount);
+      expect(state.block.previewPalette.roles.find((r) => r.id === 'accent2')).toBeDefined();
+      // Shape should be restored to accent2
+      expect((state.block.shapes[0] as SquareShape).fabricRole).toBe('accent2');
+    });
+
+    it('can be redone after undo', () => {
+      const store = useBlockDesignerStore.getState();
+
+      const initialCount = store.block.previewPalette.roles.length;
+      store.removeRole('accent2');
+      store.undo();
+
+      expect(useBlockDesignerStore.getState().block.previewPalette.roles.length).toBe(initialCount);
+
+      store.redo();
+
+      const state = useBlockDesignerStore.getState();
+      expect(state.block.previewPalette.roles.length).toBe(initialCount - 1);
+      expect(state.block.previewPalette.roles.find((r) => r.id === 'accent2')).toBeUndefined();
+    });
+  });
+
+  describe('renameRole', () => {
+    it('renames a role', () => {
+      const store = useBlockDesignerStore.getState();
+
+      store.renameRole('background', 'Main Fabric');
+
+      const state = useBlockDesignerStore.getState();
+      const bgRole = state.block.previewPalette.roles.find((r) => r.id === 'background');
+      expect(bgRole?.name).toBe('Main Fabric');
+    });
+
+    it('does nothing if role not found', () => {
+      const store = useBlockDesignerStore.getState();
+      const before = store.block.previewPalette.roles.map((r) => ({ ...r }));
+
+      store.renameRole('non-existent', 'New Name');
+
+      const after = useBlockDesignerStore.getState().block.previewPalette.roles;
+      for (let i = 0; i < before.length; i++) {
+        expect(after[i].name).toBe(before[i].name);
+      }
+    });
+
+    it('records operation for undo', () => {
+      const store = useBlockDesignerStore.getState();
+      const undoCountBefore = store.undoManager.undoStack.length;
+
+      store.renameRole('background', 'New Name');
+
+      const undoCountAfter = useBlockDesignerStore.getState().undoManager.undoStack.length;
+      expect(undoCountAfter).toBe(undoCountBefore + 1);
+    });
+
+    it('can be undone', () => {
+      const store = useBlockDesignerStore.getState();
+      const originalName =
+        store.block.previewPalette.roles.find((r) => r.id === 'background')?.name;
+
+      store.renameRole('background', 'Renamed');
+
+      expect(
+        useBlockDesignerStore.getState().block.previewPalette.roles.find((r) => r.id === 'background')
+          ?.name
+      ).toBe('Renamed');
+
+      store.undo();
+
+      expect(
+        useBlockDesignerStore.getState().block.previewPalette.roles.find((r) => r.id === 'background')
+          ?.name
+      ).toBe(originalName);
+    });
+
+    it('can be redone after undo', () => {
+      const store = useBlockDesignerStore.getState();
+
+      store.renameRole('background', 'Renamed');
+      store.undo();
+      store.redo();
+
+      expect(
+        useBlockDesignerStore.getState().block.previewPalette.roles.find((r) => r.id === 'background')
+          ?.name
+      ).toBe('Renamed');
+    });
+  });
+
+  describe('canRemoveRole', () => {
+    it('returns true when more than one role exists', () => {
+      const store = useBlockDesignerStore.getState();
+
+      expect(store.canRemoveRole()).toBe(true);
+    });
+
+    it('returns false when only one role exists', () => {
+      const store = useBlockDesignerStore.getState();
+
+      // Remove all but one role
+      store.removeRole('accent2');
+      store.removeRole('accent1');
+      store.removeRole('feature');
+
+      expect(useBlockDesignerStore.getState().block.previewPalette.roles.length).toBe(1);
+      expect(useBlockDesignerStore.getState().canRemoveRole()).toBe(false);
+    });
+  });
+
+  describe('getShapesUsingRole', () => {
+    it('returns empty array when no shapes use the role', () => {
+      const store = useBlockDesignerStore.getState();
+
+      const shapes = store.getShapesUsingRole('feature');
+
+      expect(shapes).toEqual([]);
+    });
+
+    it('returns shapes using the specified role', () => {
+      const store = useBlockDesignerStore.getState();
+
+      // Add squares with different roles
+      store.addSquare({ row: 0, col: 0 }); // default is background
+      const secondId = store.addSquare({ row: 0, col: 1 });
+      store.assignFabricRole(secondId, 'feature');
+
+      const shapes = useBlockDesignerStore.getState().getShapesUsingRole('feature');
+
+      expect(shapes.length).toBe(1);
+      expect(shapes[0].id).toBe(secondId);
+    });
+
+    it('detects HST shapes using role in either position', () => {
+      const store = useBlockDesignerStore.getState();
+
+      // Create HST with background and feature roles
+      store.addHst({ row: 0, col: 0 }, 'ne', 'background', 'feature');
+
+      const bgShapes = useBlockDesignerStore.getState().getShapesUsingRole('background');
+      const featureShapes = useBlockDesignerStore.getState().getShapesUsingRole('feature');
+
+      expect(bgShapes.length).toBe(1);
+      expect(featureShapes.length).toBe(1);
     });
   });
 
@@ -1954,6 +2312,260 @@ describe('BlockDesignerStore', () => {
 
       store.undo();
       expect(useBlockDesignerStore.getState().block.gridSize).toBe(DEFAULT_GRID_SIZE);
+    });
+  });
+
+  // ===========================================================================
+  // Range Fill Anchor
+  // ===========================================================================
+
+  describe('rangeFillAnchor', () => {
+    describe('setRangeFillAnchor', () => {
+      it('sets the anchor position', () => {
+        const store = useBlockDesignerStore.getState();
+        expect(store.rangeFillAnchor).toBeNull();
+
+        store.setRangeFillAnchor({ row: 2, col: 1 });
+
+        expect(useBlockDesignerStore.getState().rangeFillAnchor).toEqual({
+          row: 2,
+          col: 1,
+        });
+      });
+
+      it('updates existing anchor position', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setRangeFillAnchor({ row: 0, col: 0 });
+        store.setRangeFillAnchor({ row: 2, col: 2 });
+
+        expect(useBlockDesignerStore.getState().rangeFillAnchor).toEqual({
+          row: 2,
+          col: 2,
+        });
+      });
+
+      it('clears anchor when set to null', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setRangeFillAnchor({ row: 1, col: 1 });
+        expect(useBlockDesignerStore.getState().rangeFillAnchor).not.toBeNull();
+
+        store.setRangeFillAnchor(null);
+
+        expect(useBlockDesignerStore.getState().rangeFillAnchor).toBeNull();
+      });
+    });
+
+    describe('getRangeFillPositions', () => {
+      it('returns only end position when no anchor is set', () => {
+        const store = useBlockDesignerStore.getState();
+
+        const positions = store.getRangeFillPositions({ row: 2, col: 2 });
+
+        expect(positions).toEqual([{ row: 2, col: 2 }]);
+      });
+
+      it('returns rectangular range when anchor is set', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setRangeFillAnchor({ row: 0, col: 0 });
+
+        const positions = store.getRangeFillPositions({ row: 1, col: 1 });
+
+        expect(positions).toHaveLength(4);
+        expect(positions).toContainEqual({ row: 0, col: 0 });
+        expect(positions).toContainEqual({ row: 0, col: 1 });
+        expect(positions).toContainEqual({ row: 1, col: 0 });
+        expect(positions).toContainEqual({ row: 1, col: 1 });
+      });
+
+      it('filters out occupied cells', () => {
+        const store = useBlockDesignerStore.getState();
+        // Add a shape at (0, 1)
+        store.addSquare({ row: 0, col: 1 }, 'background');
+
+        store.setRangeFillAnchor({ row: 0, col: 0 });
+
+        const positions = store.getRangeFillPositions({ row: 1, col: 1 });
+
+        // Should have 3 positions, not 4 (0,1 is occupied)
+        expect(positions).toHaveLength(3);
+        expect(positions).not.toContainEqual({ row: 0, col: 1 });
+        expect(positions).toContainEqual({ row: 0, col: 0 });
+        expect(positions).toContainEqual({ row: 1, col: 0 });
+        expect(positions).toContainEqual({ row: 1, col: 1 });
+      });
+
+      it('handles same start and end position', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setRangeFillAnchor({ row: 1, col: 1 });
+
+        const positions = store.getRangeFillPositions({ row: 1, col: 1 });
+
+        expect(positions).toHaveLength(1);
+        expect(positions[0]).toEqual({ row: 1, col: 1 });
+      });
+
+      it('handles reversed direction', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setRangeFillAnchor({ row: 2, col: 2 });
+
+        const positions = store.getRangeFillPositions({ row: 0, col: 0 });
+
+        expect(positions).toHaveLength(9);
+        expect(positions).toContainEqual({ row: 0, col: 0 });
+        expect(positions).toContainEqual({ row: 2, col: 2 });
+      });
+
+      it('handles horizontal range', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setRangeFillAnchor({ row: 1, col: 0 });
+
+        const positions = store.getRangeFillPositions({ row: 1, col: 2 });
+
+        expect(positions).toHaveLength(3);
+        positions.forEach((pos) => {
+          expect(pos.row).toBe(1);
+        });
+      });
+
+      it('handles vertical range', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setRangeFillAnchor({ row: 0, col: 1 });
+
+        const positions = store.getRangeFillPositions({ row: 2, col: 1 });
+
+        expect(positions).toHaveLength(3);
+        positions.forEach((pos) => {
+          expect(pos.col).toBe(1);
+        });
+      });
+    });
+
+    describe('clearShapeSelection clears rangeFillAnchor', () => {
+      it('clears anchor when clearing shape selection', () => {
+        const store = useBlockDesignerStore.getState();
+        store.selectShapeForPlacement({ type: 'square' });
+        store.setRangeFillAnchor({ row: 1, col: 1 });
+        expect(useBlockDesignerStore.getState().rangeFillAnchor).not.toBeNull();
+
+        store.clearShapeSelection();
+
+        expect(useBlockDesignerStore.getState().rangeFillAnchor).toBeNull();
+      });
+    });
+
+    describe('initBlock clears rangeFillAnchor', () => {
+      it('clears anchor when initializing new block', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setRangeFillAnchor({ row: 1, col: 1 });
+        expect(useBlockDesignerStore.getState().rangeFillAnchor).not.toBeNull();
+
+        store.initBlock();
+
+        expect(useBlockDesignerStore.getState().rangeFillAnchor).toBeNull();
+      });
+    });
+
+    describe('loadBlock clears rangeFillAnchor', () => {
+      it('clears anchor when loading a block', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setRangeFillAnchor({ row: 1, col: 1 });
+        expect(useBlockDesignerStore.getState().rangeFillAnchor).not.toBeNull();
+
+        store.loadBlock({
+          id: 'block-1',
+          creatorId: 'user-1',
+          derivedFromBlockId: null,
+          title: 'Test Block',
+          description: null,
+          hashtags: [],
+          gridSize: 3,
+          shapes: [],
+          previewPalette: { ...DEFAULT_PALETTE, roles: [...DEFAULT_PALETTE.roles] },
+          status: 'draft',
+          publishedAt: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+
+        expect(useBlockDesignerStore.getState().rangeFillAnchor).toBeNull();
+      });
+    });
+
+    describe('integration with batch placement', () => {
+      it('enables shift-click workflow for squares', () => {
+        const store = useBlockDesignerStore.getState();
+
+        // First click places shape and sets anchor
+        store.addSquare({ row: 0, col: 0 }, 'background');
+        store.setRangeFillAnchor({ row: 0, col: 0 });
+
+        // Get positions for range fill
+        const positions = store.getRangeFillPositions({ row: 2, col: 2 });
+        // (0,0) is already occupied, so should have 8 empty positions
+        expect(positions).toHaveLength(8);
+
+        // Batch place at those positions
+        store.addShapesBatch(positions, { type: 'square' });
+
+        // Should now have 9 shapes total
+        expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(9);
+      });
+
+      it('enables shift-click workflow for HSTs', () => {
+        const store = useBlockDesignerStore.getState();
+
+        // First click places shape and sets anchor
+        store.addHst({ row: 0, col: 0 }, 'top_left', 'background', 'background');
+        store.setRangeFillAnchor({ row: 0, col: 0 });
+
+        // Get positions for range fill
+        const positions = store.getRangeFillPositions({ row: 1, col: 1 });
+        // (0,0) is already occupied, so should have 3 empty positions
+        expect(positions).toHaveLength(3);
+
+        // Batch place at those positions
+        store.addShapesBatch(positions, { type: 'hst', variant: 'top_left' });
+
+        // Should now have 4 shapes total
+        expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(4);
+      });
+
+      it('supports chaining range fills', () => {
+        const store = useBlockDesignerStore.getState();
+
+        // First range
+        store.addSquare({ row: 0, col: 0 }, 'background');
+        store.setRangeFillAnchor({ row: 0, col: 0 });
+        const positions1 = store.getRangeFillPositions({ row: 1, col: 1 });
+        store.addShapesBatch(positions1, { type: 'square' });
+        store.setRangeFillAnchor({ row: 1, col: 1 });
+
+        expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(4);
+
+        // Second range from (1,1) to (2,2)
+        const positions2 = store.getRangeFillPositions({ row: 2, col: 2 });
+        expect(positions2).toHaveLength(3); // (1,1) is occupied
+
+        store.addShapesBatch(positions2, { type: 'square' });
+
+        expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(7);
+      });
+
+      it('does not apply range fill for Flying Geese (they use two-tap)', () => {
+        const store = useBlockDesignerStore.getState();
+        store.setRangeFillAnchor({ row: 0, col: 0 });
+
+        // Flying Geese are excluded from addShapesBatch
+        // This is a design decision - they require two-tap placement
+        const positions = store.getRangeFillPositions({ row: 1, col: 1 });
+        expect(positions).toHaveLength(4);
+
+        // addShapesBatch should skip Flying Geese types
+        store.addShapesBatch(positions, { type: 'flying_geese' });
+
+        // No shapes should be added (Flying Geese ignored)
+        expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+      });
     });
   });
 });

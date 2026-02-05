@@ -29,9 +29,9 @@ import {
   MAX_BORDERS,
   DEFAULT_BORDER_WIDTH_INCHES,
 } from './types';
-import { DEFAULT_PALETTE } from '../block-designer/constants';
+import { DEFAULT_PALETTE, MAX_PALETTE_ROLES, ADDITIONAL_ROLE_COLORS } from '../block-designer/constants';
 import type { Block } from '../block-designer/types';
-import type { PatternOperation, PatternBatchOperation } from './history/operations';
+import type { PatternOperation, PatternBatchOperation, AddRoleOperation, RemoveRoleOperation, RenameRoleOperation } from './history/operations';
 import {
   applyOperationToBlockInstances,
   applyOperationToPalette,
@@ -144,6 +144,9 @@ interface PatternDesignerState {
 
   /** Rotation to apply when placing blocks (0, 90, 180, 270) */
   placementRotation: Rotation;
+
+  /** Anchor position for shift-click range fill (null if no anchor set) */
+  rangeFillAnchor: GridPosition | null;
 }
 
 interface PatternDesignerActions {
@@ -179,6 +182,12 @@ interface PatternDesignerActions {
   /** Clear all selections */
   clearSelections: () => void;
 
+  // Range fill (shift-click)
+  /** Set the anchor position for range fill */
+  setRangeFillAnchor: (position: GridPosition | null) => void;
+  /** Get empty positions in range from anchor to given position */
+  getRangeFillPositions: (endPosition: GridPosition) => GridPosition[];
+
   // Block transformations
   /** Rotate selected block instance 90° clockwise */
   rotateBlockInstance: (instanceId: UUID) => void;
@@ -190,6 +199,14 @@ interface PatternDesignerActions {
   // Palette
   /** Change a palette role's color */
   setRoleColor: (roleId: FabricRoleId, color: string) => void;
+  /** Add a new fabric role to the palette */
+  addRole: (name?: string, color?: string) => string;
+  /** Remove a fabric role from the palette */
+  removeRole: (roleId: FabricRoleId) => void;
+  /** Rename a fabric role */
+  renameRole: (roleId: FabricRoleId, newName: string) => void;
+  /** Check if a role can be removed (not the last one) */
+  canRemoveRole: () => boolean;
 
   // Grid management
   /** Add a row to the grid (uses gridResizePosition for placement) */
@@ -283,6 +300,7 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
     gridResizePosition: 'end',
     undoManager: createUndoManagerState(),
     placementRotation: 0,
+    rangeFillAnchor: null,
 
     // Pattern management
     initPattern: (gridSize, creatorId = '') => {
@@ -294,6 +312,7 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
         state.mode = 'idle';
         state.isDirty = false;
         state.undoManager = createUndoManagerState();
+        state.rangeFillAnchor = null;
         // Keep block cache - might reuse blocks
       });
     },
@@ -311,6 +330,7 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
         state.mode = 'idle';
         state.isDirty = false;
         state.undoManager = createUndoManagerState();
+        state.rangeFillAnchor = null;
       });
     },
 
@@ -539,7 +559,37 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
         state.selectedLibraryBlockId = null;
         state.mode = 'idle';
         state.placementRotation = 0;
+        state.rangeFillAnchor = null;
       });
+    },
+
+    // Range fill (shift-click)
+    setRangeFillAnchor: (position) => {
+      set((state) => {
+        state.rangeFillAnchor = position;
+      });
+    },
+
+    getRangeFillPositions: (endPosition) => {
+      const anchor = get().rangeFillAnchor;
+      if (!anchor) return [endPosition];
+
+      // Calculate rectangular range
+      const minRow = Math.min(anchor.row, endPosition.row);
+      const maxRow = Math.max(anchor.row, endPosition.row);
+      const minCol = Math.min(anchor.col, endPosition.col);
+      const maxCol = Math.max(anchor.col, endPosition.col);
+
+      const positions: GridPosition[] = [];
+      for (let row = minRow; row <= maxRow; row++) {
+        for (let col = minCol; col <= maxCol; col++) {
+          // Only include empty positions
+          if (!get().isPositionOccupied({ row, col })) {
+            positions.push({ row, col });
+          }
+        }
+      }
+      return positions;
     },
 
     // Block transformations
@@ -636,6 +686,97 @@ export const usePatternDesignerStore: UseBoundStore<StoreApi<PatternDesignerStor
           state.undoManager = recordOperation(state.undoManager, operation);
         }
       });
+    },
+
+    addRole: (name, color) => {
+      const palette = get().pattern.palette;
+
+      // Enforce maximum
+      if (palette.roles.length >= MAX_PALETTE_ROLES) {
+        return '';
+      }
+
+      // Generate unique ID
+      const existingIds = new Set(palette.roles.map((r) => r.id));
+      let newId = `accent${palette.roles.length - 1}`;
+      let counter = palette.roles.length;
+      while (existingIds.has(newId)) {
+        newId = `accent${counter++}`;
+      }
+
+      // Pick a default color from the additional colors array
+      const colorIndex = (palette.roles.length - 4) % ADDITIONAL_ROLE_COLORS.length;
+      const defaultColor = ADDITIONAL_ROLE_COLORS[Math.max(0, colorIndex)] ?? '#808080';
+
+      const newRole = {
+        id: newId,
+        name: name ?? `Accent ${palette.roles.length - 1}`,
+        color: color ?? defaultColor,
+      };
+
+      set((state) => {
+        state.pattern.palette.roles.push(newRole);
+        state.pattern.updatedAt = getCurrentTimestamp();
+        state.isDirty = true;
+
+        // Record operation for undo
+        const operation: AddRoleOperation = { type: 'add_role', role: newRole };
+        state.undoManager = recordOperation(state.undoManager, operation);
+      });
+
+      return newId;
+    },
+
+    removeRole: (roleId) => {
+      const palette = get().pattern.palette;
+
+      // Cannot remove last role
+      if (palette.roles.length <= 1) return;
+
+      // Find the role to remove
+      const roleIndex = palette.roles.findIndex((r) => r.id === roleId);
+      if (roleIndex === -1) return;
+
+      const removedRole = palette.roles[roleIndex];
+
+      set((state) => {
+        // Remove role from palette
+        state.pattern.palette.roles.splice(roleIndex, 1);
+        state.pattern.updatedAt = getCurrentTimestamp();
+        state.isDirty = true;
+
+        // Record operation for undo
+        const operation: RemoveRoleOperation = {
+          type: 'remove_role',
+          role: removedRole,
+          index: roleIndex,
+        };
+        state.undoManager = recordOperation(state.undoManager, operation);
+      });
+    },
+
+    renameRole: (roleId, newName) => {
+      const role = get().pattern.palette.roles.find((r) => r.id === roleId);
+      if (!role) return;
+
+      const prevName = role.name;
+
+      set((state) => {
+        const stateRole = state.pattern.palette.roles.find((r) => r.id === roleId);
+        if (stateRole) {
+          stateRole.name = newName;
+          state.pattern.updatedAt = getCurrentTimestamp();
+          state.isDirty = true;
+
+          // Record operation for undo
+          const operation: RenameRoleOperation = { type: 'rename_role', roleId, prevName, nextName: newName };
+          state.undoManager = recordOperation(state.undoManager, operation);
+        }
+      });
+    },
+
+    canRemoveRole: () => {
+      return get().pattern.palette.roles.length > 1;
     },
 
     // Grid management
@@ -1296,3 +1437,10 @@ export const useCanRedo = () => usePatternDesignerStore((state) => checkCanRedo(
 
 /** Get the current placement rotation */
 export const usePlacementRotation = () => usePatternDesignerStore((state) => state.placementRotation);
+
+// =============================================================================
+// Range Fill Selector Hooks
+// =============================================================================
+
+/** Get the current range fill anchor position */
+export const useRangeFillAnchor = () => usePatternDesignerStore((state) => state.rangeFillAnchor);

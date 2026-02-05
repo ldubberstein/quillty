@@ -104,6 +104,9 @@ export {
   MIN_TOUCH_TARGET_SIZE,
   SHAPE_PICKER_BUTTON_SIZE,
   FABRIC_ROLE_IDS,
+  MAX_PALETTE_ROLES,
+  MIN_PALETTE_ROLES,
+  ADDITIONAL_ROLE_COLORS,
 } from './constants';
 
 // Store
@@ -124,6 +127,7 @@ export {
   useHoveredCell,
   useIsPlacingShape,
   useBlockGridSize,
+  useBlockRangeFillAnchor,
   type BlockDesignerStore,
 } from './store';
 

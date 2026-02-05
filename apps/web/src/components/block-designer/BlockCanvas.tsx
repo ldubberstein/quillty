@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Stage, Layer, Rect } from 'react-konva';
 import type Konva from 'konva';
 import { Group } from 'react-konva';
@@ -12,8 +12,8 @@ import { FlyingGeeseRenderer } from './FlyingGeeseRenderer';
 import { FloatingToolbar } from './FloatingToolbar';
 import { PreviewGrid } from './PreviewGrid';
 import { EmptyCell } from './EmptyCell';
-import { useDragToFill } from '../../hooks';
-import { useBlockDesignerStore, useSelectedShapeType, useHoveredCell, useIsPlacingShape } from '@quillty/core';
+import { useShiftKey } from '../../hooks';
+import { useBlockDesignerStore, useSelectedShapeType, useHoveredCell, useIsPlacingShape, useBlockRangeFillAnchor } from '@quillty/core';
 import type { GridPosition, SquareShape, HstShape, FlyingGeeseShape, Shape, ShapeSelectionType } from '@quillty/core';
 
 /** Canvas sizing constants */
@@ -33,7 +33,6 @@ export function BlockCanvas() {
   const addSquare = useBlockDesignerStore((state) => state.addSquare);
   const addHst = useBlockDesignerStore((state) => state.addHst);
   const isCellOccupied = useBlockDesignerStore((state) => state.isCellOccupied);
-  const getShapeAt = useBlockDesignerStore((state) => state.getShapeAt);
   const clearSelection = useBlockDesignerStore((state) => state.clearSelection);
   const getValidAdjacentCells = useBlockDesignerStore((state) => state.getValidAdjacentCells);
   const startFlyingGeesePlacement = useBlockDesignerStore((state) => state.startFlyingGeesePlacement);
@@ -51,9 +50,14 @@ export function BlockCanvas() {
   const selectedShapeType = useSelectedShapeType();
   const hoveredCell = useHoveredCell();
   const isPlacingShape = useIsPlacingShape();
-  const selectShapeForPlacement = useBlockDesignerStore((state) => state.selectShapeForPlacement);
   const setHoveredCell = useBlockDesignerStore((state) => state.setHoveredCell);
   const clearShapeSelection = useBlockDesignerStore((state) => state.clearShapeSelection);
+
+  // Track shift key for range fill
+  const isShiftHeld = useShiftKey();
+  const rangeFillAnchor = useBlockRangeFillAnchor();
+  const setRangeFillAnchor = useBlockDesignerStore((state) => state.setRangeFillAnchor);
+  const getRangeFillPositions = useBlockDesignerStore((state) => state.getRangeFillPositions);
   const addShapesBatch = useBlockDesignerStore((state) => state.addShapesBatch);
 
   const { gridSize, shapes, previewPalette } = block;
@@ -241,67 +245,6 @@ export function BlockCanvas() {
     [scale, gridPixelSize, gridOffsetX, gridOffsetY, dimensions.width, dimensions.height]
   );
 
-  // Convert stage coordinates to grid position
-  const stageToGrid = useCallback(
-    (stageX: number, stageY: number): GridPosition | null => {
-      // Convert to local grid coordinates
-      const localX = stageX - gridOffsetX;
-      const localY = stageY - gridOffsetY;
-
-      // Check if within grid bounds
-      if (localX < 0 || localY < 0 || localX >= gridPixelSize || localY >= gridPixelSize) {
-        return null;
-      }
-
-      const col = Math.floor(localX / cellSize);
-      const row = Math.floor(localY / cellSize);
-
-      // Validate bounds
-      if (row < 0 || row >= gridSize || col < 0 || col >= gridSize) {
-        return null;
-      }
-
-      return { row, col };
-    },
-    [gridOffsetX, gridOffsetY, gridPixelSize, cellSize, gridSize]
-  );
-
-  // Handle drag complete callback for batch shape placement
-  const handleDragFillComplete = useCallback(
-    (cells: GridPosition[]) => {
-      if (selectedShapeType && selectedShapeType.type !== 'flying_geese') {
-        addShapesBatch(cells, selectedShapeType);
-      }
-    },
-    [selectedShapeType, addShapesBatch]
-  );
-
-  // Drag-to-fill hook - enabled for square/HST shapes only (not Flying Geese)
-  const dragToFillEnabled = isPlacingShape && selectedShapeType !== null && selectedShapeType.type !== 'flying_geese';
-  const {
-    handleMouseDown: handleDragMouseDown,
-    handleMouseMove: handleDragMouseMove,
-    handleMouseUp: handleDragMouseUp,
-    draggedCells,
-    isDragging,
-  } = useDragToFill({
-    stageToGrid,
-    isCellOccupied,
-    onDragComplete: handleDragFillComplete,
-    enabled: dragToFillEnabled,
-  });
-
-  // Convert stage position to screen position
-  const stageToScreen = useCallback(
-    (stageX: number, stageY: number): { x: number; y: number } => {
-      return {
-        x: stageX * scale + position.x,
-        y: stageY * scale + position.y,
-      };
-    },
-    [scale, position]
-  );
-
   // Place a shape at the given position based on the selected shape type
   const placeShapeAt = useCallback(
     (gridPos: GridPosition, shapeType: ShapeSelectionType) => {
@@ -325,7 +268,7 @@ export function BlockCanvas() {
 
   // Handle click on empty cell (for placing shapes from library)
   const handleEmptyCellClick = useCallback(
-    (row: number, col: number) => {
+    (row: number, col: number, shiftKey: boolean) => {
       const gridPos: GridPosition = { row, col };
 
       // If in Flying Geese placement mode, handle second tap
@@ -344,10 +287,26 @@ export function BlockCanvas() {
 
       // If in placing_shape mode with a selected shape type, place the shape
       if (isPlacingShape && selectedShapeType) {
-        placeShapeAt(gridPos, selectedShapeType);
+        // Range fill doesn't apply to Flying Geese (uses two-tap placement)
+        const canRangeFill = selectedShapeType.type !== 'flying_geese';
+
+        if (shiftKey && rangeFillAnchor && canRangeFill) {
+          // Range fill: place shapes in all empty cells between anchor and clicked position
+          const positions = getRangeFillPositions(gridPos);
+          if (positions.length > 0) {
+            addShapesBatch(positions, selectedShapeType);
+          }
+        } else {
+          // Single placement
+          placeShapeAt(gridPos, selectedShapeType);
+        }
+        // Update anchor to clicked position for chaining (only for non-Flying Geese shapes)
+        if (canRangeFill) {
+          setRangeFillAnchor(gridPos);
+        }
       }
     },
-    [mode, flyingGeesePlacement, isPlacingShape, selectedShapeType, completeFlyingGeesePlacement, cancelFlyingGeesePlacement, placeShapeAt]
+    [mode, flyingGeesePlacement, isPlacingShape, selectedShapeType, completeFlyingGeesePlacement, cancelFlyingGeesePlacement, placeShapeAt, rangeFillAnchor, getRangeFillPositions, addShapesBatch, setRangeFillAnchor]
   );
 
   // Handle hover on empty cell (for ghost preview)
@@ -452,6 +411,22 @@ export function BlockCanvas() {
 
   const emptyCellPositions = getEmptyCellPositions();
 
+  // Calculate range fill preview positions when shift is held
+  // Note: Range fill only works for squares and HSTs, not Flying Geese (which use two-tap placement)
+  const rangeFillPreviewPositions = useMemo(() => {
+    if (!isPlacingShape || !isShiftHeld || !rangeFillAnchor || !hoveredCell) {
+      return [];
+    }
+    // Don't show range fill for Flying Geese
+    if (selectedShapeType?.type === 'flying_geese') {
+      return [];
+    }
+    return getRangeFillPositions(hoveredCell);
+  }, [isPlacingShape, isShiftHeld, rangeFillAnchor, hoveredCell, selectedShapeType, getRangeFillPositions]);
+
+  // Whether to show range fill preview instead of single ghost preview
+  const showRangeFillPreview = rangeFillPreviewPositions.length > 0;
+
   // Check if a cell is a valid Flying Geese target
   const isValidFlyingGeeseTarget = useCallback(
     (row: number, col: number): boolean => {
@@ -484,14 +459,10 @@ export function BlockCanvas() {
             scaleY={scale}
             x={position.x}
             y={position.y}
-            draggable={!isDragging}
+            draggable
             dragBoundFunc={dragBoundFunc}
             onWheel={handleWheel}
             onDragEnd={handleDragEnd}
-            onMouseDown={handleDragMouseDown}
-            onMouseMove={handleDragMouseMove}
-            onMouseUp={handleDragMouseUp}
-            onMouseLeave={handleDragMouseUp}
           >
             <Layer>
               {/* Background rect to capture clicks outside the grid */}
@@ -587,7 +558,7 @@ export function BlockCanvas() {
               ))}
 
               {/* Ghost preview for shape placement (single cell hover) */}
-              {isPlacingShape && !isDragging && hoveredCell && selectedShapeType && !isCellOccupied(hoveredCell) && (
+              {isPlacingShape && hoveredCell && selectedShapeType && !isCellOccupied(hoveredCell) && !showRangeFillPreview && (
                 <Group opacity={0.5} listening={false}>
                   {selectedShapeType.type === 'square' && (
                     <SquareRenderer
@@ -627,21 +598,49 @@ export function BlockCanvas() {
                 </Group>
               )}
 
-              {/* Drag-to-fill preview - show cells that will be filled */}
-              {isDragging && draggedCells.map(({ row, col }) => (
-                <Rect
-                  key={`drag-preview-${row}-${col}`}
-                  x={gridOffsetX + col * cellSize + 2}
-                  y={gridOffsetY + row * cellSize + 2}
-                  width={cellSize - 4}
-                  height={cellSize - 4}
-                  fill="rgba(59, 130, 246, 0.2)"
-                  stroke="#3B82F6"
-                  strokeWidth={1}
-                  dash={[4, 4]}
-                  listening={false}
-                />
-              ))}
+              {/* Range fill ghost preview when shift is held */}
+              {showRangeFillPreview && selectedShapeType && (
+                <Group opacity={0.5} listening={false}>
+                  {rangeFillPreviewPositions.map(({ row, col }) => (
+                    selectedShapeType.type === 'square' ? (
+                      <SquareRenderer
+                        key={`ghost-range-${row}-${col}`}
+                        shape={{
+                          id: `ghost-range-${row}-${col}`,
+                          type: 'square',
+                          position: { row, col },
+                          span: { rows: 1, cols: 1 },
+                          fabricRole: 'background',
+                        }}
+                        cellSize={cellSize}
+                        offsetX={gridOffsetX}
+                        offsetY={gridOffsetY}
+                        palette={previewPalette}
+                        isSelected={false}
+                      />
+                    ) : selectedShapeType.type === 'hst' ? (
+                      <HstRenderer
+                        key={`ghost-range-${row}-${col}`}
+                        shape={{
+                          id: `ghost-range-${row}-${col}`,
+                          type: 'hst',
+                          position: { row, col },
+                          span: { rows: 1, cols: 1 },
+                          variant: selectedShapeType.variant,
+                          fabricRole: 'background',
+                          secondaryFabricRole: 'background',
+                        }}
+                        cellSize={cellSize}
+                        offsetX={gridOffsetX}
+                        offsetY={gridOffsetY}
+                        palette={previewPalette}
+                        isSelected={false}
+                      />
+                    ) : null
+                  ))}
+                </Group>
+              )}
+
             </Layer>
           </Stage>
 
@@ -680,6 +679,22 @@ export function BlockCanvas() {
               />
               Tap shapes to paint with{' '}
               {previewPalette.roles.find((r) => r.id === activeFabricRole)?.name ?? 'fabric'}
+            </div>
+          )}
+
+          {/* Shape placement mode indicator */}
+          {isPlacingShape && selectedShapeType && selectedShapeType.type !== 'flying_geese' && (
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2">
+              Tap to place • Shift+click to fill range
+              <button
+                onClick={clearShapeSelection}
+                className="ml-1 p-1 text-blue-100 hover:text-white hover:bg-blue-600 rounded"
+                aria-label="Cancel placement"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
           )}
 

@@ -15,6 +15,11 @@ const mockAddHst = vi.fn();
 const mockIsCellOccupied = vi.fn(() => false);
 const mockClearSelection = vi.fn();
 
+// Mock the useShiftKey hook
+vi.mock('../../hooks', () => ({
+  useShiftKey: vi.fn(() => false),
+}));
+
 vi.mock('@quillty/core', () => ({
   useBlockDesignerStore: vi.fn((selector) => {
     const state = {
@@ -32,6 +37,7 @@ vi.mock('@quillty/core', () => ({
       selectedShapeType: null,
       hoveredCell: null,
       mode: 'idle',
+      rangeFillAnchor: null,
       addSquare: mockAddSquare,
       addHst: mockAddHst,
       isCellOccupied: mockIsCellOccupied,
@@ -39,12 +45,16 @@ vi.mock('@quillty/core', () => ({
       selectShapeForPlacement: vi.fn(),
       setHoveredCell: vi.fn(),
       clearShapeSelection: vi.fn(),
+      setRangeFillAnchor: vi.fn(),
+      getRangeFillPositions: vi.fn(() => []),
+      addShapesBatch: vi.fn(),
     };
     return selector ? selector(state) : state;
   }),
   useSelectedShapeType: vi.fn(() => null),
   useHoveredCell: vi.fn(() => null),
   useIsPlacingShape: vi.fn(() => false),
+  useBlockRangeFillAnchor: vi.fn(() => null),
   DEFAULT_GRID_SIZE: 3,
 }));
 

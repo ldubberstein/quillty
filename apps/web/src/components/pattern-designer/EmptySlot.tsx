@@ -2,6 +2,7 @@
 
 import { Rect, Group, Line } from 'react-konva';
 import { useCallback } from 'react';
+import type Konva from 'konva';
 
 interface EmptySlotProps {
   /** Row position in grid */
@@ -18,8 +19,8 @@ interface EmptySlotProps {
   isHighlighted?: boolean;
   /** Whether this slot is being hovered */
   isHovered?: boolean;
-  /** Called when slot is clicked/tapped */
-  onClick?: (row: number, col: number) => void;
+  /** Called when slot is clicked/tapped (shiftKey indicates if shift was held) */
+  onClick?: (row: number, col: number, shiftKey: boolean) => void;
   /** Called when mouse enters slot */
   onMouseEnter?: (row: number, col: number) => void;
   /** Called when mouse leaves slot */
@@ -41,9 +42,13 @@ export function EmptySlot({
   const x = offsetX + col * cellSize;
   const y = offsetY + row * cellSize;
 
-  const handleClick = useCallback(() => {
-    onClick?.(row, col);
-  }, [onClick, row, col]);
+  const handleClick = useCallback(
+    (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+      const shiftKey = 'shiftKey' in e.evt ? e.evt.shiftKey : false;
+      onClick?.(row, col, shiftKey);
+    },
+    [onClick, row, col]
+  );
 
   const handleMouseEnter = useCallback(() => {
     onMouseEnter?.(row, col);

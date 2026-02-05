@@ -51,6 +51,7 @@ function resetStore() {
     gridResizePosition: 'end',
     undoManager: createUndoManagerState(),
     placementRotation: 0,
+    rangeFillAnchor: null,
   });
 }
 
@@ -557,6 +558,268 @@ describe('PatternDesignerStore', () => {
       store.setRoleColor('background', '#FF0000');
 
       expect(usePatternDesignerStore.getState().isDirty).toBe(true);
+    });
+  });
+
+  describe('addRole', () => {
+    it('adds a new role with auto-generated ID', () => {
+      const store = usePatternDesignerStore.getState();
+      const initialCount = store.pattern.palette.roles.length;
+
+      const newId = store.addRole();
+
+      const state = usePatternDesignerStore.getState();
+      expect(state.pattern.palette.roles.length).toBe(initialCount + 1);
+      expect(newId).toBeTruthy();
+      expect(state.pattern.palette.roles.find((r) => r.id === newId)).toBeDefined();
+    });
+
+    it('uses provided name when specified', () => {
+      const store = usePatternDesignerStore.getState();
+
+      const newId = store.addRole('My Custom Color');
+
+      const state = usePatternDesignerStore.getState();
+      const newRole = state.pattern.palette.roles.find((r) => r.id === newId);
+      expect(newRole?.name).toBe('My Custom Color');
+    });
+
+    it('uses provided color when specified', () => {
+      const store = usePatternDesignerStore.getState();
+
+      const newId = store.addRole('Custom', '#ABCDEF');
+
+      const state = usePatternDesignerStore.getState();
+      const newRole = state.pattern.palette.roles.find((r) => r.id === newId);
+      expect(newRole?.color).toBe('#ABCDEF');
+    });
+
+    it('generates unique IDs', () => {
+      const store = usePatternDesignerStore.getState();
+
+      const id1 = store.addRole('Test 1');
+      const id2 = store.addRole('Test 2');
+      const id3 = store.addRole('Test 3');
+
+      expect(id1).not.toBe(id2);
+      expect(id2).not.toBe(id3);
+      expect(id1).not.toBe(id3);
+    });
+
+    it('returns empty string when at maximum roles', () => {
+      const store = usePatternDesignerStore.getState();
+
+      // Add roles until max (12 total, start with 4)
+      for (let i = 0; i < 8; i++) {
+        store.addRole(`Extra ${i}`);
+      }
+
+      expect(usePatternDesignerStore.getState().pattern.palette.roles.length).toBe(12);
+
+      const result = store.addRole('Over limit');
+      expect(result).toBe('');
+      expect(usePatternDesignerStore.getState().pattern.palette.roles.length).toBe(12);
+    });
+
+    it('marks pattern as dirty', () => {
+      const store = usePatternDesignerStore.getState();
+      expect(usePatternDesignerStore.getState().isDirty).toBe(false);
+
+      store.addRole();
+
+      expect(usePatternDesignerStore.getState().isDirty).toBe(true);
+    });
+
+    it('can be undone', () => {
+      const store = usePatternDesignerStore.getState();
+      const initialCount = store.pattern.palette.roles.length;
+
+      store.addRole('To be undone');
+
+      expect(usePatternDesignerStore.getState().pattern.palette.roles.length).toBe(initialCount + 1);
+
+      store.undo();
+
+      expect(usePatternDesignerStore.getState().pattern.palette.roles.length).toBe(initialCount);
+    });
+
+    it('can be redone after undo', () => {
+      const store = usePatternDesignerStore.getState();
+      const initialCount = store.pattern.palette.roles.length;
+
+      const newId = store.addRole('Redo test');
+      store.undo();
+
+      expect(usePatternDesignerStore.getState().pattern.palette.roles.length).toBe(initialCount);
+
+      store.redo();
+
+      const state = usePatternDesignerStore.getState();
+      expect(state.pattern.palette.roles.length).toBe(initialCount + 1);
+      expect(state.pattern.palette.roles.find((r) => r.id === newId)).toBeDefined();
+    });
+  });
+
+  describe('removeRole', () => {
+    it('removes a role from the palette', () => {
+      const store = usePatternDesignerStore.getState();
+      const initialCount = store.pattern.palette.roles.length;
+
+      store.removeRole('accent2');
+
+      const state = usePatternDesignerStore.getState();
+      expect(state.pattern.palette.roles.length).toBe(initialCount - 1);
+      expect(state.pattern.palette.roles.find((r) => r.id === 'accent2')).toBeUndefined();
+    });
+
+    it('does nothing when trying to remove last role', () => {
+      const store = usePatternDesignerStore.getState();
+
+      // Remove all but one role
+      store.removeRole('accent2');
+      store.removeRole('accent1');
+      store.removeRole('feature');
+
+      expect(usePatternDesignerStore.getState().pattern.palette.roles.length).toBe(1);
+
+      // Try to remove the last one
+      store.removeRole('background');
+
+      expect(usePatternDesignerStore.getState().pattern.palette.roles.length).toBe(1);
+    });
+
+    it('does nothing when role not found', () => {
+      const store = usePatternDesignerStore.getState();
+      const initialCount = store.pattern.palette.roles.length;
+
+      store.removeRole('non-existent-role');
+
+      expect(usePatternDesignerStore.getState().pattern.palette.roles.length).toBe(initialCount);
+    });
+
+    it('marks pattern as dirty', () => {
+      const store = usePatternDesignerStore.getState();
+      expect(usePatternDesignerStore.getState().isDirty).toBe(false);
+
+      store.removeRole('accent2');
+
+      expect(usePatternDesignerStore.getState().isDirty).toBe(true);
+    });
+
+    it('can be undone', () => {
+      const store = usePatternDesignerStore.getState();
+      const initialCount = store.pattern.palette.roles.length;
+
+      store.removeRole('accent2');
+
+      expect(usePatternDesignerStore.getState().pattern.palette.roles.length).toBe(initialCount - 1);
+
+      store.undo();
+
+      const state = usePatternDesignerStore.getState();
+      expect(state.pattern.palette.roles.length).toBe(initialCount);
+      expect(state.pattern.palette.roles.find((r) => r.id === 'accent2')).toBeDefined();
+    });
+
+    it('can be redone after undo', () => {
+      const store = usePatternDesignerStore.getState();
+      const initialCount = store.pattern.palette.roles.length;
+
+      store.removeRole('accent2');
+      store.undo();
+
+      expect(usePatternDesignerStore.getState().pattern.palette.roles.length).toBe(initialCount);
+
+      store.redo();
+
+      const state = usePatternDesignerStore.getState();
+      expect(state.pattern.palette.roles.length).toBe(initialCount - 1);
+      expect(state.pattern.palette.roles.find((r) => r.id === 'accent2')).toBeUndefined();
+    });
+  });
+
+  describe('renameRole', () => {
+    it('renames a role', () => {
+      const store = usePatternDesignerStore.getState();
+
+      store.renameRole('background', 'Main Fabric');
+
+      const state = usePatternDesignerStore.getState();
+      const bgRole = state.pattern.palette.roles.find((r) => r.id === 'background');
+      expect(bgRole?.name).toBe('Main Fabric');
+    });
+
+    it('does nothing if role not found', () => {
+      const store = usePatternDesignerStore.getState();
+      const before = store.pattern.palette.roles.map((r) => ({ ...r }));
+
+      store.renameRole('non-existent', 'New Name');
+
+      const after = usePatternDesignerStore.getState().pattern.palette.roles;
+      for (let i = 0; i < before.length; i++) {
+        expect(after[i].name).toBe(before[i].name);
+      }
+    });
+
+    it('marks pattern as dirty', () => {
+      const store = usePatternDesignerStore.getState();
+      expect(usePatternDesignerStore.getState().isDirty).toBe(false);
+
+      store.renameRole('background', 'New Name');
+
+      expect(usePatternDesignerStore.getState().isDirty).toBe(true);
+    });
+
+    it('can be undone', () => {
+      const store = usePatternDesignerStore.getState();
+      const originalName = store.pattern.palette.roles.find((r) => r.id === 'background')?.name;
+
+      store.renameRole('background', 'Renamed');
+
+      expect(
+        usePatternDesignerStore.getState().pattern.palette.roles.find((r) => r.id === 'background')
+          ?.name
+      ).toBe('Renamed');
+
+      store.undo();
+
+      expect(
+        usePatternDesignerStore.getState().pattern.palette.roles.find((r) => r.id === 'background')
+          ?.name
+      ).toBe(originalName);
+    });
+
+    it('can be redone after undo', () => {
+      const store = usePatternDesignerStore.getState();
+
+      store.renameRole('background', 'Renamed');
+      store.undo();
+      store.redo();
+
+      expect(
+        usePatternDesignerStore.getState().pattern.palette.roles.find((r) => r.id === 'background')
+          ?.name
+      ).toBe('Renamed');
+    });
+  });
+
+  describe('canRemoveRole', () => {
+    it('returns true when more than one role exists', () => {
+      const store = usePatternDesignerStore.getState();
+
+      expect(store.canRemoveRole()).toBe(true);
+    });
+
+    it('returns false when only one role exists', () => {
+      const store = usePatternDesignerStore.getState();
+
+      // Remove all but one role
+      store.removeRole('accent2');
+      store.removeRole('accent1');
+      store.removeRole('feature');
+
+      expect(usePatternDesignerStore.getState().pattern.palette.roles.length).toBe(1);
+      expect(usePatternDesignerStore.getState().canRemoveRole()).toBe(false);
     });
   });
 
@@ -1447,6 +1710,267 @@ describe('PatternDesignerStore', () => {
         const instances = usePatternDesignerStore.getState().pattern.blockInstances;
         expect(instances[0].rotation).toBe(0);
         expect(instances[1].rotation).toBe(0);
+      });
+    });
+  });
+
+  // ===========================================================================
+  // Range Fill Anchor
+  // ===========================================================================
+
+  describe('rangeFillAnchor', () => {
+    describe('setRangeFillAnchor', () => {
+      it('sets the anchor position', () => {
+        const store = usePatternDesignerStore.getState();
+        expect(store.rangeFillAnchor).toBeNull();
+
+        store.setRangeFillAnchor({ row: 2, col: 3 });
+
+        expect(usePatternDesignerStore.getState().rangeFillAnchor).toEqual({
+          row: 2,
+          col: 3,
+        });
+      });
+
+      it('updates existing anchor position', () => {
+        const store = usePatternDesignerStore.getState();
+        store.setRangeFillAnchor({ row: 0, col: 0 });
+        store.setRangeFillAnchor({ row: 5, col: 5 });
+
+        expect(usePatternDesignerStore.getState().rangeFillAnchor).toEqual({
+          row: 5,
+          col: 5,
+        });
+      });
+
+      it('clears anchor when set to null', () => {
+        const store = usePatternDesignerStore.getState();
+        store.setRangeFillAnchor({ row: 1, col: 1 });
+        expect(usePatternDesignerStore.getState().rangeFillAnchor).not.toBeNull();
+
+        store.setRangeFillAnchor(null);
+
+        expect(usePatternDesignerStore.getState().rangeFillAnchor).toBeNull();
+      });
+    });
+
+    describe('getRangeFillPositions', () => {
+      it('returns only end position when no anchor is set', () => {
+        const store = usePatternDesignerStore.getState();
+
+        const positions = store.getRangeFillPositions({ row: 2, col: 2 });
+
+        expect(positions).toEqual([{ row: 2, col: 2 }]);
+      });
+
+      it('returns rectangular range when anchor is set', () => {
+        const store = usePatternDesignerStore.getState();
+        store.setRangeFillAnchor({ row: 0, col: 0 });
+
+        const positions = store.getRangeFillPositions({ row: 1, col: 1 });
+
+        expect(positions).toHaveLength(4);
+        expect(positions).toContainEqual({ row: 0, col: 0 });
+        expect(positions).toContainEqual({ row: 0, col: 1 });
+        expect(positions).toContainEqual({ row: 1, col: 0 });
+        expect(positions).toContainEqual({ row: 1, col: 1 });
+      });
+
+      it('returns positions in row-major order', () => {
+        const store = usePatternDesignerStore.getState();
+        store.setRangeFillAnchor({ row: 0, col: 0 });
+
+        const positions = store.getRangeFillPositions({ row: 2, col: 2 });
+
+        // Should be ordered row by row, column by column
+        expect(positions[0]).toEqual({ row: 0, col: 0 });
+        expect(positions[1]).toEqual({ row: 0, col: 1 });
+        expect(positions[2]).toEqual({ row: 0, col: 2 });
+        expect(positions[3]).toEqual({ row: 1, col: 0 });
+      });
+
+      it('filters out occupied positions', () => {
+        const store = usePatternDesignerStore.getState();
+        // Add a block at (0, 1)
+        store.addBlockInstance('block-123', { row: 0, col: 1 });
+
+        store.setRangeFillAnchor({ row: 0, col: 0 });
+
+        const positions = store.getRangeFillPositions({ row: 1, col: 1 });
+
+        // Should have 3 positions, not 4 (0,1 is occupied)
+        expect(positions).toHaveLength(3);
+        expect(positions).not.toContainEqual({ row: 0, col: 1 });
+        expect(positions).toContainEqual({ row: 0, col: 0 });
+        expect(positions).toContainEqual({ row: 1, col: 0 });
+        expect(positions).toContainEqual({ row: 1, col: 1 });
+      });
+
+      it('handles same start and end position', () => {
+        const store = usePatternDesignerStore.getState();
+        store.setRangeFillAnchor({ row: 2, col: 2 });
+
+        const positions = store.getRangeFillPositions({ row: 2, col: 2 });
+
+        expect(positions).toHaveLength(1);
+        expect(positions[0]).toEqual({ row: 2, col: 2 });
+      });
+
+      it('handles reversed direction (end before start)', () => {
+        const store = usePatternDesignerStore.getState();
+        store.setRangeFillAnchor({ row: 2, col: 2 });
+
+        const positions = store.getRangeFillPositions({ row: 0, col: 0 });
+
+        expect(positions).toHaveLength(9);
+        // Should include all cells regardless of direction
+        expect(positions).toContainEqual({ row: 0, col: 0 });
+        expect(positions).toContainEqual({ row: 2, col: 2 });
+      });
+
+      it('handles horizontal range (same row)', () => {
+        const store = usePatternDesignerStore.getState();
+        store.setRangeFillAnchor({ row: 1, col: 0 });
+
+        const positions = store.getRangeFillPositions({ row: 1, col: 3 });
+
+        expect(positions).toHaveLength(4);
+        positions.forEach((pos) => {
+          expect(pos.row).toBe(1);
+        });
+      });
+
+      it('handles vertical range (same column)', () => {
+        const store = usePatternDesignerStore.getState();
+        store.setRangeFillAnchor({ row: 0, col: 2 });
+
+        const positions = store.getRangeFillPositions({ row: 3, col: 2 });
+
+        expect(positions).toHaveLength(4);
+        positions.forEach((pos) => {
+          expect(pos.col).toBe(2);
+        });
+      });
+
+      it('returns empty array when anchor position is now occupied', () => {
+        const store = usePatternDesignerStore.getState();
+        store.setRangeFillAnchor({ row: 0, col: 0 });
+        // Occupy all cells in the range
+        store.addBlockInstance('block-1', { row: 0, col: 0 });
+        store.addBlockInstance('block-2', { row: 0, col: 1 });
+        store.addBlockInstance('block-3', { row: 1, col: 0 });
+        store.addBlockInstance('block-4', { row: 1, col: 1 });
+
+        const positions = store.getRangeFillPositions({ row: 1, col: 1 });
+
+        expect(positions).toHaveLength(0);
+      });
+    });
+
+    describe('clearSelections clears rangeFillAnchor', () => {
+      it('clears anchor when clearing selections', () => {
+        const store = usePatternDesignerStore.getState();
+        store.selectLibraryBlock('block-1');
+        store.setRangeFillAnchor({ row: 1, col: 1 });
+        expect(usePatternDesignerStore.getState().rangeFillAnchor).not.toBeNull();
+
+        store.clearSelections();
+
+        expect(usePatternDesignerStore.getState().rangeFillAnchor).toBeNull();
+      });
+    });
+
+    describe('initPattern clears rangeFillAnchor', () => {
+      it('clears anchor when initializing new pattern', () => {
+        const store = usePatternDesignerStore.getState();
+        store.setRangeFillAnchor({ row: 1, col: 1 });
+        expect(usePatternDesignerStore.getState().rangeFillAnchor).not.toBeNull();
+
+        store.initPattern({ rows: 3, cols: 3 });
+
+        expect(usePatternDesignerStore.getState().rangeFillAnchor).toBeNull();
+      });
+    });
+
+    describe('loadPattern clears rangeFillAnchor', () => {
+      it('clears anchor when loading a pattern', () => {
+        const store = usePatternDesignerStore.getState();
+        store.setRangeFillAnchor({ row: 1, col: 1 });
+        expect(usePatternDesignerStore.getState().rangeFillAnchor).not.toBeNull();
+
+        store.loadPattern({
+          id: 'pattern-1',
+          creatorId: 'user-1',
+          title: 'Test Pattern',
+          description: null,
+          hashtags: [],
+          difficulty: 'beginner',
+          category: null,
+          gridSize: { rows: 3, cols: 3 },
+          physicalSize: {
+            widthInches: 36,
+            heightInches: 36,
+            blockSizeInches: 12,
+          },
+          palette: { ...DEFAULT_PALETTE, roles: [...DEFAULT_PALETTE.roles] },
+          blockInstances: [],
+          borderConfig: null,
+          status: 'draft',
+          isPremium: false,
+          priceCents: null,
+          publishedAt: null,
+          thumbnailUrl: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+
+        expect(usePatternDesignerStore.getState().rangeFillAnchor).toBeNull();
+      });
+    });
+
+    describe('integration with batch placement', () => {
+      it('enables shift-click workflow: place -> set anchor -> range fill', () => {
+        const store = usePatternDesignerStore.getState();
+
+        // First click places block and sets anchor
+        store.addBlockInstance('block-1', { row: 0, col: 0 });
+        store.setRangeFillAnchor({ row: 0, col: 0 });
+
+        // Shift+click at (2, 2) would fill the range
+        const positions = store.getRangeFillPositions({ row: 2, col: 2 });
+        // (0,0) is already occupied, so should have 8 empty positions
+        expect(positions).toHaveLength(8);
+
+        // Batch place at those positions
+        store.addBlockInstancesBatch('block-1', positions);
+
+        // Should now have 9 blocks total
+        expect(usePatternDesignerStore.getState().pattern.blockInstances).toHaveLength(9);
+      });
+
+      it('supports chaining: multiple range fills in sequence', () => {
+        const store = usePatternDesignerStore.getState();
+
+        // First range: (0,0) to (1,1)
+        store.addBlockInstance('block-1', { row: 0, col: 0 });
+        store.setRangeFillAnchor({ row: 0, col: 0 });
+        const positions1 = store.getRangeFillPositions({ row: 1, col: 1 });
+        store.addBlockInstancesBatch('block-1', positions1);
+        store.setRangeFillAnchor({ row: 1, col: 1 }); // Update anchor
+
+        // First range should have 4 blocks
+        expect(usePatternDesignerStore.getState().pattern.blockInstances).toHaveLength(4);
+
+        // Second range: (1,1) to (2,2) - anchor is now (1,1)
+        const positions2 = store.getRangeFillPositions({ row: 2, col: 2 });
+        // (1,1) is occupied, so should fill (1,2), (2,1), (2,2)
+        expect(positions2).toHaveLength(3);
+
+        store.addBlockInstancesBatch('block-1', positions2);
+        store.setRangeFillAnchor({ row: 2, col: 2 });
+
+        // Total should be 7 blocks
+        expect(usePatternDesignerStore.getState().pattern.blockInstances).toHaveLength(7);
       });
     });
   });

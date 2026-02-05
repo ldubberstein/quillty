@@ -25,13 +25,15 @@ import type {
   ShapeSelectionType,
   UUID,
 } from './types';
-import { DEFAULT_PALETTE, DEFAULT_GRID_SIZE } from './constants';
-import type { Operation, BatchOperation, ResizeGridOperation } from './history/operations';
+import { DEFAULT_PALETTE, DEFAULT_GRID_SIZE, MAX_PALETTE_ROLES, ADDITIONAL_ROLE_COLORS } from './constants';
+import type { Operation, BatchOperation, ResizeGridOperation, AddRoleOperation, RemoveRoleOperation, RenameRoleOperation, ShapeRoleState } from './history/operations';
 import {
   applyOperationToShapes,
   applyOperationToPalette,
   applyOperationToGridSize,
   getShapesOutOfBounds,
+  extractRolesFromShape,
+  getShapesUsingRole as getShapesUsingRoleHelper,
 } from './history/operations';
 import type { UndoManagerState } from './history/undoManager';
 import {
@@ -112,6 +114,9 @@ interface BlockDesignerState {
 
   /** Cell being hovered during placement mode (for ghost preview) */
   hoveredCell: GridPosition | null;
+
+  /** Anchor position for shift-click range fill (null if no anchor set) */
+  rangeFillAnchor: GridPosition | null;
 }
 
 interface BlockDesignerActions {
@@ -165,6 +170,16 @@ interface BlockDesignerActions {
   // Palette
   /** Change a palette role's color */
   setRoleColor: (roleId: FabricRoleId, color: string) => void;
+  /** Add a new fabric role to the palette */
+  addRole: (name?: string, color?: string) => string;
+  /** Remove a fabric role from the palette (reassigns shapes to fallback role) */
+  removeRole: (roleId: FabricRoleId, fallbackRoleId?: FabricRoleId) => void;
+  /** Rename a fabric role */
+  renameRole: (roleId: FabricRoleId, newName: string) => void;
+  /** Check if a role can be removed (not the last one) */
+  canRemoveRole: () => boolean;
+  /** Get shapes that use a specific role */
+  getShapesUsingRole: (roleId: FabricRoleId) => Shape[];
 
   // Mode management
   /** Set the designer mode */
@@ -219,6 +234,12 @@ interface BlockDesignerActions {
   setHoveredCell: (position: GridPosition | null) => void;
   /** Clear shape selection and exit placing mode */
   clearShapeSelection: () => void;
+
+  // Range fill (shift-click)
+  /** Set the anchor position for range fill */
+  setRangeFillAnchor: (position: GridPosition | null) => void;
+  /** Get empty positions in range from anchor to given position */
+  getRangeFillPositions: (endPosition: GridPosition) => GridPosition[];
 }
 
 export type BlockDesignerStore = BlockDesignerState & BlockDesignerActions;
@@ -239,6 +260,7 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
     previewRotationPreset: 'all_same',
     selectedShapeType: null,
     hoveredCell: null,
+    rangeFillAnchor: null,
 
     // Block management
     initBlock: (gridSize = DEFAULT_GRID_SIZE, creatorId = '') => {
@@ -252,6 +274,7 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
         state.previewRotationPreset = 'all_same';
         state.selectedShapeType = null;
         state.hoveredCell = null;
+        state.rangeFillAnchor = null;
       });
     },
 
@@ -266,6 +289,7 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
         state.previewRotationPreset = 'all_same';
         state.selectedShapeType = null;
         state.hoveredCell = null;
+        state.rangeFillAnchor = null;
       });
     },
 
@@ -569,6 +593,144 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
           state.undoManager = recordOperation(state.undoManager, operation);
         }
       });
+    },
+
+    addRole: (name, color) => {
+      const palette = get().block.previewPalette;
+
+      // Enforce maximum
+      if (palette.roles.length >= MAX_PALETTE_ROLES) {
+        return '';
+      }
+
+      // Generate unique ID
+      const existingIds = new Set(palette.roles.map((r) => r.id));
+      let newId = `accent${palette.roles.length - 1}`;
+      let counter = palette.roles.length;
+      while (existingIds.has(newId)) {
+        newId = `accent${counter++}`;
+      }
+
+      // Pick a default color from the additional colors array
+      const colorIndex = (palette.roles.length - 4) % ADDITIONAL_ROLE_COLORS.length;
+      const defaultColor = ADDITIONAL_ROLE_COLORS[Math.max(0, colorIndex)] ?? '#808080';
+
+      const newRole = {
+        id: newId,
+        name: name ?? `Accent ${palette.roles.length - 1}`,
+        color: color ?? defaultColor,
+      };
+
+      set((state) => {
+        state.block.previewPalette.roles.push(newRole);
+        state.block.updatedAt = getCurrentTimestamp();
+
+        // Record operation for undo
+        const operation: AddRoleOperation = { type: 'add_role', role: newRole };
+        state.undoManager = recordOperation(state.undoManager, operation);
+      });
+
+      return newId;
+    },
+
+    removeRole: (roleId, fallbackRoleId) => {
+      const palette = get().block.previewPalette;
+      const shapes = get().block.shapes;
+
+      // Cannot remove last role
+      if (palette.roles.length <= 1) return;
+
+      // Find the role to remove
+      const roleIndex = palette.roles.findIndex((r) => r.id === roleId);
+      if (roleIndex === -1) return;
+
+      const removedRole = palette.roles[roleIndex];
+
+      // Determine fallback (first remaining role if not specified)
+      const fallback =
+        fallbackRoleId ?? (palette.roles[0].id === roleId ? palette.roles[1].id : palette.roles[0].id);
+
+      // Find affected shapes and record their current role assignments
+      const affectedShapes: Array<{ shapeId: string; prevRoles: ShapeRoleState }> = [];
+
+      for (const shape of shapes) {
+        const usesRole = getShapesUsingRoleHelper([shape], roleId).length > 0;
+        if (usesRole) {
+          affectedShapes.push({
+            shapeId: shape.id,
+            prevRoles: extractRolesFromShape(shape),
+          });
+        }
+      }
+
+      set((state) => {
+        // Reassign shapes to fallback role
+        for (const shape of state.block.shapes) {
+          if (shape.type === 'square' || shape.type === 'hst') {
+            if (shape.fabricRole === roleId) {
+              shape.fabricRole = fallback;
+            }
+          }
+          if (shape.type === 'hst' && shape.secondaryFabricRole === roleId) {
+            shape.secondaryFabricRole = fallback;
+          }
+          if (shape.type === 'flying_geese') {
+            const fg = shape as FlyingGeeseShape;
+            if (fg.partFabricRoles.goose === roleId) fg.partFabricRoles.goose = fallback;
+            if (fg.partFabricRoles.sky1 === roleId) fg.partFabricRoles.sky1 = fallback;
+            if (fg.partFabricRoles.sky2 === roleId) fg.partFabricRoles.sky2 = fallback;
+          }
+        }
+
+        // Remove role from palette
+        state.block.previewPalette.roles.splice(roleIndex, 1);
+        state.block.updatedAt = getCurrentTimestamp();
+
+        // Clear active fabric role if it was the removed one
+        if (state.activeFabricRole === roleId) {
+          state.activeFabricRole = null;
+          if (state.mode === 'paint_mode') {
+            state.mode = 'idle';
+          }
+        }
+
+        // Record operation for undo
+        const operation: RemoveRoleOperation = {
+          type: 'remove_role',
+          role: removedRole,
+          index: roleIndex,
+          affectedShapes,
+          fallbackRoleId: fallback,
+        };
+        state.undoManager = recordOperation(state.undoManager, operation);
+      });
+    },
+
+    renameRole: (roleId, newName) => {
+      const role = get().block.previewPalette.roles.find((r) => r.id === roleId);
+      if (!role) return;
+
+      const prevName = role.name;
+
+      set((state) => {
+        const stateRole = state.block.previewPalette.roles.find((r) => r.id === roleId);
+        if (stateRole) {
+          stateRole.name = newName;
+          state.block.updatedAt = getCurrentTimestamp();
+
+          // Record operation for undo
+          const operation: RenameRoleOperation = { type: 'rename_role', roleId, prevName, nextName: newName };
+          state.undoManager = recordOperation(state.undoManager, operation);
+        }
+      });
+    },
+
+    canRemoveRole: () => {
+      return get().block.previewPalette.roles.length > 1;
+    },
+
+    getShapesUsingRole: (roleId) => {
+      return getShapesUsingRoleHelper(get().block.shapes, roleId);
     },
 
     // Mode management
@@ -1026,7 +1188,37 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
           state.mode = 'idle';
         }
         state.flyingGeesePlacement = null;
+        state.rangeFillAnchor = null;
       });
+    },
+
+    // Range fill (shift-click)
+    setRangeFillAnchor: (position) => {
+      set((state) => {
+        state.rangeFillAnchor = position;
+      });
+    },
+
+    getRangeFillPositions: (endPosition) => {
+      const anchor = get().rangeFillAnchor;
+      if (!anchor) return [endPosition];
+
+      // Calculate rectangular range
+      const minRow = Math.min(anchor.row, endPosition.row);
+      const maxRow = Math.max(anchor.row, endPosition.row);
+      const minCol = Math.min(anchor.col, endPosition.col);
+      const maxCol = Math.max(anchor.col, endPosition.col);
+
+      const positions: GridPosition[] = [];
+      for (let row = minRow; row <= maxRow; row++) {
+        for (let col = minCol; col <= maxCol; col++) {
+          // Only include empty positions
+          if (!get().isCellOccupied({ row, col })) {
+            positions.push({ row, col });
+          }
+        }
+      }
+      return positions;
     },
   }))
 );
@@ -1093,3 +1285,6 @@ export const useIsPlacingShape = () =>
 
 /** Get the current block grid size */
 export const useBlockGridSize = () => useBlockDesignerStore((state) => state.block.gridSize);
+
+/** Get the current range fill anchor position */
+export const useBlockRangeFillAnchor = () => useBlockDesignerStore((state) => state.rangeFillAnchor);

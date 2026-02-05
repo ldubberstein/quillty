@@ -102,6 +102,8 @@ export {
   useCanRedo as usePatternCanRedo,
   // Placement rotation selector hook
   usePlacementRotation,
+  // Range fill selector hook
+  useRangeFillAnchor,
 } from './store';
 
 export type { PatternDesignerStore } from './store';

@@ -47,7 +47,7 @@ describe('EmptyCell', () => {
   });
 
   describe('click handling', () => {
-    it('calls onClick with row and col when clicked', async () => {
+    it('calls onClick with row, col, and shiftKey when clicked', async () => {
       await act(async () => {
         render(<EmptyCell {...defaultProps} onClick={mockOnClick} />);
       });
@@ -55,7 +55,18 @@ describe('EmptyCell', () => {
       const rect = screen.getByTestId('konva-rect');
       fireEvent.click(rect);
 
-      expect(mockOnClick).toHaveBeenCalledWith(1, 2);
+      expect(mockOnClick).toHaveBeenCalledWith(1, 2, false);
+    });
+
+    it('calls onClick with shiftKey=true when shift-clicked', async () => {
+      await act(async () => {
+        render(<EmptyCell {...defaultProps} onClick={mockOnClick} />);
+      });
+
+      const rect = screen.getByTestId('konva-rect');
+      fireEvent.click(rect, { shiftKey: true });
+
+      expect(mockOnClick).toHaveBeenCalledWith(1, 2, true);
     });
 
     it('does not throw when onClick is not provided', async () => {
@@ -172,7 +183,7 @@ describe('EmptyCell', () => {
       const rect = screen.getByTestId('konva-rect');
       fireEvent.click(rect);
 
-      expect(mockOnClick).toHaveBeenCalledWith(5, 3);
+      expect(mockOnClick).toHaveBeenCalledWith(5, 3, false);
     });
   });
 });

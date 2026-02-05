@@ -1,0 +1,1 @@
+export { getRectangularRange } from './grid';

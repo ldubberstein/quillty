@@ -53,7 +53,24 @@ vi.mock('react-konva', () => ({
       {children}
     </div>
   ),
-  Rect: (props: Record<string, unknown>) => <div data-testid="konva-rect" {...props} />,
+  Rect: ({
+    onClick,
+    onTap,
+    ...props
+  }: {
+    onClick?: (e: { evt: MouseEvent }) => void;
+    onTap?: (e: { evt: TouchEvent }) => void;
+    [key: string]: unknown;
+  }) => (
+    <div
+      data-testid="konva-rect"
+      onClick={(e) => {
+        // Wrap DOM event in Konva-like event structure
+        if (onClick) onClick({ evt: e.nativeEvent as MouseEvent });
+      }}
+      {...props}
+    />
+  ),
   Line: (props: Record<string, unknown>) => <div data-testid="konva-line" {...props} />,
 }));
 
