@@ -130,7 +130,7 @@ describe('Block API Schemas', () => {
       expect(() => CreateBlockInputSchema.parse(invalidInput)).toThrow();
     });
 
-    it('should only accept valid grid sizes (2-8)', () => {
+    it('should only accept valid grid sizes (2-9)', () => {
       expect(CreateBlockInputSchema.parse({ ...validInput, gridSize: 2 }).gridSize).toBe(2);
       expect(CreateBlockInputSchema.parse({ ...validInput, gridSize: 3 }).gridSize).toBe(3);
       expect(CreateBlockInputSchema.parse({ ...validInput, gridSize: 4 }).gridSize).toBe(4);
@@ -138,9 +138,10 @@ describe('Block API Schemas', () => {
       expect(CreateBlockInputSchema.parse({ ...validInput, gridSize: 6 }).gridSize).toBe(6);
       expect(CreateBlockInputSchema.parse({ ...validInput, gridSize: 7 }).gridSize).toBe(7);
       expect(CreateBlockInputSchema.parse({ ...validInput, gridSize: 8 }).gridSize).toBe(8);
+      expect(CreateBlockInputSchema.parse({ ...validInput, gridSize: 9 }).gridSize).toBe(9);
 
       expect(() => CreateBlockInputSchema.parse({ ...validInput, gridSize: 1 })).toThrow();
-      expect(() => CreateBlockInputSchema.parse({ ...validInput, gridSize: 9 })).toThrow();
+      expect(() => CreateBlockInputSchema.parse({ ...validInput, gridSize: 10 })).toThrow();
     });
 
     it('should reject invalid thumbnail URL', () => {
@@ -184,7 +185,7 @@ describe('Block API Schemas', () => {
     it('should apply same validation rules as create', () => {
       expect(() => UpdateBlockInputSchema.parse({ name: '' })).toThrow();
       expect(() => UpdateBlockInputSchema.parse({ name: 'a'.repeat(101) })).toThrow();
-      expect(() => UpdateBlockInputSchema.parse({ gridSize: 9 })).toThrow();
+      expect(() => UpdateBlockInputSchema.parse({ gridSize: 10 })).toThrow();
     });
   });
 });

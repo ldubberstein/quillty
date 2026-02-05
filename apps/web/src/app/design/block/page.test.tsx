@@ -89,7 +89,7 @@ vi.mock('@quillty/core', () => ({
   useIsPlacingShape: vi.fn(() => false),
   useBlockGridSize: vi.fn(() => 3),
   DEFAULT_GRID_SIZE: 3,
-  GRID_SIZES: [2, 3, 4, 5, 6, 7, 8],
+  GRID_SIZES: [2, 3, 4, 5, 6, 7, 8, 9],
   serializeBlockForDb: vi.fn(() => ({
     name: 'Test Block',
     gridSize: 3,

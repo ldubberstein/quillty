@@ -19,8 +19,8 @@ export type Timestamp = string;
 /** Hex color string (e.g., "#FF5733") */
 export type HexColor = string;
 
-/** Grid sizes allowed for block design (2×2 through 8×8) */
-export type GridSize = 2 | 3 | 4 | 5 | 6 | 7 | 8;
+/** Grid sizes allowed for block design (2×2 through 9×9) */
+export type GridSize = 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
 /** Rotation in degrees (90° increments) */
 export type Rotation = 0 | 90 | 180 | 270;

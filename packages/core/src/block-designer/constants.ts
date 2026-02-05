@@ -29,13 +29,13 @@ export const DEFAULT_PALETTE: Palette = {
 // =============================================================================
 
 /** Available grid sizes for block design */
-export const GRID_SIZES: GridSize[] = [2, 3, 4, 5, 6, 7, 8];
+export const GRID_SIZES: GridSize[] = [2, 3, 4, 5, 6, 7, 8, 9];
 
 /** Minimum block grid size */
 export const MIN_BLOCK_GRID_SIZE: GridSize = 2;
 
 /** Maximum block grid size */
-export const MAX_BLOCK_GRID_SIZE: GridSize = 8;
+export const MAX_BLOCK_GRID_SIZE: GridSize = 9;
 
 /** Default grid size for new blocks */
 export const DEFAULT_GRID_SIZE: GridSize = 3;

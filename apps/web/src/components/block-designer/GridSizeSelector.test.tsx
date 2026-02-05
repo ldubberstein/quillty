@@ -15,7 +15,7 @@ vi.mock('@quillty/core', () => ({
     return selector ? selector(state) : state;
   }),
   useBlockGridSize: vi.fn(() => mockGridSize),
-  GRID_SIZES: [2, 3, 4, 5, 6, 7, 8],
+  GRID_SIZES: [2, 3, 4, 5, 6, 7, 8, 9],
 }));
 
 import { GridSizeSelector } from './GridSizeSelector';
@@ -62,7 +62,7 @@ describe('GridSizeSelector', () => {
       fireEvent.click(screen.getByRole('button', { name: /change grid size/i }));
 
       const options = screen.getAllByRole('option');
-      expect(options).toHaveLength(7);
+      expect(options).toHaveLength(8);
       expect(screen.getByRole('option', { name: '2×2' })).toBeInTheDocument();
       expect(screen.getByRole('option', { name: '3×3' })).toBeInTheDocument();
       expect(screen.getByRole('option', { name: '4×4' })).toBeInTheDocument();
@@ -70,6 +70,7 @@ describe('GridSizeSelector', () => {
       expect(screen.getByRole('option', { name: '6×6' })).toBeInTheDocument();
       expect(screen.getByRole('option', { name: '7×7' })).toBeInTheDocument();
       expect(screen.getByRole('option', { name: '8×8' })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: '9×9' })).toBeInTheDocument();
     });
 
     it('marks current size as selected', () => {
