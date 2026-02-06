@@ -214,10 +214,3 @@ async function handleAccountUpdated(account: Stripe.Account): Promise<void> {
     });
   }
 }
-
-// Disable body parsing for webhook route (we need raw body for signature verification)
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};

@@ -227,7 +227,7 @@ export async function PATCH(
     if (input.thumbnailUrl !== undefined) updateData.thumbnail_url = input.thumbnailUrl;
     if (input.designData !== undefined) {
       updateData.design_data = input.designData;
-      updateData.piece_count = input.designData.shapes.length;
+      updateData.piece_count = input.designData.units.length;
     }
 
     // Update block

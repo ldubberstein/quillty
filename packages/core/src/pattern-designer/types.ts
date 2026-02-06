@@ -57,6 +57,9 @@ export type PaletteOverrides = Record<FabricRoleId, string>;
 /** Corner treatment style for borders */
 export type BorderCornerStyle = 'butted' | 'mitered' | 'cornerstone';
 
+/** Overlap direction for butted corners */
+export type ButtedOverlapDirection = 'horizontal_over_vertical' | 'vertical_over_horizontal';
+
 /** Border style - plain (solid fabric) or pieced (uses blocks) */
 export type BorderStyle = 'plain' | 'pieced';
 
@@ -92,6 +95,8 @@ export interface Border {
   fabricRole: FabricRoleId;
   /** Corner treatment */
   cornerStyle: BorderCornerStyle;
+  /** Overlap direction for butted corners (only when cornerStyle === 'butted') */
+  buttedOverlap?: ButtedOverlapDirection;
   /** Cornerstone fabric role (only when cornerStyle === 'cornerstone') */
   cornerstoneFabricRole?: FabricRoleId;
   /** For pieced borders (Phase 3): block reference configuration */

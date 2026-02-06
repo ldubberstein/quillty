@@ -13,7 +13,7 @@ import {
   usePatternPalette,
   MAX_BORDERS,
 } from '@quillty/core';
-import type { Border, BorderCornerStyle, FabricRoleId } from '@quillty/core';
+import type { Border, BorderCornerStyle, ButtedOverlapDirection, FabricRoleId } from '@quillty/core';
 import { useSidebarPanel } from './SidebarContext';
 import { ColorSwatch, CollapsiblePanel } from '../shared';
 
@@ -274,6 +274,13 @@ function BorderEditor({
     [border.id, onUpdate]
   );
 
+  const handleButtedOverlapChange = useCallback(
+    (direction: ButtedOverlapDirection) => {
+      onUpdate(border.id, { buttedOverlap: direction });
+    },
+    [border.id, onUpdate]
+  );
+
   return (
     <div className="mt-3 p-3 bg-gray-50 rounded-lg space-y-3">
       {/* Width */}
@@ -297,12 +304,12 @@ function BorderEditor({
         <label className="block text-xs font-medium text-gray-600 mb-1">
           Corner Style
         </label>
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-1">
           {CORNER_STYLES.map((style) => (
             <button
               key={style.value}
               onClick={() => handleCornerStyleChange(style.value)}
-              className={`flex-1 px-2 py-1.5 text-xs rounded transition-colors ${
+              className={`px-2 py-1.5 text-xs rounded transition-colors ${
                 border.cornerStyle === style.value
                   ? 'bg-blue-600 text-white'
                   : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
@@ -314,12 +321,57 @@ function BorderEditor({
         </div>
       </div>
 
+      {/* Butted Overlap Direction (only for butted style) */}
+      {border.cornerStyle === 'butted' && (
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            Overlap
+          </label>
+          <div className="flex gap-1">
+            <button
+              onClick={() => handleButtedOverlapChange('horizontal_over_vertical')}
+              className={`flex-1 px-2 py-1.5 text-xs rounded transition-colors flex items-center justify-center gap-1 ${
+                (border.buttedOverlap ?? 'horizontal_over_vertical') === 'horizontal_over_vertical'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+              title="Top and bottom borders applied first"
+            >
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
+                <rect x="2" y="2" width="20" height="4" />
+                <rect x="2" y="18" width="20" height="4" />
+                <rect x="2" y="6" width="4" height="12" opacity="0.5" />
+                <rect x="18" y="6" width="4" height="12" opacity="0.5" />
+              </svg>
+              <span>Top/Bottom</span>
+            </button>
+            <button
+              onClick={() => handleButtedOverlapChange('vertical_over_horizontal')}
+              className={`flex-1 px-2 py-1.5 text-xs rounded transition-colors flex items-center justify-center gap-1 ${
+                border.buttedOverlap === 'vertical_over_horizontal'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+              title="Side borders applied first"
+            >
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
+                <rect x="2" y="2" width="4" height="20" />
+                <rect x="18" y="2" width="4" height="20" />
+                <rect x="6" y="2" width="12" height="4" opacity="0.5" />
+                <rect x="6" y="18" width="12" height="4" opacity="0.5" />
+              </svg>
+              <span>Sides</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Fabric Color */}
       <div>
         <label className="block text-xs font-medium text-gray-600 mb-1">
           Border Fabric
         </label>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {palette.roles.map((role) => (
             <ColorSwatch
               key={role.id}
@@ -339,7 +391,7 @@ function BorderEditor({
           <label className="block text-xs font-medium text-gray-600 mb-1">
             Cornerstone Fabric
           </label>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {palette.roles.map((role) => (
               <ColorSwatch
                 key={role.id}

@@ -2,14 +2,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 
 // Mock store state
-let mockSelectedShapeId: string | null = null;
-const mockRemoveShape = vi.fn();
+let mockSelectedUnitId: string | null = null;
+const mockRemoveUnit = vi.fn();
 
 vi.mock('@quillty/core', () => ({
   useBlockDesignerStore: vi.fn((selector) => {
     const state = {
-      selectedShapeId: mockSelectedShapeId,
-      removeShape: mockRemoveShape,
+      selectedUnitId: mockSelectedUnitId,
+      removeUnit: mockRemoveUnit,
     };
     return selector ? selector(state) : state;
   }),
@@ -20,7 +20,7 @@ import { useDeleteKeyboard } from './useDeleteKeyboard';
 describe('useDeleteKeyboard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSelectedShapeId = null;
+    mockSelectedUnitId = null;
   });
 
   afterEach(() => {
@@ -38,38 +38,38 @@ describe('useDeleteKeyboard', () => {
     return event;
   };
 
-  it('deletes selected shape when Delete key is pressed', () => {
-    mockSelectedShapeId = 'shape-1';
+  it('deletes selected unit when Delete key is pressed', () => {
+    mockSelectedUnitId = 'unit-1';
 
     renderHook(() => useDeleteKeyboard());
 
     simulateKeyDown('Delete');
 
-    expect(mockRemoveShape).toHaveBeenCalledWith('shape-1');
+    expect(mockRemoveUnit).toHaveBeenCalledWith('unit-1');
   });
 
-  it('deletes selected shape when Backspace key is pressed', () => {
-    mockSelectedShapeId = 'shape-2';
+  it('deletes selected unit when Backspace key is pressed', () => {
+    mockSelectedUnitId = 'unit-2';
 
     renderHook(() => useDeleteKeyboard());
 
     simulateKeyDown('Backspace');
 
-    expect(mockRemoveShape).toHaveBeenCalledWith('shape-2');
+    expect(mockRemoveUnit).toHaveBeenCalledWith('unit-2');
   });
 
-  it('does not call removeShape when no shape is selected', () => {
-    mockSelectedShapeId = null;
+  it('does not call removeUnit when no unit is selected', () => {
+    mockSelectedUnitId = null;
 
     renderHook(() => useDeleteKeyboard());
 
     simulateKeyDown('Delete');
 
-    expect(mockRemoveShape).not.toHaveBeenCalled();
+    expect(mockRemoveUnit).not.toHaveBeenCalled();
   });
 
   it('does not trigger when typing in an input', () => {
-    mockSelectedShapeId = 'shape-1';
+    mockSelectedUnitId = 'unit-1';
 
     renderHook(() => useDeleteKeyboard());
 
@@ -86,14 +86,14 @@ describe('useDeleteKeyboard', () => {
     Object.defineProperty(event, 'target', { value: input, writable: false });
     document.dispatchEvent(event);
 
-    expect(mockRemoveShape).not.toHaveBeenCalled();
+    expect(mockRemoveUnit).not.toHaveBeenCalled();
 
     // Clean up
     document.body.removeChild(input);
   });
 
   it('does not trigger when typing in a textarea', () => {
-    mockSelectedShapeId = 'shape-1';
+    mockSelectedUnitId = 'unit-1';
 
     renderHook(() => useDeleteKeyboard());
 
@@ -108,13 +108,13 @@ describe('useDeleteKeyboard', () => {
     Object.defineProperty(event, 'target', { value: textarea, writable: false });
     document.dispatchEvent(event);
 
-    expect(mockRemoveShape).not.toHaveBeenCalled();
+    expect(mockRemoveUnit).not.toHaveBeenCalled();
 
     document.body.removeChild(textarea);
   });
 
   it('does not trigger when typing in a contenteditable element', () => {
-    mockSelectedShapeId = 'shape-1';
+    mockSelectedUnitId = 'unit-1';
 
     renderHook(() => useDeleteKeyboard());
 
@@ -131,11 +131,11 @@ describe('useDeleteKeyboard', () => {
     Object.defineProperty(event, 'target', { value: mockTarget, writable: false });
     document.dispatchEvent(event);
 
-    expect(mockRemoveShape).not.toHaveBeenCalled();
+    expect(mockRemoveUnit).not.toHaveBeenCalled();
   });
 
   it('does not trigger for other keys', () => {
-    mockSelectedShapeId = 'shape-1';
+    mockSelectedUnitId = 'unit-1';
 
     renderHook(() => useDeleteKeyboard());
 
@@ -143,11 +143,11 @@ describe('useDeleteKeyboard', () => {
     simulateKeyDown('Escape');
     simulateKeyDown('a');
 
-    expect(mockRemoveShape).not.toHaveBeenCalled();
+    expect(mockRemoveUnit).not.toHaveBeenCalled();
   });
 
   it('removes event listener on unmount', () => {
-    mockSelectedShapeId = 'shape-1';
+    mockSelectedUnitId = 'unit-1';
 
     const { unmount } = renderHook(() => useDeleteKeyboard());
 
@@ -155,6 +155,6 @@ describe('useDeleteKeyboard', () => {
 
     simulateKeyDown('Delete');
 
-    expect(mockRemoveShape).not.toHaveBeenCalled();
+    expect(mockRemoveUnit).not.toHaveBeenCalled();
   });
 });

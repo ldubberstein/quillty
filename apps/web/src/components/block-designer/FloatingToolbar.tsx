@@ -6,9 +6,9 @@ import { useEscapeDismiss } from '@/hooks/useEscapeDismiss';
 interface FloatingToolbarProps {
   /** Screen position where toolbar should appear */
   position: { x: number; y: number };
-  /** Whether the shape can be rotated (HST, Flying Geese) */
+  /** Whether the unit can be rotated (HST, Flying Geese) */
   canRotate: boolean;
-  /** Whether the shape can be flipped (HST, Flying Geese) */
+  /** Whether the unit can be flipped (HST, Flying Geese) */
   canFlip: boolean;
   /** Callback when rotate is clicked */
   onRotate: () => void;
@@ -23,13 +23,13 @@ interface FloatingToolbarProps {
 }
 
 /**
- * FloatingToolbar - Toolbar that appears above selected shapes
+ * FloatingToolbar - Toolbar that appears above selected units
  *
- * Provides quick actions for shape manipulation:
+ * Provides quick actions for unit manipulation:
  * - Rotate 90° clockwise
  * - Flip horizontally
  * - Flip vertically
- * - Delete shape
+ * - Delete unit
  */
 export function FloatingToolbar({
   position,
@@ -60,7 +60,7 @@ export function FloatingToolbar({
         marginTop: '-8px',
       }}
       role="toolbar"
-      aria-label="Shape tools"
+      aria-label="Unit tools"
     >
       {/* Rotate 90° */}
       {canRotate && (
@@ -105,8 +105,8 @@ export function FloatingToolbar({
       <button
         onClick={onDelete}
         className="flex items-center justify-center w-10 h-10 rounded hover:bg-red-50 focus:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors"
-        title="Delete shape"
-        aria-label="Delete shape"
+        title="Delete unit"
+        aria-label="Delete unit"
       >
         <Trash2 className="w-5 h-5 text-red-600" />
       </button>

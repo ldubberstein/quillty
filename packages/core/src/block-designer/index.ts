@@ -12,14 +12,14 @@ export type {
   HexColor,
   GridSize,
   Rotation,
-  // Shape types
-  ShapeType,
+  // Unit types
+  UnitType,
   HstVariant,
   FlyingGeeseDirection,
-  FlyingGeesePartId,
-  FlyingGeesePartRoles,
-  QstPartId,
-  QstPartRoles,
+  FlyingGeesePatchId,
+  FlyingGeesePatchRoles,
+  QstPatchId,
+  QstPatchRoles,
   // Grid & position
   GridPosition,
   Span,
@@ -28,27 +28,27 @@ export type {
   StandardFabricRoleId,
   FabricRole,
   Palette,
-  // Shapes
-  BaseShape,
-  SquareShape,
-  HstShape,
-  FlyingGeeseShape,
-  QstShape,
-  Shape,
+  // Units
+  BaseUnit,
+  SquareUnit,
+  HstUnit,
+  FlyingGeeseUnit,
+  QstUnit,
+  Unit,
   // Block
   BlockStatus,
   Block,
-  // Shape creation inputs
+  // Unit creation inputs
   CreateSquareInput,
   CreateHstInput,
   CreateFlyingGeeseInput,
   CreateQstInput,
-  CreateShapeInput,
+  CreateUnitInput,
   // Designer state
   DesignerMode,
   FlyingGeesePlacementState,
   PreviewRotationPreset,
-  ShapeSelectionType,
+  UnitSelectionType,
 } from './types';
 
 // Schemas
@@ -59,14 +59,14 @@ export {
   HexColorSchema,
   GridSizeSchema,
   RotationSchema,
-  // Shape type schemas
-  ShapeTypeSchema,
+  // Unit type schemas
+  UnitTypeSchema,
   HstVariantSchema,
   FlyingGeeseDirectionSchema,
-  FlyingGeesePartIdSchema,
-  FlyingGeesePartRolesSchema,
-  QstPartIdSchema,
-  QstPartRolesSchema,
+  FlyingGeesePatchIdSchema,
+  FlyingGeesePatchRolesSchema,
+  QstPatchIdSchema,
+  QstPatchRolesSchema,
   // Grid & position schemas
   GridPositionSchema,
   SpanSchema,
@@ -75,12 +75,12 @@ export {
   FabricRoleIdSchema,
   FabricRoleSchema,
   PaletteSchema,
-  // Shape schemas
-  SquareShapeSchema,
-  HstShapeSchema,
-  FlyingGeeseShapeSchema,
-  QstShapeSchema,
-  ShapeSchema,
+  // Unit schemas
+  SquareUnitSchema,
+  HstUnitSchema,
+  FlyingGeeseUnitSchema,
+  QstUnitSchema,
+  UnitSchema,
   // Block schemas
   BlockStatusSchema,
   BlockSchema,
@@ -90,7 +90,7 @@ export {
   CreateFlyingGeeseInputSchema,
   CreateQstInputSchema,
   // Inferred types
-  type ValidatedShape,
+  type ValidatedUnit,
   type ValidatedBlock,
   type ValidatedPalette,
   type ValidatedFabricRole,
@@ -110,7 +110,7 @@ export {
   BLOCK_DESCRIPTION_MAX_LENGTH,
   HASHTAG_MAX_LENGTH,
   MIN_TOUCH_TARGET_SIZE,
-  SHAPE_PICKER_BUTTON_SIZE,
+  UNIT_PICKER_BUTTON_SIZE,
   FABRIC_ROLE_IDS,
   MAX_PALETTE_ROLES,
   MIN_PALETTE_ROLES,
@@ -121,7 +121,7 @@ export {
 export {
   useBlockDesignerStore,
   useBlock,
-  useSelectedShape,
+  useSelectedUnit,
   usePalette,
   useRoleColor,
   useDesignerMode,
@@ -131,9 +131,9 @@ export {
   useCanRedo,
   useIsPreviewMode,
   usePreviewRotationPreset,
-  useSelectedShapeType,
+  useSelectedUnitType,
   useHoveredCell,
-  useIsPlacingShape,
+  useIsPlacingUnit,
   useBlockGridSize,
   useBlockRangeFillAnchor,
   type BlockDesignerStore,
@@ -160,9 +160,52 @@ export {
   deserializeBlockFromDb,
   extractHashtags,
   validateBlockForPublish,
+  migrateUnits,
   type BlockDesignData,
   type BlockPersistData,
 } from './persistence';
 
-// Legacy class (deprecated - use useBlockDesignerStore instead)
-// export { BlockDesigner } from './BlockDesigner';
+// Unit Registry (scalable unit system)
+export {
+  unitRegistry,
+  triangleToFlatPoints as registryTriangleToFlatPoints,
+  type UnitDefinition,
+  type UnitConfig,
+  type IUnitRegistry,
+  type Point as RegistryPoint,
+  type Triangle as RegistryTriangle,
+  type TriangleGroup,
+  type PatchDefinition,
+  type VariantDefinition,
+  type ThumbnailDefinition,
+  type SvgPath,
+  type PlacementMode,
+  type PlacementValidation,
+  type SpanBehavior,
+  type UnitCategory,
+} from './shape-registry';
+
+// Unit Definitions (import to trigger registration)
+import './shapes';
+
+// Export individual unit definitions for direct access
+export {
+  squareDefinition,
+  hstDefinition,
+  qstDefinition,
+  flyingGeeseDefinition,
+} from './shapes';
+
+// Unit Bridge (registry-driven dispatch for store and renderers)
+export {
+  toUnitConfig,
+  getAllRoleIds,
+  unitUsesRole,
+  applyRotation,
+  applyFlipHorizontal,
+  applyFlipVertical,
+  assignPatchRole,
+  replaceRole,
+  getUnitTrianglesWithColors,
+  getSpanForUnit,
+} from './unit-bridge';

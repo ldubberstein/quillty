@@ -11,8 +11,9 @@ import {
   useBlockInstances,
   usePatternPalette,
   DEFAULT_PALETTE,
+  migrateUnits,
 } from '@quillty/core';
-import type { Block as CoreBlock, Shape, Palette, PaletteOverrides } from '@quillty/core';
+import type { Block as CoreBlock, Unit, Palette, PaletteOverrides } from '@quillty/core';
 import type { Block } from '@quillty/api';
 
 // Dynamic import for BlockThumbnail (uses Konva)
@@ -69,7 +70,7 @@ function VariantItem({ block, overrides, index, palette, onSelect }: VariantItem
       title={`Variant ${index + 1}`}
     >
       <BlockThumbnail
-        shapes={block.shapes}
+        units={block.units}
         gridSize={block.gridSize}
         palette={mergedPalette}
         size={32}
@@ -119,8 +120,8 @@ function BlockInPattern({ blockId }: BlockWithVariantsProps) {
     }
   }, [debouncedKey]);
 
-  // Don't render if block isn't cached or has no shapes
-  if (!block || !block.shapes) return null;
+  // Don't render if block isn't cached or has no units
+  if (!block || !block.units) return null;
 
   const isSelected = selectedLibraryBlockId === blockId;
 
@@ -145,7 +146,7 @@ function BlockInPattern({ blockId }: BlockWithVariantsProps) {
         }`}
       >
         <BlockThumbnail
-          shapes={block.shapes}
+          units={block.units}
           gridSize={block.gridSize}
           palette={palette}
           size={40}
@@ -240,9 +241,9 @@ export function BlockLibraryPanel() {
   const blocks = blocksResponse?.data ?? [];
 
   // Parse design_data from block (stored as JSON in database)
-  const parseBlockDesignData = useCallback((block: Block): { shapes: Shape[]; previewPalette: Palette } => {
+  const parseBlockDesignData = useCallback((block: Block): { units: Unit[]; previewPalette: Palette } => {
     if (!block.design_data) {
-      return { shapes: [], previewPalette: DEFAULT_PALETTE };
+      return { units: [], previewPalette: DEFAULT_PALETTE };
     }
     try {
       const designData =
@@ -250,11 +251,12 @@ export function BlockLibraryPanel() {
           ? JSON.parse(block.design_data)
           : block.design_data;
       return {
-        shapes: designData.shapes ?? [],
+        // Support legacy format where units were stored as "shapes"
+        units: migrateUnits(designData.units ?? designData.shapes ?? []),
         previewPalette: designData.previewPalette ?? DEFAULT_PALETTE,
       };
     } catch {
-      return { shapes: [], previewPalette: DEFAULT_PALETTE };
+      return { units: [], previewPalette: DEFAULT_PALETTE };
     }
   }, []);
 
@@ -262,7 +264,7 @@ export function BlockLibraryPanel() {
     (block: Block) => {
       selectLibraryBlock(block.id);
       // Transform API block to CoreBlock format for caching
-      const { shapes, previewPalette } = parseBlockDesignData(block);
+      const { units, previewPalette } = parseBlockDesignData(block);
       const coreBlock: CoreBlock = {
         id: block.id,
         creatorId: block.creator_id || '',
@@ -271,7 +273,7 @@ export function BlockLibraryPanel() {
         description: null,
         hashtags: [],
         gridSize: block.grid_size || 3,
-        shapes,
+        units,
         previewPalette,
         fabricRequirements: [],
         cuttingInstructions: [],
@@ -368,7 +370,7 @@ export function BlockLibraryPanel() {
             {!isLoading && !error && blocks.length > 0 && (
               <div className="grid grid-cols-2 gap-2">
                 {blocks.map((block) => {
-                  const { shapes, previewPalette } = parseBlockDesignData(block);
+                  const { units, previewPalette } = parseBlockDesignData(block);
                   return (
                     <div
                       key={block.id}
@@ -381,7 +383,7 @@ export function BlockLibraryPanel() {
                     >
                       <div className="flex justify-center">
                         <BlockThumbnail
-                          shapes={shapes}
+                          units={units}
                           gridSize={block.grid_size || 3}
                           palette={previewPalette}
                           size={70}

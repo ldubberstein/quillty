@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useBlockDesignerStore } from './store';
 import { DEFAULT_GRID_SIZE, DEFAULT_PALETTE } from './constants';
-import type { Block, GridPosition, HstVariant, FlyingGeeseDirection, SquareShape, HstShape, FlyingGeeseShape, QstShape } from './types';
+import type { Block, GridPosition, HstVariant, FlyingGeeseDirection, SquareUnit, HstUnit, FlyingGeeseUnit, QstUnit } from './types';
 import { createUndoManagerState } from './history/undoManager';
 
 // Helper to reset store state before each test
@@ -21,20 +21,20 @@ function resetStore() {
       description: null,
       hashtags: [],
       gridSize: DEFAULT_GRID_SIZE,
-      shapes: [],
+      units: [],
       previewPalette: { ...DEFAULT_PALETTE, roles: [...DEFAULT_PALETTE.roles] },
       status: 'draft',
       publishedAt: null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
-    selectedShapeId: null,
+    selectedUnitId: null,
     activeFabricRole: null,
     mode: 'idle',
     flyingGeesePlacement: null,
     undoManager: createUndoManagerState(),
     previewRotationPreset: 'all_same',
-    selectedShapeType: null,
+    selectedUnitType: null,
     hoveredCell: null,
     rangeFillAnchor: null,
   });
@@ -56,7 +56,7 @@ describe('BlockDesignerStore', () => {
 
       const { block } = useBlockDesignerStore.getState();
       expect(block.gridSize).toBe(DEFAULT_GRID_SIZE);
-      expect(block.shapes).toHaveLength(0);
+      expect(block.units).toHaveLength(0);
       expect(block.title).toBe('');
       expect(block.status).toBe('draft');
     });
@@ -80,15 +80,15 @@ describe('BlockDesignerStore', () => {
     it('resets all designer state', () => {
       // Set up some state first
       useBlockDesignerStore.getState().addSquare({ row: 0, col: 0 });
-      const shapeId = useBlockDesignerStore.getState().block.shapes[0].id;
-      useBlockDesignerStore.getState().selectShape(shapeId);
+      const unitId = useBlockDesignerStore.getState().block.units[0].id;
+      useBlockDesignerStore.getState().selectUnit(unitId);
       useBlockDesignerStore.getState().setActiveFabricRole('accent1');
 
       // Now init a new block
       useBlockDesignerStore.getState().initBlock();
 
       const state = useBlockDesignerStore.getState();
-      expect(state.selectedShapeId).toBeNull();
+      expect(state.selectedUnitId).toBeNull();
       expect(state.activeFabricRole).toBeNull();
       expect(state.mode).toBe('idle');
       expect(state.flyingGeesePlacement).toBeNull();
@@ -105,7 +105,7 @@ describe('BlockDesignerStore', () => {
         description: 'A test block',
         hashtags: ['test', 'quilt'],
         gridSize: 4,
-        shapes: [],
+        units: [],
         previewPalette: DEFAULT_PALETTE,
         status: 'published',
         publishedAt: '2024-01-01T00:00:00Z',
@@ -125,8 +125,8 @@ describe('BlockDesignerStore', () => {
 
     it('resets designer state when loading', () => {
       useBlockDesignerStore.getState().addSquare({ row: 0, col: 0 });
-      const shapeId = useBlockDesignerStore.getState().block.shapes[0].id;
-      useBlockDesignerStore.getState().selectShape(shapeId);
+      const unitId = useBlockDesignerStore.getState().block.units[0].id;
+      useBlockDesignerStore.getState().selectUnit(unitId);
 
       const newBlock: Block = {
         id: 'new-block',
@@ -136,7 +136,7 @@ describe('BlockDesignerStore', () => {
         description: null,
         hashtags: [],
         gridSize: 3,
-        shapes: [],
+        units: [],
         previewPalette: DEFAULT_PALETTE,
         status: 'draft',
         publishedAt: null,
@@ -147,7 +147,7 @@ describe('BlockDesignerStore', () => {
       useBlockDesignerStore.getState().loadBlock(newBlock);
 
       const state = useBlockDesignerStore.getState();
-      expect(state.selectedShapeId).toBeNull();
+      expect(state.selectedUnitId).toBeNull();
       expect(state.mode).toBe('idle');
     });
   });
@@ -185,50 +185,50 @@ describe('BlockDesignerStore', () => {
   });
 
   // ===========================================================================
-  // Shape Management
+  // Unit Management
   // ===========================================================================
 
   describe('addSquare', () => {
-    it('adds a square shape at specified position', () => {
+    it('adds a square unit at specified position', () => {
       const store = useBlockDesignerStore.getState();
       const position: GridPosition = { row: 1, col: 2 };
 
       const id = store.addSquare(position);
 
       const { block } = useBlockDesignerStore.getState();
-      expect(block.shapes).toHaveLength(1);
-      expect(block.shapes[0].type).toBe('square');
-      expect(block.shapes[0].position).toEqual(position);
-      expect(block.shapes[0].id).toBe(id);
+      expect(block.units).toHaveLength(1);
+      expect(block.units[0].type).toBe('square');
+      expect(block.units[0].position).toEqual(position);
+      expect(block.units[0].id).toBe(id);
     });
 
     it('uses default fabric role (background)', () => {
       const store = useBlockDesignerStore.getState();
       store.addSquare({ row: 0, col: 0 });
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0] as SquareShape;
-      expect(shape.fabricRole).toBe('background');
+      const unit = useBlockDesignerStore.getState().block.units[0] as SquareUnit;
+      expect(unit.fabricRole).toBe('background');
     });
 
     it('accepts custom fabric role', () => {
       const store = useBlockDesignerStore.getState();
       store.addSquare({ row: 0, col: 0 }, 'accent1');
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0] as SquareShape;
-      expect(shape.fabricRole).toBe('accent1');
+      const unit = useBlockDesignerStore.getState().block.units[0] as SquareUnit;
+      expect(unit.fabricRole).toBe('accent1');
     });
 
     it('sets span to 1x1', () => {
       const store = useBlockDesignerStore.getState();
       store.addSquare({ row: 0, col: 0 });
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0];
-      expect(shape.span).toEqual({ rows: 1, cols: 1 });
+      const unit = useBlockDesignerStore.getState().block.units[0];
+      expect(unit.span).toEqual({ rows: 1, cols: 1 });
     });
   });
 
   describe('addHst', () => {
-    it('adds an HST shape with specified variant', () => {
+    it('adds an HST unit with specified variant', () => {
       const store = useBlockDesignerStore.getState();
       const position: GridPosition = { row: 0, col: 0 };
       const variant: HstVariant = 'nw';
@@ -236,11 +236,11 @@ describe('BlockDesignerStore', () => {
       const id = store.addHst(position, variant);
 
       const { block } = useBlockDesignerStore.getState();
-      expect(block.shapes).toHaveLength(1);
-      expect(block.shapes[0].type).toBe('hst');
-      expect(block.shapes[0].id).toBe(id);
-      if (block.shapes[0].type === 'hst') {
-        expect(block.shapes[0].variant).toBe('nw');
+      expect(block.units).toHaveLength(1);
+      expect(block.units[0].type).toBe('hst');
+      expect(block.units[0].id).toBe(id);
+      if (block.units[0].type === 'hst') {
+        expect(block.units[0].variant).toBe('nw');
       }
     });
 
@@ -248,9 +248,9 @@ describe('BlockDesignerStore', () => {
       const store = useBlockDesignerStore.getState();
       store.addHst({ row: 0, col: 0 }, variant);
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0];
-      if (shape.type === 'hst') {
-        expect(shape.variant).toBe(variant);
+      const unit = useBlockDesignerStore.getState().block.units[0];
+      if (unit.type === 'hst') {
+        expect(unit.variant).toBe(variant);
       }
     });
 
@@ -258,37 +258,37 @@ describe('BlockDesignerStore', () => {
       const store = useBlockDesignerStore.getState();
       store.addHst({ row: 0, col: 0 }, 'nw');
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0] as HstShape;
-      expect(shape.fabricRole).toBe('background');
-      expect(shape.secondaryFabricRole).toBe('background');
+      const unit = useBlockDesignerStore.getState().block.units[0] as HstUnit;
+      expect(unit.fabricRole).toBe('background');
+      expect(unit.secondaryFabricRole).toBe('background');
     });
 
     it('accepts custom fabric roles', () => {
       const store = useBlockDesignerStore.getState();
       store.addHst({ row: 0, col: 0 }, 'nw', 'accent1', 'accent2');
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0] as HstShape;
-      expect(shape.fabricRole).toBe('accent1');
-      expect(shape.secondaryFabricRole).toBe('accent2');
+      const unit = useBlockDesignerStore.getState().block.units[0] as HstUnit;
+      expect(unit.fabricRole).toBe('accent1');
+      expect(unit.secondaryFabricRole).toBe('accent2');
     });
   });
 
   describe('addFlyingGeese', () => {
-    it('adds a Flying Geese shape with horizontal span for left/right', () => {
+    it('adds a Flying Geese unit with horizontal span for left/right', () => {
       const store = useBlockDesignerStore.getState();
       store.addFlyingGeese({ row: 0, col: 0 }, 'right');
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0];
-      expect(shape.type).toBe('flying_geese');
-      expect(shape.span).toEqual({ rows: 1, cols: 2 });
+      const unit = useBlockDesignerStore.getState().block.units[0];
+      expect(unit.type).toBe('flying_geese');
+      expect(unit.span).toEqual({ rows: 1, cols: 2 });
     });
 
-    it('adds a Flying Geese shape with vertical span for up/down', () => {
+    it('adds a Flying Geese unit with vertical span for up/down', () => {
       const store = useBlockDesignerStore.getState();
       store.addFlyingGeese({ row: 0, col: 0 }, 'down');
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0];
-      expect(shape.span).toEqual({ rows: 2, cols: 1 });
+      const unit = useBlockDesignerStore.getState().block.units[0];
+      expect(unit.span).toEqual({ rows: 2, cols: 1 });
     });
 
     it.each(['up', 'down', 'left', 'right'] as FlyingGeeseDirection[])(
@@ -298,9 +298,9 @@ describe('BlockDesignerStore', () => {
         const store = useBlockDesignerStore.getState();
         store.addFlyingGeese({ row: 0, col: 0 }, direction);
 
-        const shape = useBlockDesignerStore.getState().block.shapes[0];
-        if (shape.type === 'flying_geese') {
-          expect(shape.direction).toBe(direction);
+        const unit = useBlockDesignerStore.getState().block.units[0];
+        if (unit.type === 'flying_geese') {
+          expect(unit.direction).toBe(direction);
         }
       }
     );
@@ -309,44 +309,44 @@ describe('BlockDesignerStore', () => {
       const store = useBlockDesignerStore.getState();
       store.addFlyingGeese({ row: 0, col: 0 }, 'up');
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape;
-      expect(shape.partFabricRoles.goose).toBe('background');
-      expect(shape.partFabricRoles.sky1).toBe('background');
-      expect(shape.partFabricRoles.sky2).toBe('background');
+      const unit = useBlockDesignerStore.getState().block.units[0] as FlyingGeeseUnit;
+      expect(unit.patchFabricRoles.goose).toBe('background');
+      expect(unit.patchFabricRoles.sky1).toBe('background');
+      expect(unit.patchFabricRoles.sky2).toBe('background');
     });
   });
 
   describe('addQst', () => {
-    it('adds a QST shape at specified position', () => {
+    it('adds a QST unit at specified position', () => {
       const store = useBlockDesignerStore.getState();
       const position: GridPosition = { row: 0, col: 0 };
 
       const id = store.addQst(position);
 
       const { block } = useBlockDesignerStore.getState();
-      expect(block.shapes).toHaveLength(1);
-      expect(block.shapes[0].type).toBe('qst');
-      expect(block.shapes[0].id).toBe(id);
+      expect(block.units).toHaveLength(1);
+      expect(block.units[0].type).toBe('qst');
+      expect(block.units[0].id).toBe(id);
     });
 
-    it('creates a 1x1 span shape', () => {
+    it('creates a 1x1 span unit', () => {
       const store = useBlockDesignerStore.getState();
       store.addQst({ row: 0, col: 0 });
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0];
-      expect(shape.span).toEqual({ rows: 1, cols: 1 });
+      const unit = useBlockDesignerStore.getState().block.units[0];
+      expect(unit.span).toEqual({ rows: 1, cols: 1 });
     });
 
     it('uses default fabric roles (all background)', () => {
       const store = useBlockDesignerStore.getState();
       store.addQst({ row: 0, col: 0 });
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0];
-      if (shape.type === 'qst') {
-        expect(shape.partFabricRoles.top).toBe('background');
-        expect(shape.partFabricRoles.right).toBe('background');
-        expect(shape.partFabricRoles.bottom).toBe('background');
-        expect(shape.partFabricRoles.left).toBe('background');
+      const unit = useBlockDesignerStore.getState().block.units[0];
+      if (unit.type === 'qst') {
+        expect(unit.patchFabricRoles.top).toBe('background');
+        expect(unit.patchFabricRoles.right).toBe('background');
+        expect(unit.patchFabricRoles.bottom).toBe('background');
+        expect(unit.patchFabricRoles.left).toBe('background');
       }
     });
 
@@ -359,12 +359,12 @@ describe('BlockDesignerStore', () => {
         left: 'accent1',
       });
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0];
-      if (shape.type === 'qst') {
-        expect(shape.partFabricRoles.top).toBe('feature');
-        expect(shape.partFabricRoles.right).toBe('accent1');
-        expect(shape.partFabricRoles.bottom).toBe('feature');
-        expect(shape.partFabricRoles.left).toBe('accent1');
+      const unit = useBlockDesignerStore.getState().block.units[0];
+      if (unit.type === 'qst') {
+        expect(unit.patchFabricRoles.top).toBe('feature');
+        expect(unit.patchFabricRoles.right).toBe('accent1');
+        expect(unit.patchFabricRoles.bottom).toBe('feature');
+        expect(unit.patchFabricRoles.left).toBe('accent1');
       }
     });
 
@@ -372,18 +372,18 @@ describe('BlockDesignerStore', () => {
       const store = useBlockDesignerStore.getState();
       store.addQst({ row: 0, col: 0 }, { top: 'feature' });
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0];
-      if (shape.type === 'qst') {
-        expect(shape.partFabricRoles.top).toBe('feature');
-        expect(shape.partFabricRoles.right).toBe('background');
-        expect(shape.partFabricRoles.bottom).toBe('background');
-        expect(shape.partFabricRoles.left).toBe('background');
+      const unit = useBlockDesignerStore.getState().block.units[0];
+      if (unit.type === 'qst') {
+        expect(unit.patchFabricRoles.top).toBe('feature');
+        expect(unit.patchFabricRoles.right).toBe('background');
+        expect(unit.patchFabricRoles.bottom).toBe('background');
+        expect(unit.patchFabricRoles.left).toBe('background');
       }
     });
   });
 
-  describe('addShapesBatch', () => {
-    it('adds multiple square shapes at specified positions', () => {
+  describe('addUnitsBatch', () => {
+    it('adds multiple square units at specified positions', () => {
       const store = useBlockDesignerStore.getState();
       const positions: GridPosition[] = [
         { row: 0, col: 0 },
@@ -391,54 +391,54 @@ describe('BlockDesignerStore', () => {
         { row: 1, col: 0 },
       ];
 
-      const ids = store.addShapesBatch(positions, { type: 'square' });
+      const ids = store.addUnitsBatch(positions, { type: 'square' });
 
       const { block } = useBlockDesignerStore.getState();
       expect(ids).toHaveLength(3);
-      expect(block.shapes).toHaveLength(3);
-      expect(block.shapes.every((s) => s.type === 'square')).toBe(true);
+      expect(block.units).toHaveLength(3);
+      expect(block.units.every((s) => s.type === 'square')).toBe(true);
     });
 
-    it('adds multiple HST shapes with correct variant', () => {
+    it('adds multiple HST units with correct variant', () => {
       const store = useBlockDesignerStore.getState();
       const positions: GridPosition[] = [
         { row: 0, col: 0 },
         { row: 1, col: 1 },
       ];
 
-      const ids = store.addShapesBatch(positions, { type: 'hst', variant: 'ne' });
+      const ids = store.addUnitsBatch(positions, { type: 'hst', variant: 'ne' });
 
       const { block } = useBlockDesignerStore.getState();
       expect(ids).toHaveLength(2);
-      expect(block.shapes).toHaveLength(2);
-      block.shapes.forEach((shape) => {
-        expect(shape.type).toBe('hst');
-        if (shape.type === 'hst') {
-          expect(shape.variant).toBe('ne');
+      expect(block.units).toHaveLength(2);
+      block.units.forEach((unit) => {
+        expect(unit.type).toBe('hst');
+        if (unit.type === 'hst') {
+          expect(unit.variant).toBe('ne');
         }
       });
     });
 
-    it('adds multiple QST shapes', () => {
+    it('adds multiple QST units', () => {
       const store = useBlockDesignerStore.getState();
       const positions: GridPosition[] = [
         { row: 0, col: 0 },
         { row: 1, col: 1 },
       ];
 
-      const ids = store.addShapesBatch(positions, { type: 'qst' });
+      const ids = store.addUnitsBatch(positions, { type: 'qst' });
 
       const { block } = useBlockDesignerStore.getState();
       expect(ids).toHaveLength(2);
-      expect(block.shapes).toHaveLength(2);
-      block.shapes.forEach((shape) => {
-        expect(shape.type).toBe('qst');
-        if (shape.type === 'qst') {
+      expect(block.units).toHaveLength(2);
+      block.units.forEach((unit) => {
+        expect(unit.type).toBe('qst');
+        if (unit.type === 'qst') {
           // Should use default background for all parts
-          expect(shape.partFabricRoles.top).toBe('background');
-          expect(shape.partFabricRoles.right).toBe('background');
-          expect(shape.partFabricRoles.bottom).toBe('background');
-          expect(shape.partFabricRoles.left).toBe('background');
+          expect(unit.patchFabricRoles.top).toBe('background');
+          expect(unit.patchFabricRoles.right).toBe('background');
+          expect(unit.patchFabricRoles.bottom).toBe('background');
+          expect(unit.patchFabricRoles.left).toBe('background');
         }
       });
     });
@@ -450,40 +450,40 @@ describe('BlockDesignerStore', () => {
         { row: 0, col: 1 },
       ];
 
-      const ids = store.addShapesBatch(positions, { type: 'flying_geese' });
+      const ids = store.addUnitsBatch(positions, { type: 'flying_geese' });
 
       expect(ids).toHaveLength(0);
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(0);
     });
 
     it('returns empty array for empty positions', () => {
       const store = useBlockDesignerStore.getState();
-      const ids = store.addShapesBatch([], { type: 'square' });
+      const ids = store.addUnitsBatch([], { type: 'square' });
 
       expect(ids).toHaveLength(0);
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(0);
     });
 
-    it('places shapes at correct positions', () => {
+    it('places units at correct positions', () => {
       const store = useBlockDesignerStore.getState();
       const positions: GridPosition[] = [
         { row: 0, col: 2 },
         { row: 2, col: 1 },
       ];
 
-      store.addShapesBatch(positions, { type: 'square' });
+      store.addUnitsBatch(positions, { type: 'square' });
 
       const { block } = useBlockDesignerStore.getState();
-      expect(block.shapes[0].position).toEqual({ row: 0, col: 2 });
-      expect(block.shapes[1].position).toEqual({ row: 2, col: 1 });
+      expect(block.units[0].position).toEqual({ row: 0, col: 2 });
+      expect(block.units[1].position).toEqual({ row: 2, col: 1 });
     });
 
     it('uses default fabric role (background)', () => {
       const store = useBlockDesignerStore.getState();
-      store.addShapesBatch([{ row: 0, col: 0 }], { type: 'square' });
+      store.addUnitsBatch([{ row: 0, col: 0 }], { type: 'square' });
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0] as SquareShape;
-      expect(shape.fabricRole).toBe('background');
+      const unit = useBlockDesignerStore.getState().block.units[0] as SquareUnit;
+      expect(unit.fabricRole).toBe('background');
     });
 
     it('undoes entire batch as single operation', () => {
@@ -494,11 +494,11 @@ describe('BlockDesignerStore', () => {
         { row: 0, col: 2 },
       ];
 
-      store.addShapesBatch(positions, { type: 'square' });
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(3);
+      store.addUnitsBatch(positions, { type: 'square' });
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(3);
 
       store.undo();
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(0);
     });
 
     it('redoes entire batch as single operation', () => {
@@ -508,15 +508,15 @@ describe('BlockDesignerStore', () => {
         { row: 1, col: 1 },
       ];
 
-      store.addShapesBatch(positions, { type: 'hst', variant: 'sw' });
+      store.addUnitsBatch(positions, { type: 'hst', variant: 'sw' });
       store.undo();
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(0);
 
       store.redo();
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(2);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(2);
     });
 
-    it('generates unique IDs for each shape', () => {
+    it('generates unique IDs for each unit', () => {
       const store = useBlockDesignerStore.getState();
       const positions: GridPosition[] = [
         { row: 0, col: 0 },
@@ -524,7 +524,7 @@ describe('BlockDesignerStore', () => {
         { row: 0, col: 2 },
       ];
 
-      const ids = store.addShapesBatch(positions, { type: 'square' });
+      const ids = store.addUnitsBatch(positions, { type: 'square' });
 
       const uniqueIds = new Set(ids);
       expect(uniqueIds.size).toBe(3);
@@ -540,74 +540,74 @@ describe('BlockDesignerStore', () => {
         // spin wait
       }
 
-      store.addShapesBatch([{ row: 0, col: 0 }], { type: 'square' });
+      store.addUnitsBatch([{ row: 0, col: 0 }], { type: 'square' });
 
       expect(useBlockDesignerStore.getState().block.updatedAt).not.toBe(beforeUpdate);
     });
   });
 
-  describe('removeShape', () => {
-    it('removes a shape by ID', () => {
+  describe('removeUnit', () => {
+    it('removes a unit by ID', () => {
       const store = useBlockDesignerStore.getState();
       const id = store.addSquare({ row: 0, col: 0 });
 
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(1);
 
-      store.removeShape(id);
+      store.removeUnit(id);
 
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(0);
     });
 
-    it('clears selection if removed shape was selected', () => {
+    it('clears selection if removed unit was selected', () => {
       const store = useBlockDesignerStore.getState();
       const id = store.addSquare({ row: 0, col: 0 });
-      store.selectShape(id);
+      store.selectUnit(id);
 
-      expect(useBlockDesignerStore.getState().selectedShapeId).toBe(id);
+      expect(useBlockDesignerStore.getState().selectedUnitId).toBe(id);
 
-      store.removeShape(id);
+      store.removeUnit(id);
 
-      expect(useBlockDesignerStore.getState().selectedShapeId).toBeNull();
+      expect(useBlockDesignerStore.getState().selectedUnitId).toBeNull();
     });
 
-    it('does nothing if shape ID not found', () => {
+    it('does nothing if unit ID not found', () => {
       const store = useBlockDesignerStore.getState();
       store.addSquare({ row: 0, col: 0 });
 
-      store.removeShape('non-existent-id');
+      store.removeUnit('non-existent-id');
 
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(1);
     });
   });
 
-  describe('updateShape', () => {
-    it('updates shape properties', () => {
+  describe('updateUnit', () => {
+    it('updates unit properties', () => {
       const store = useBlockDesignerStore.getState();
       const id = store.addSquare({ row: 0, col: 0 });
 
-      store.updateShape(id, { fabricRole: 'accent1' });
+      store.updateUnit(id, { fabricRole: 'accent1' });
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0] as SquareShape;
-      expect(shape.fabricRole).toBe('accent1');
+      const unit = useBlockDesignerStore.getState().block.units[0] as SquareUnit;
+      expect(unit.fabricRole).toBe('accent1');
     });
 
     it('updates position', () => {
       const store = useBlockDesignerStore.getState();
       const id = store.addSquare({ row: 0, col: 0 });
 
-      store.updateShape(id, { position: { row: 1, col: 1 } });
+      store.updateUnit(id, { position: { row: 1, col: 1 } });
 
-      expect(useBlockDesignerStore.getState().block.shapes[0].position).toEqual({ row: 1, col: 1 });
+      expect(useBlockDesignerStore.getState().block.units[0].position).toEqual({ row: 1, col: 1 });
     });
 
-    it('does nothing if shape ID not found', () => {
+    it('does nothing if unit ID not found', () => {
       const store = useBlockDesignerStore.getState();
       store.addSquare({ row: 0, col: 0 }, 'background');
 
-      store.updateShape('non-existent-id', { fabricRole: 'accent1' });
+      store.updateUnit('non-existent-id', { fabricRole: 'accent1' });
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0] as SquareShape;
-      expect(shape.fabricRole).toBe('background');
+      const unit = useBlockDesignerStore.getState().block.units[0] as SquareUnit;
+      expect(unit.fabricRole).toBe('background');
     });
   });
 
@@ -615,34 +615,34 @@ describe('BlockDesignerStore', () => {
   // Selection
   // ===========================================================================
 
-  describe('selectShape', () => {
-    it('selects a shape by ID', () => {
+  describe('selectUnit', () => {
+    it('selects a unit by ID', () => {
       const store = useBlockDesignerStore.getState();
       const id = store.addSquare({ row: 0, col: 0 });
 
-      store.selectShape(id);
+      store.selectUnit(id);
 
-      expect(useBlockDesignerStore.getState().selectedShapeId).toBe(id);
+      expect(useBlockDesignerStore.getState().selectedUnitId).toBe(id);
     });
 
     it('can select null to deselect', () => {
       const store = useBlockDesignerStore.getState();
       const id = store.addSquare({ row: 0, col: 0 });
-      store.selectShape(id);
+      store.selectUnit(id);
 
-      store.selectShape(null);
+      store.selectUnit(null);
 
-      expect(useBlockDesignerStore.getState().selectedShapeId).toBeNull();
+      expect(useBlockDesignerStore.getState().selectedUnitId).toBeNull();
     });
 
-    it('exits paint mode when selecting a shape', () => {
+    it('exits paint mode when selecting a unit', () => {
       const store = useBlockDesignerStore.getState();
       const id = store.addSquare({ row: 0, col: 0 });
       store.setActiveFabricRole('accent1');
 
       expect(useBlockDesignerStore.getState().mode).toBe('paint_mode');
 
-      store.selectShape(id);
+      store.selectUnit(id);
 
       expect(useBlockDesignerStore.getState().mode).toBe('idle');
       expect(useBlockDesignerStore.getState().activeFabricRole).toBeNull();
@@ -653,11 +653,11 @@ describe('BlockDesignerStore', () => {
     it('clears the current selection', () => {
       const store = useBlockDesignerStore.getState();
       const id = store.addSquare({ row: 0, col: 0 });
-      store.selectShape(id);
+      store.selectUnit(id);
 
       store.clearSelection();
 
-      expect(useBlockDesignerStore.getState().selectedShapeId).toBeNull();
+      expect(useBlockDesignerStore.getState().selectedUnitId).toBeNull();
     });
   });
 
@@ -691,23 +691,23 @@ describe('BlockDesignerStore', () => {
     it('clears selection when entering paint mode', () => {
       const store = useBlockDesignerStore.getState();
       const id = store.addSquare({ row: 0, col: 0 });
-      store.selectShape(id);
+      store.selectUnit(id);
 
       store.setActiveFabricRole('accent1');
 
-      expect(useBlockDesignerStore.getState().selectedShapeId).toBeNull();
+      expect(useBlockDesignerStore.getState().selectedUnitId).toBeNull();
     });
   });
 
   describe('assignFabricRole', () => {
-    it('assigns fabric role to a square shape', () => {
+    it('assigns fabric role to a square unit', () => {
       const store = useBlockDesignerStore.getState();
       const id = store.addSquare({ row: 0, col: 0 }, 'background');
 
       store.assignFabricRole(id, 'accent2');
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0] as SquareShape;
-      expect(shape.fabricRole).toBe('accent2');
+      const unit = useBlockDesignerStore.getState().block.units[0] as SquareUnit;
+      expect(unit.fabricRole).toBe('accent2');
     });
 
     it('assigns primary fabric role to HST', () => {
@@ -716,8 +716,8 @@ describe('BlockDesignerStore', () => {
 
       store.assignFabricRole(id, 'accent1', 'primary');
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0] as HstShape;
-      expect(shape.fabricRole).toBe('accent1');
+      const unit = useBlockDesignerStore.getState().block.units[0] as HstUnit;
+      expect(unit.fabricRole).toBe('accent1');
     });
 
     it('assigns secondary fabric role to HST', () => {
@@ -726,8 +726,8 @@ describe('BlockDesignerStore', () => {
 
       store.assignFabricRole(id, 'accent1', 'secondary');
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0] as HstShape;
-      expect(shape.secondaryFabricRole).toBe('accent1');
+      const unit = useBlockDesignerStore.getState().block.units[0] as HstUnit;
+      expect(unit.secondaryFabricRole).toBe('accent1');
     });
 
     it('assigns goose fabric role to Flying Geese', () => {
@@ -736,8 +736,8 @@ describe('BlockDesignerStore', () => {
 
       store.assignFabricRole(id, 'accent1', 'goose');
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape;
-      expect(shape.partFabricRoles.goose).toBe('accent1');
+      const unit = useBlockDesignerStore.getState().block.units[0] as FlyingGeeseUnit;
+      expect(unit.patchFabricRoles.goose).toBe('accent1');
     });
 
     it('assigns sky1 fabric role to Flying Geese', () => {
@@ -746,8 +746,8 @@ describe('BlockDesignerStore', () => {
 
       store.assignFabricRole(id, 'accent2', 'sky1');
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape;
-      expect(shape.partFabricRoles.sky1).toBe('accent2');
+      const unit = useBlockDesignerStore.getState().block.units[0] as FlyingGeeseUnit;
+      expect(unit.patchFabricRoles.sky1).toBe('accent2');
     });
 
     it('assigns sky2 fabric role to Flying Geese', () => {
@@ -756,8 +756,8 @@ describe('BlockDesignerStore', () => {
 
       store.assignFabricRole(id, 'feature', 'sky2');
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape;
-      expect(shape.partFabricRoles.sky2).toBe('feature');
+      const unit = useBlockDesignerStore.getState().block.units[0] as FlyingGeeseUnit;
+      expect(unit.patchFabricRoles.sky2).toBe('feature');
     });
 
     it('assigns top fabric role to QST', () => {
@@ -766,8 +766,8 @@ describe('BlockDesignerStore', () => {
 
       store.assignFabricRole(id, 'accent1', 'top');
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0] as QstShape;
-      expect(shape.partFabricRoles.top).toBe('accent1');
+      const unit = useBlockDesignerStore.getState().block.units[0] as QstUnit;
+      expect(unit.patchFabricRoles.top).toBe('accent1');
     });
 
     it('assigns right fabric role to QST', () => {
@@ -776,8 +776,8 @@ describe('BlockDesignerStore', () => {
 
       store.assignFabricRole(id, 'accent2', 'right');
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0] as QstShape;
-      expect(shape.partFabricRoles.right).toBe('accent2');
+      const unit = useBlockDesignerStore.getState().block.units[0] as QstUnit;
+      expect(unit.patchFabricRoles.right).toBe('accent2');
     });
 
     it('assigns bottom fabric role to QST', () => {
@@ -786,8 +786,8 @@ describe('BlockDesignerStore', () => {
 
       store.assignFabricRole(id, 'feature', 'bottom');
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0] as QstShape;
-      expect(shape.partFabricRoles.bottom).toBe('feature');
+      const unit = useBlockDesignerStore.getState().block.units[0] as QstUnit;
+      expect(unit.patchFabricRoles.bottom).toBe('feature');
     });
 
     it('assigns left fabric role to QST', () => {
@@ -796,8 +796,8 @@ describe('BlockDesignerStore', () => {
 
       store.assignFabricRole(id, 'background', 'left');
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0] as QstShape;
-      expect(shape.partFabricRoles.left).toBe('background');
+      const unit = useBlockDesignerStore.getState().block.units[0] as QstUnit;
+      expect(unit.patchFabricRoles.left).toBe('background');
     });
   });
 
@@ -981,32 +981,32 @@ describe('BlockDesignerStore', () => {
       expect(useBlockDesignerStore.getState().block.previewPalette.roles.length).toBe(initialCount);
     });
 
-    it('reassigns shapes using the removed role to fallback', () => {
+    it('reassigns units using the removed role to fallback', () => {
       const store = useBlockDesignerStore.getState();
 
       // Add a square with accent2
-      const shapeId = store.addSquare({ row: 0, col: 0 });
-      store.assignFabricRole(shapeId, 'accent2');
+      const unitId = store.addSquare({ row: 0, col: 0 });
+      store.assignFabricRole(unitId, 'accent2');
 
-      expect((useBlockDesignerStore.getState().block.shapes[0] as SquareShape).fabricRole).toBe('accent2');
+      expect((useBlockDesignerStore.getState().block.units[0] as SquareUnit).fabricRole).toBe('accent2');
 
-      // Remove accent2, shapes should be reassigned to background (first role)
+      // Remove accent2, units should be reassigned to background (first role)
       store.removeRole('accent2');
 
-      expect((useBlockDesignerStore.getState().block.shapes[0] as SquareShape).fabricRole).toBe('background');
+      expect((useBlockDesignerStore.getState().block.units[0] as SquareUnit).fabricRole).toBe('background');
     });
 
     it('uses specified fallback role for reassignment', () => {
       const store = useBlockDesignerStore.getState();
 
       // Add a square with accent2
-      const shapeId = store.addSquare({ row: 0, col: 0 });
-      store.assignFabricRole(shapeId, 'accent2');
+      const unitId = store.addSquare({ row: 0, col: 0 });
+      store.assignFabricRole(unitId, 'accent2');
 
       // Remove accent2, specify feature as fallback
       store.removeRole('accent2', 'feature');
 
-      expect((useBlockDesignerStore.getState().block.shapes[0] as SquareShape).fabricRole).toBe('feature');
+      expect((useBlockDesignerStore.getState().block.units[0] as SquareUnit).fabricRole).toBe('feature');
     });
 
     it('clears active fabric role if it was the removed one', () => {
@@ -1035,8 +1035,8 @@ describe('BlockDesignerStore', () => {
       const store = useBlockDesignerStore.getState();
 
       // Add a square with accent2
-      const shapeId = store.addSquare({ row: 0, col: 0 });
-      store.assignFabricRole(shapeId, 'accent2');
+      const unitId = store.addSquare({ row: 0, col: 0 });
+      store.assignFabricRole(unitId, 'accent2');
 
       const initialCount = useBlockDesignerStore.getState().block.previewPalette.roles.length;
       store.removeRole('accent2');
@@ -1050,8 +1050,8 @@ describe('BlockDesignerStore', () => {
       const state = useBlockDesignerStore.getState();
       expect(state.block.previewPalette.roles.length).toBe(initialCount);
       expect(state.block.previewPalette.roles.find((r) => r.id === 'accent2')).toBeDefined();
-      // Shape should be restored to accent2
-      expect((state.block.shapes[0] as SquareShape).fabricRole).toBe('accent2');
+      // Unit should be restored to accent2
+      expect((state.block.units[0] as SquareUnit).fabricRole).toBe('accent2');
     });
 
     it('can be redone after undo', () => {
@@ -1158,16 +1158,16 @@ describe('BlockDesignerStore', () => {
     });
   });
 
-  describe('getShapesUsingRole', () => {
-    it('returns empty array when no shapes use the role', () => {
+  describe('getUnitsUsingRole', () => {
+    it('returns empty array when no units use the role', () => {
       const store = useBlockDesignerStore.getState();
 
-      const shapes = store.getShapesUsingRole('feature');
+      const units = store.getUnitsUsingRole('feature');
 
-      expect(shapes).toEqual([]);
+      expect(units).toEqual([]);
     });
 
-    it('returns shapes using the specified role', () => {
+    it('returns units using the specified role', () => {
       const store = useBlockDesignerStore.getState();
 
       // Add squares with different roles
@@ -1175,23 +1175,23 @@ describe('BlockDesignerStore', () => {
       const secondId = store.addSquare({ row: 0, col: 1 });
       store.assignFabricRole(secondId, 'feature');
 
-      const shapes = useBlockDesignerStore.getState().getShapesUsingRole('feature');
+      const units = useBlockDesignerStore.getState().getUnitsUsingRole('feature');
 
-      expect(shapes.length).toBe(1);
-      expect(shapes[0].id).toBe(secondId);
+      expect(units.length).toBe(1);
+      expect(units[0].id).toBe(secondId);
     });
 
-    it('detects HST shapes using role in either position', () => {
+    it('detects HST units using role in either position', () => {
       const store = useBlockDesignerStore.getState();
 
       // Create HST with background and feature roles
       store.addHst({ row: 0, col: 0 }, 'ne', 'background', 'feature');
 
-      const bgShapes = useBlockDesignerStore.getState().getShapesUsingRole('background');
-      const featureShapes = useBlockDesignerStore.getState().getShapesUsingRole('feature');
+      const bgUnits = useBlockDesignerStore.getState().getUnitsUsingRole('background');
+      const featureUnits = useBlockDesignerStore.getState().getUnitsUsingRole('feature');
 
-      expect(bgShapes.length).toBe(1);
-      expect(featureShapes.length).toBe(1);
+      expect(bgUnits.length).toBe(1);
+      expect(featureUnits.length).toBe(1);
     });
   });
 
@@ -1272,20 +1272,20 @@ describe('BlockDesignerStore', () => {
       const id = store.completeFlyingGeesePlacement({ row: 0, col: 1 });
 
       expect(id).not.toBeNull();
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
-      expect(useBlockDesignerStore.getState().block.shapes[0].type).toBe('flying_geese');
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(1);
+      expect(useBlockDesignerStore.getState().block.units[0].type).toBe('flying_geese');
     });
 
-    it('returns null and cancels for invalid position, staying in placing_shape mode', () => {
+    it('returns null and cancels for invalid position, staying in placing_unit mode', () => {
       const store = useBlockDesignerStore.getState();
       store.startFlyingGeesePlacement({ row: 0, col: 0 });
 
       const id = store.completeFlyingGeesePlacement({ row: 2, col: 2 }); // Not adjacent
 
       expect(id).toBeNull();
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
-      // Returns to placing_shape so user can try again
-      expect(useBlockDesignerStore.getState().mode).toBe('placing_shape');
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(0);
+      // Returns to placing_unit so user can try again
+      expect(useBlockDesignerStore.getState().mode).toBe('placing_unit');
     });
 
     it('determines correct direction for rightward placement', () => {
@@ -1293,9 +1293,9 @@ describe('BlockDesignerStore', () => {
       store.startFlyingGeesePlacement({ row: 0, col: 0 });
       store.completeFlyingGeesePlacement({ row: 0, col: 1 });
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0];
-      if (shape.type === 'flying_geese') {
-        expect(shape.direction).toBe('right');
+      const unit = useBlockDesignerStore.getState().block.units[0];
+      if (unit.type === 'flying_geese') {
+        expect(unit.direction).toBe('right');
       }
     });
 
@@ -1304,9 +1304,9 @@ describe('BlockDesignerStore', () => {
       store.startFlyingGeesePlacement({ row: 0, col: 1 });
       store.completeFlyingGeesePlacement({ row: 0, col: 0 });
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0];
-      if (shape.type === 'flying_geese') {
-        expect(shape.direction).toBe('left');
+      const unit = useBlockDesignerStore.getState().block.units[0];
+      if (unit.type === 'flying_geese') {
+        expect(unit.direction).toBe('left');
       }
     });
 
@@ -1315,9 +1315,9 @@ describe('BlockDesignerStore', () => {
       store.startFlyingGeesePlacement({ row: 0, col: 0 });
       store.completeFlyingGeesePlacement({ row: 1, col: 0 });
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0];
-      if (shape.type === 'flying_geese') {
-        expect(shape.direction).toBe('down');
+      const unit = useBlockDesignerStore.getState().block.units[0];
+      if (unit.type === 'flying_geese') {
+        expect(unit.direction).toBe('down');
       }
     });
 
@@ -1326,9 +1326,9 @@ describe('BlockDesignerStore', () => {
       store.startFlyingGeesePlacement({ row: 1, col: 0 });
       store.completeFlyingGeesePlacement({ row: 0, col: 0 });
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0];
-      if (shape.type === 'flying_geese') {
-        expect(shape.direction).toBe('up');
+      const unit = useBlockDesignerStore.getState().block.units[0];
+      if (unit.type === 'flying_geese') {
+        expect(unit.direction).toBe('up');
       }
     });
 
@@ -1337,9 +1337,9 @@ describe('BlockDesignerStore', () => {
       store.startFlyingGeesePlacement({ row: 1, col: 1 });
       store.completeFlyingGeesePlacement({ row: 0, col: 1 }); // Click above
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0];
+      const unit = useBlockDesignerStore.getState().block.units[0];
       // Position should be top cell regardless of click order
-      expect(shape.position).toEqual({ row: 0, col: 1 });
+      expect(unit.position).toEqual({ row: 0, col: 1 });
     });
 
     it('returns null if no placement in progress', () => {
@@ -1351,7 +1351,7 @@ describe('BlockDesignerStore', () => {
   });
 
   describe('cancelFlyingGeesePlacement', () => {
-    it('cancels placement and returns to placing_shape mode', () => {
+    it('cancels placement and returns to placing_unit mode', () => {
       const store = useBlockDesignerStore.getState();
       store.startFlyingGeesePlacement({ row: 0, col: 0 });
 
@@ -1359,8 +1359,8 @@ describe('BlockDesignerStore', () => {
 
       const state = useBlockDesignerStore.getState();
       expect(state.flyingGeesePlacement).toBeNull();
-      // Returns to placing_shape so user can try placing again
-      expect(state.mode).toBe('placing_shape');
+      // Returns to placing_unit so user can try placing again
+      expect(state.mode).toBe('placing_unit');
     });
   });
 
@@ -1368,32 +1368,32 @@ describe('BlockDesignerStore', () => {
   // Utility Functions
   // ===========================================================================
 
-  describe('getShapeAt', () => {
-    it('returns shape at exact position', () => {
+  describe('getUnitAt', () => {
+    it('returns unit at exact position', () => {
       const store = useBlockDesignerStore.getState();
       const id = store.addSquare({ row: 1, col: 2 });
 
-      const shape = store.getShapeAt({ row: 1, col: 2 });
+      const unit = store.getUnitAt({ row: 1, col: 2 });
 
-      expect(shape?.id).toBe(id);
+      expect(unit?.id).toBe(id);
     });
 
-    it('returns undefined if no shape at position', () => {
+    it('returns undefined if no unit at position', () => {
       const store = useBlockDesignerStore.getState();
       store.addSquare({ row: 0, col: 0 });
 
-      const shape = store.getShapeAt({ row: 2, col: 2 });
+      const unit = store.getUnitAt({ row: 2, col: 2 });
 
-      expect(shape).toBeUndefined();
+      expect(unit).toBeUndefined();
     });
 
-    it('finds Flying Geese shape spanning multiple cells', () => {
+    it('finds Flying Geese unit spanning multiple cells', () => {
       const store = useBlockDesignerStore.getState();
       const id = store.addFlyingGeese({ row: 0, col: 0 }, 'right');
 
       // Should find at both positions
-      expect(store.getShapeAt({ row: 0, col: 0 })?.id).toBe(id);
-      expect(store.getShapeAt({ row: 0, col: 1 })?.id).toBe(id);
+      expect(store.getUnitAt({ row: 0, col: 0 })?.id).toBe(id);
+      expect(store.getUnitAt({ row: 0, col: 1 })?.id).toBe(id);
     });
   });
 
@@ -1411,7 +1411,7 @@ describe('BlockDesignerStore', () => {
       expect(store.isCellOccupied({ row: 0, col: 0 })).toBe(false);
     });
 
-    it('returns true for cell covered by multi-cell shape', () => {
+    it('returns true for cell covered by multi-cell unit', () => {
       const store = useBlockDesignerStore.getState();
       store.addFlyingGeese({ row: 0, col: 0 }, 'down'); // 2x1 vertical
 
@@ -1464,25 +1464,25 @@ describe('BlockDesignerStore', () => {
   });
 
   // ===========================================================================
-  // Shape Transformations
+  // Unit Transformations
   // ===========================================================================
 
-  describe('rotateShape', () => {
+  describe('rotateUnit', () => {
     describe('HST rotation', () => {
       it('rotates HST nw -> ne -> se -> sw -> nw', () => {
         const id = useBlockDesignerStore.getState().addHst({ row: 0, col: 0 }, 'nw');
 
-        useBlockDesignerStore.getState().rotateShape(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('ne');
+        useBlockDesignerStore.getState().rotateUnit(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as HstUnit).variant).toBe('ne');
 
-        useBlockDesignerStore.getState().rotateShape(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('se');
+        useBlockDesignerStore.getState().rotateUnit(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as HstUnit).variant).toBe('se');
 
-        useBlockDesignerStore.getState().rotateShape(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('sw');
+        useBlockDesignerStore.getState().rotateUnit(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as HstUnit).variant).toBe('sw');
 
-        useBlockDesignerStore.getState().rotateShape(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('nw');
+        useBlockDesignerStore.getState().rotateUnit(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as HstUnit).variant).toBe('nw');
       });
 
       it('updates timestamp after rotation', () => {
@@ -1495,7 +1495,7 @@ describe('BlockDesignerStore', () => {
           // spin wait
         }
 
-        useBlockDesignerStore.getState().rotateShape(id);
+        useBlockDesignerStore.getState().rotateUnit(id);
 
         expect(useBlockDesignerStore.getState().block.updatedAt).not.toBe(originalTime);
       });
@@ -1505,29 +1505,29 @@ describe('BlockDesignerStore', () => {
       it('rotates Flying Geese direction: up -> right -> down -> left -> up', () => {
         const id = useBlockDesignerStore.getState().addFlyingGeese({ row: 0, col: 0 }, 'up');
 
-        useBlockDesignerStore.getState().rotateShape(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('right');
+        useBlockDesignerStore.getState().rotateUnit(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as FlyingGeeseUnit).direction).toBe('right');
 
-        useBlockDesignerStore.getState().rotateShape(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('down');
+        useBlockDesignerStore.getState().rotateUnit(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as FlyingGeeseUnit).direction).toBe('down');
 
-        useBlockDesignerStore.getState().rotateShape(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('left');
+        useBlockDesignerStore.getState().rotateUnit(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as FlyingGeeseUnit).direction).toBe('left');
 
-        useBlockDesignerStore.getState().rotateShape(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('up');
+        useBlockDesignerStore.getState().rotateUnit(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as FlyingGeeseUnit).direction).toBe('up');
       });
 
       it('swaps span when rotating Flying Geese', () => {
         const id = useBlockDesignerStore.getState().addFlyingGeese({ row: 0, col: 0 }, 'up'); // 2x1
 
-        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).span).toEqual({ rows: 2, cols: 1 });
+        expect((useBlockDesignerStore.getState().block.units[0] as FlyingGeeseUnit).span).toEqual({ rows: 2, cols: 1 });
 
-        useBlockDesignerStore.getState().rotateShape(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).span).toEqual({ rows: 1, cols: 2 });
+        useBlockDesignerStore.getState().rotateUnit(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as FlyingGeeseUnit).span).toEqual({ rows: 1, cols: 2 });
 
-        useBlockDesignerStore.getState().rotateShape(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).span).toEqual({ rows: 2, cols: 1 });
+        useBlockDesignerStore.getState().rotateUnit(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as FlyingGeeseUnit).span).toEqual({ rows: 2, cols: 1 });
       });
     });
 
@@ -1540,15 +1540,15 @@ describe('BlockDesignerStore', () => {
           left: 'background',
         });
 
-        useBlockDesignerStore.getState().rotateShape(id);
+        useBlockDesignerStore.getState().rotateUnit(id);
 
-        const shape = useBlockDesignerStore.getState().block.shapes[0];
-        if (shape.type === 'qst') {
+        const unit = useBlockDesignerStore.getState().block.units[0];
+        if (unit.type === 'qst') {
           // After one rotation: left->top, top->right, right->bottom, bottom->left
-          expect(shape.partFabricRoles.top).toBe('background'); // was left
-          expect(shape.partFabricRoles.right).toBe('feature'); // was top
-          expect(shape.partFabricRoles.bottom).toBe('accent1'); // was right
-          expect(shape.partFabricRoles.left).toBe('accent2'); // was bottom
+          expect(unit.patchFabricRoles.top).toBe('background'); // was left
+          expect(unit.patchFabricRoles.right).toBe('feature'); // was top
+          expect(unit.patchFabricRoles.bottom).toBe('accent1'); // was right
+          expect(unit.patchFabricRoles.left).toBe('accent2'); // was bottom
         }
       });
 
@@ -1561,60 +1561,60 @@ describe('BlockDesignerStore', () => {
         });
 
         // Rotate 4 times
-        useBlockDesignerStore.getState().rotateShape(id);
-        useBlockDesignerStore.getState().rotateShape(id);
-        useBlockDesignerStore.getState().rotateShape(id);
-        useBlockDesignerStore.getState().rotateShape(id);
+        useBlockDesignerStore.getState().rotateUnit(id);
+        useBlockDesignerStore.getState().rotateUnit(id);
+        useBlockDesignerStore.getState().rotateUnit(id);
+        useBlockDesignerStore.getState().rotateUnit(id);
 
-        const shape = useBlockDesignerStore.getState().block.shapes[0];
-        if (shape.type === 'qst') {
-          expect(shape.partFabricRoles.top).toBe('feature');
-          expect(shape.partFabricRoles.right).toBe('accent1');
-          expect(shape.partFabricRoles.bottom).toBe('accent2');
-          expect(shape.partFabricRoles.left).toBe('background');
+        const unit = useBlockDesignerStore.getState().block.units[0];
+        if (unit.type === 'qst') {
+          expect(unit.patchFabricRoles.top).toBe('feature');
+          expect(unit.patchFabricRoles.right).toBe('accent1');
+          expect(unit.patchFabricRoles.bottom).toBe('accent2');
+          expect(unit.patchFabricRoles.left).toBe('background');
         }
       });
     });
 
-    it('does nothing for square shapes', () => {
+    it('does nothing for square units', () => {
       const id = useBlockDesignerStore.getState().addSquare({ row: 0, col: 0 });
-      const originalShape = { ...useBlockDesignerStore.getState().block.shapes[0] };
+      const originalUnit = { ...useBlockDesignerStore.getState().block.units[0] };
 
-      useBlockDesignerStore.getState().rotateShape(id);
+      useBlockDesignerStore.getState().rotateUnit(id);
 
-      const shape = useBlockDesignerStore.getState().block.shapes[0] as SquareShape;
-      expect(shape.type).toBe('square');
-      expect(shape.span).toEqual(originalShape.span);
+      const unit = useBlockDesignerStore.getState().block.units[0] as SquareUnit;
+      expect(unit.type).toBe('square');
+      expect(unit.span).toEqual(originalUnit.span);
     });
 
-    it('does nothing for non-existent shape', () => {
+    it('does nothing for non-existent unit', () => {
       useBlockDesignerStore.getState().addSquare({ row: 0, col: 0 });
 
       // Should not throw
-      expect(() => useBlockDesignerStore.getState().rotateShape('non-existent-id')).not.toThrow();
+      expect(() => useBlockDesignerStore.getState().rotateUnit('non-existent-id')).not.toThrow();
     });
   });
 
-  describe('flipShapeHorizontal', () => {
+  describe('flipUnitHorizontal', () => {
     describe('HST horizontal flip', () => {
       it('flips HST variant horizontally nw <-> ne', () => {
         const id = useBlockDesignerStore.getState().addHst({ row: 0, col: 0 }, 'nw');
 
-        useBlockDesignerStore.getState().flipShapeHorizontal(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('ne');
+        useBlockDesignerStore.getState().flipUnitHorizontal(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as HstUnit).variant).toBe('ne');
 
-        useBlockDesignerStore.getState().flipShapeHorizontal(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('nw');
+        useBlockDesignerStore.getState().flipUnitHorizontal(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as HstUnit).variant).toBe('nw');
       });
 
       it('flips sw <-> se horizontally', () => {
         const id = useBlockDesignerStore.getState().addHst({ row: 0, col: 0 }, 'sw');
 
-        useBlockDesignerStore.getState().flipShapeHorizontal(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('se');
+        useBlockDesignerStore.getState().flipUnitHorizontal(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as HstUnit).variant).toBe('se');
 
-        useBlockDesignerStore.getState().flipShapeHorizontal(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('sw');
+        useBlockDesignerStore.getState().flipUnitHorizontal(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as HstUnit).variant).toBe('sw');
       });
     });
 
@@ -1622,18 +1622,18 @@ describe('BlockDesignerStore', () => {
       it('flips left <-> right', () => {
         const id = useBlockDesignerStore.getState().addFlyingGeese({ row: 0, col: 0 }, 'left');
 
-        useBlockDesignerStore.getState().flipShapeHorizontal(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('right');
+        useBlockDesignerStore.getState().flipUnitHorizontal(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as FlyingGeeseUnit).direction).toBe('right');
 
-        useBlockDesignerStore.getState().flipShapeHorizontal(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('left');
+        useBlockDesignerStore.getState().flipUnitHorizontal(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as FlyingGeeseUnit).direction).toBe('left');
       });
 
       it('does not change up/down directions', () => {
         const id = useBlockDesignerStore.getState().addFlyingGeese({ row: 0, col: 0 }, 'up');
 
-        useBlockDesignerStore.getState().flipShapeHorizontal(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('up');
+        useBlockDesignerStore.getState().flipUnitHorizontal(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as FlyingGeeseUnit).direction).toBe('up');
       });
     });
 
@@ -1646,14 +1646,14 @@ describe('BlockDesignerStore', () => {
           left: 'background',
         });
 
-        useBlockDesignerStore.getState().flipShapeHorizontal(id);
+        useBlockDesignerStore.getState().flipUnitHorizontal(id);
 
-        const shape = useBlockDesignerStore.getState().block.shapes[0];
-        if (shape.type === 'qst') {
-          expect(shape.partFabricRoles.top).toBe('feature'); // unchanged
-          expect(shape.partFabricRoles.right).toBe('background'); // was left
-          expect(shape.partFabricRoles.bottom).toBe('accent2'); // unchanged
-          expect(shape.partFabricRoles.left).toBe('accent1'); // was right
+        const unit = useBlockDesignerStore.getState().block.units[0];
+        if (unit.type === 'qst') {
+          expect(unit.patchFabricRoles.top).toBe('feature'); // unchanged
+          expect(unit.patchFabricRoles.right).toBe('background'); // was left
+          expect(unit.patchFabricRoles.bottom).toBe('accent2'); // unchanged
+          expect(unit.patchFabricRoles.left).toBe('accent1'); // was right
         }
       });
 
@@ -1665,38 +1665,38 @@ describe('BlockDesignerStore', () => {
           left: 'background',
         });
 
-        useBlockDesignerStore.getState().flipShapeHorizontal(id);
-        useBlockDesignerStore.getState().flipShapeHorizontal(id);
+        useBlockDesignerStore.getState().flipUnitHorizontal(id);
+        useBlockDesignerStore.getState().flipUnitHorizontal(id);
 
-        const shape = useBlockDesignerStore.getState().block.shapes[0];
-        if (shape.type === 'qst') {
-          expect(shape.partFabricRoles.right).toBe('accent1');
-          expect(shape.partFabricRoles.left).toBe('background');
+        const unit = useBlockDesignerStore.getState().block.units[0];
+        if (unit.type === 'qst') {
+          expect(unit.patchFabricRoles.right).toBe('accent1');
+          expect(unit.patchFabricRoles.left).toBe('background');
         }
       });
     });
   });
 
-  describe('flipShapeVertical', () => {
+  describe('flipUnitVertical', () => {
     describe('HST vertical flip', () => {
       it('flips HST variant vertically nw <-> sw', () => {
         const id = useBlockDesignerStore.getState().addHst({ row: 0, col: 0 }, 'nw');
 
-        useBlockDesignerStore.getState().flipShapeVertical(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('sw');
+        useBlockDesignerStore.getState().flipUnitVertical(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as HstUnit).variant).toBe('sw');
 
-        useBlockDesignerStore.getState().flipShapeVertical(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('nw');
+        useBlockDesignerStore.getState().flipUnitVertical(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as HstUnit).variant).toBe('nw');
       });
 
       it('flips ne <-> se vertically', () => {
         const id = useBlockDesignerStore.getState().addHst({ row: 0, col: 0 }, 'ne');
 
-        useBlockDesignerStore.getState().flipShapeVertical(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('se');
+        useBlockDesignerStore.getState().flipUnitVertical(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as HstUnit).variant).toBe('se');
 
-        useBlockDesignerStore.getState().flipShapeVertical(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('ne');
+        useBlockDesignerStore.getState().flipUnitVertical(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as HstUnit).variant).toBe('ne');
       });
     });
 
@@ -1704,18 +1704,18 @@ describe('BlockDesignerStore', () => {
       it('flips up <-> down', () => {
         const id = useBlockDesignerStore.getState().addFlyingGeese({ row: 0, col: 0 }, 'up');
 
-        useBlockDesignerStore.getState().flipShapeVertical(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('down');
+        useBlockDesignerStore.getState().flipUnitVertical(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as FlyingGeeseUnit).direction).toBe('down');
 
-        useBlockDesignerStore.getState().flipShapeVertical(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('up');
+        useBlockDesignerStore.getState().flipUnitVertical(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as FlyingGeeseUnit).direction).toBe('up');
       });
 
       it('does not change left/right directions', () => {
         const id = useBlockDesignerStore.getState().addFlyingGeese({ row: 0, col: 0 }, 'right');
 
-        useBlockDesignerStore.getState().flipShapeVertical(id);
-        expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('right');
+        useBlockDesignerStore.getState().flipUnitVertical(id);
+        expect((useBlockDesignerStore.getState().block.units[0] as FlyingGeeseUnit).direction).toBe('right');
       });
     });
 
@@ -1728,14 +1728,14 @@ describe('BlockDesignerStore', () => {
           left: 'background',
         });
 
-        useBlockDesignerStore.getState().flipShapeVertical(id);
+        useBlockDesignerStore.getState().flipUnitVertical(id);
 
-        const shape = useBlockDesignerStore.getState().block.shapes[0];
-        if (shape.type === 'qst') {
-          expect(shape.partFabricRoles.top).toBe('accent2'); // was bottom
-          expect(shape.partFabricRoles.right).toBe('accent1'); // unchanged
-          expect(shape.partFabricRoles.bottom).toBe('feature'); // was top
-          expect(shape.partFabricRoles.left).toBe('background'); // unchanged
+        const unit = useBlockDesignerStore.getState().block.units[0];
+        if (unit.type === 'qst') {
+          expect(unit.patchFabricRoles.top).toBe('accent2'); // was bottom
+          expect(unit.patchFabricRoles.right).toBe('accent1'); // unchanged
+          expect(unit.patchFabricRoles.bottom).toBe('feature'); // was top
+          expect(unit.patchFabricRoles.left).toBe('background'); // unchanged
         }
       });
 
@@ -1747,13 +1747,13 @@ describe('BlockDesignerStore', () => {
           left: 'background',
         });
 
-        useBlockDesignerStore.getState().flipShapeVertical(id);
-        useBlockDesignerStore.getState().flipShapeVertical(id);
+        useBlockDesignerStore.getState().flipUnitVertical(id);
+        useBlockDesignerStore.getState().flipUnitVertical(id);
 
-        const shape = useBlockDesignerStore.getState().block.shapes[0];
-        if (shape.type === 'qst') {
-          expect(shape.partFabricRoles.top).toBe('feature');
-          expect(shape.partFabricRoles.bottom).toBe('accent2');
+        const unit = useBlockDesignerStore.getState().block.units[0];
+        if (unit.type === 'qst') {
+          expect(unit.patchFabricRoles.top).toBe('feature');
+          expect(unit.patchFabricRoles.bottom).toBe('accent2');
         }
       });
     });
@@ -1764,27 +1764,27 @@ describe('BlockDesignerStore', () => {
   // ===========================================================================
 
   describe('undo', () => {
-    it('undoes add shape operation', () => {
+    it('undoes add unit operation', () => {
       const store = useBlockDesignerStore.getState();
       store.addSquare({ row: 0, col: 0 });
 
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(1);
 
       store.undo();
 
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(0);
     });
 
-    it('undoes remove shape operation', () => {
+    it('undoes remove unit operation', () => {
       const store = useBlockDesignerStore.getState();
       const id = store.addSquare({ row: 0, col: 0 });
-      store.removeShape(id);
+      store.removeUnit(id);
 
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(0);
 
       store.undo();
 
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(1);
     });
 
     it('undoes fabric role change', () => {
@@ -1792,11 +1792,11 @@ describe('BlockDesignerStore', () => {
       const id = store.addSquare({ row: 0, col: 0 }, 'background');
       store.assignFabricRole(id, 'accent1');
 
-      expect((useBlockDesignerStore.getState().block.shapes[0] as SquareShape).fabricRole).toBe('accent1');
+      expect((useBlockDesignerStore.getState().block.units[0] as SquareUnit).fabricRole).toBe('accent1');
 
       store.undo();
 
-      expect((useBlockDesignerStore.getState().block.shapes[0] as SquareShape).fabricRole).toBe('background');
+      expect((useBlockDesignerStore.getState().block.units[0] as SquareUnit).fabricRole).toBe('background');
     });
 
     it('undoes palette color change', () => {
@@ -1814,51 +1814,51 @@ describe('BlockDesignerStore', () => {
     it('undoes HST rotation', () => {
       const store = useBlockDesignerStore.getState();
       const id = store.addHst({ row: 0, col: 0 }, 'nw');
-      store.rotateShape(id);
+      store.rotateUnit(id);
 
-      expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('ne');
+      expect((useBlockDesignerStore.getState().block.units[0] as HstUnit).variant).toBe('ne');
 
       store.undo();
 
-      expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('nw');
+      expect((useBlockDesignerStore.getState().block.units[0] as HstUnit).variant).toBe('nw');
     });
 
     it('undoes HST flip horizontal', () => {
       const store = useBlockDesignerStore.getState();
       const id = store.addHst({ row: 0, col: 0 }, 'nw');
-      store.flipShapeHorizontal(id);
+      store.flipUnitHorizontal(id);
 
-      expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('ne');
+      expect((useBlockDesignerStore.getState().block.units[0] as HstUnit).variant).toBe('ne');
 
       store.undo();
 
-      expect((useBlockDesignerStore.getState().block.shapes[0] as HstShape).variant).toBe('nw');
+      expect((useBlockDesignerStore.getState().block.units[0] as HstUnit).variant).toBe('nw');
     });
 
     it('undoes Flying Geese rotation', () => {
       const store = useBlockDesignerStore.getState();
       const id = store.addFlyingGeese({ row: 0, col: 0 }, 'up');
-      store.rotateShape(id);
+      store.rotateUnit(id);
 
-      expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('right');
-      expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).span).toEqual({ rows: 1, cols: 2 });
+      expect((useBlockDesignerStore.getState().block.units[0] as FlyingGeeseUnit).direction).toBe('right');
+      expect((useBlockDesignerStore.getState().block.units[0] as FlyingGeeseUnit).span).toEqual({ rows: 1, cols: 2 });
 
       store.undo();
 
-      expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).direction).toBe('up');
-      expect((useBlockDesignerStore.getState().block.shapes[0] as FlyingGeeseShape).span).toEqual({ rows: 2, cols: 1 });
+      expect((useBlockDesignerStore.getState().block.units[0] as FlyingGeeseUnit).direction).toBe('up');
+      expect((useBlockDesignerStore.getState().block.units[0] as FlyingGeeseUnit).span).toEqual({ rows: 2, cols: 1 });
     });
 
-    it('clears selection when undoing removes selected shape', () => {
+    it('clears selection when undoing removes selected unit', () => {
       const store = useBlockDesignerStore.getState();
       const id = store.addSquare({ row: 0, col: 0 });
-      store.selectShape(id);
+      store.selectUnit(id);
 
-      expect(useBlockDesignerStore.getState().selectedShapeId).toBe(id);
+      expect(useBlockDesignerStore.getState().selectedUnitId).toBe(id);
 
       store.undo();
 
-      expect(useBlockDesignerStore.getState().selectedShapeId).toBeNull();
+      expect(useBlockDesignerStore.getState().selectedUnitId).toBeNull();
     });
 
     it('does nothing when undo stack is empty', () => {
@@ -1866,7 +1866,7 @@ describe('BlockDesignerStore', () => {
 
       // Should not throw
       expect(() => store.undo()).not.toThrow();
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(0);
     });
 
     it('supports multiple undos in sequence', () => {
@@ -1875,43 +1875,43 @@ describe('BlockDesignerStore', () => {
       store.addSquare({ row: 0, col: 1 });
       store.addSquare({ row: 0, col: 2 });
 
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(3);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(3);
 
       store.undo();
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(2);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(2);
 
       store.undo();
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(1);
 
       store.undo();
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(0);
     });
   });
 
   describe('redo', () => {
-    it('redoes undone add shape operation', () => {
+    it('redoes undone add unit operation', () => {
       const store = useBlockDesignerStore.getState();
       store.addSquare({ row: 0, col: 0 });
       store.undo();
 
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(0);
 
       store.redo();
 
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(1);
     });
 
-    it('redoes undone remove shape operation', () => {
+    it('redoes undone remove unit operation', () => {
       const store = useBlockDesignerStore.getState();
       const id = store.addSquare({ row: 0, col: 0 });
-      store.removeShape(id);
+      store.removeUnit(id);
       store.undo();
 
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(1);
 
       store.redo();
 
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(0);
     });
 
     it('does nothing when redo stack is empty', () => {
@@ -1920,7 +1920,7 @@ describe('BlockDesignerStore', () => {
 
       // Should not throw
       expect(() => store.redo()).not.toThrow();
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(1);
     });
 
     it('clears redo stack when new operation is performed', () => {
@@ -1945,16 +1945,16 @@ describe('BlockDesignerStore', () => {
       store.undo();
       store.undo();
 
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(0);
 
       store.redo();
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(1);
 
       store.redo();
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(2);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(2);
 
       store.redo();
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(3);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(3);
     });
   });
 
@@ -1993,16 +1993,16 @@ describe('BlockDesignerStore', () => {
         expect(useBlockDesignerStore.getState().mode).toBe('preview');
       });
 
-      it('clears selectedShapeId when entering preview', () => {
+      it('clears selectedUnitId when entering preview', () => {
         const store = useBlockDesignerStore.getState();
         store.addSquare({ row: 0, col: 0 });
-        const shapeId = useBlockDesignerStore.getState().block.shapes[0].id;
-        store.selectShape(shapeId);
+        const unitId = useBlockDesignerStore.getState().block.units[0].id;
+        store.selectUnit(unitId);
 
-        expect(useBlockDesignerStore.getState().selectedShapeId).toBe(shapeId);
+        expect(useBlockDesignerStore.getState().selectedUnitId).toBe(unitId);
 
         store.enterPreview();
-        expect(useBlockDesignerStore.getState().selectedShapeId).toBeNull();
+        expect(useBlockDesignerStore.getState().selectedUnitId).toBeNull();
       });
 
       it('clears activeFabricRole when entering preview', () => {
@@ -2087,7 +2087,7 @@ describe('BlockDesignerStore', () => {
           description: null,
           hashtags: [],
           gridSize: 3,
-          shapes: [],
+          units: [],
           previewPalette: {
             roles: [
               { id: 'background', name: 'Background', color: '#FFFFFF' },
@@ -2106,78 +2106,78 @@ describe('BlockDesignerStore', () => {
   });
 
   // ===========================================================================
-  // Shape Library Selection
+  // Unit Library Selection
   // ===========================================================================
 
-  describe('shape library selection', () => {
-    describe('selectShapeForPlacement', () => {
-      it('selects a square shape type for placement', () => {
+  describe('unit library selection', () => {
+    describe('selectUnitForPlacement', () => {
+      it('selects a square unit type for placement', () => {
         const store = useBlockDesignerStore.getState();
-        store.selectShapeForPlacement({ type: 'square' });
+        store.selectUnitForPlacement({ type: 'square' });
 
         const state = useBlockDesignerStore.getState();
-        expect(state.selectedShapeType).toEqual({ type: 'square' });
-        expect(state.mode).toBe('placing_shape');
+        expect(state.selectedUnitType).toEqual({ type: 'square' });
+        expect(state.mode).toBe('placing_unit');
       });
 
-      it('selects an HST shape type with variant for placement', () => {
+      it('selects an HST unit type with variant for placement', () => {
         const store = useBlockDesignerStore.getState();
-        store.selectShapeForPlacement({ type: 'hst', variant: 'nw' });
+        store.selectUnitForPlacement({ type: 'hst', variant: 'nw' });
 
         const state = useBlockDesignerStore.getState();
-        expect(state.selectedShapeType).toEqual({ type: 'hst', variant: 'nw' });
-        expect(state.mode).toBe('placing_shape');
+        expect(state.selectedUnitType).toEqual({ type: 'hst', variant: 'nw' });
+        expect(state.mode).toBe('placing_unit');
       });
 
-      it('selects a flying_geese shape type for placement', () => {
+      it('selects a flying_geese unit type for placement', () => {
         const store = useBlockDesignerStore.getState();
-        store.selectShapeForPlacement({ type: 'flying_geese' });
+        store.selectUnitForPlacement({ type: 'flying_geese' });
 
         const state = useBlockDesignerStore.getState();
-        expect(state.selectedShapeType).toEqual({ type: 'flying_geese' });
-        expect(state.mode).toBe('placing_shape');
+        expect(state.selectedUnitType).toEqual({ type: 'flying_geese' });
+        expect(state.mode).toBe('placing_unit');
       });
 
       it('clears selection when passing null', () => {
         const store = useBlockDesignerStore.getState();
-        store.selectShapeForPlacement({ type: 'square' });
-        store.selectShapeForPlacement(null);
+        store.selectUnitForPlacement({ type: 'square' });
+        store.selectUnitForPlacement(null);
 
         const state = useBlockDesignerStore.getState();
-        expect(state.selectedShapeType).toBeNull();
+        expect(state.selectedUnitType).toBeNull();
         expect(state.mode).toBe('idle');
       });
 
-      it('clears selectedShapeId when selecting shape type', () => {
+      it('clears selectedUnitId when selecting unit type', () => {
         const store = useBlockDesignerStore.getState();
         const id = store.addSquare({ row: 0, col: 0 });
-        store.selectShape(id);
+        store.selectUnit(id);
 
-        expect(useBlockDesignerStore.getState().selectedShapeId).toBe(id);
+        expect(useBlockDesignerStore.getState().selectedUnitId).toBe(id);
 
-        store.selectShapeForPlacement({ type: 'square' });
+        store.selectUnitForPlacement({ type: 'square' });
 
-        expect(useBlockDesignerStore.getState().selectedShapeId).toBeNull();
+        expect(useBlockDesignerStore.getState().selectedUnitId).toBeNull();
       });
 
-      it('clears activeFabricRole when selecting shape type', () => {
+      it('clears activeFabricRole when selecting unit type', () => {
         const store = useBlockDesignerStore.getState();
         store.setActiveFabricRole('accent1');
 
         expect(useBlockDesignerStore.getState().activeFabricRole).toBe('accent1');
 
-        store.selectShapeForPlacement({ type: 'hst', variant: 'ne' });
+        store.selectUnitForPlacement({ type: 'hst', variant: 'ne' });
 
         expect(useBlockDesignerStore.getState().activeFabricRole).toBeNull();
       });
 
-      it('clears flyingGeesePlacement when selecting shape type', () => {
+      it('clears flyingGeesePlacement when selecting unit type', () => {
         const store = useBlockDesignerStore.getState();
         store.startFlyingGeesePlacement({ row: 0, col: 0 });
 
         expect(useBlockDesignerStore.getState().flyingGeesePlacement).not.toBeNull();
 
-        store.selectShapeForPlacement({ type: 'square' });
+        store.selectUnitForPlacement({ type: 'square' });
 
         expect(useBlockDesignerStore.getState().flyingGeesePlacement).toBeNull();
       });
@@ -2208,16 +2208,16 @@ describe('BlockDesignerStore', () => {
       });
     });
 
-    describe('clearShapeSelection', () => {
-      it('clears selectedShapeType', () => {
+    describe('clearUnitSelection', () => {
+      it('clears selectedUnitType', () => {
         const store = useBlockDesignerStore.getState();
-        store.selectShapeForPlacement({ type: 'square' });
+        store.selectUnitForPlacement({ type: 'square' });
 
-        expect(useBlockDesignerStore.getState().selectedShapeType).not.toBeNull();
+        expect(useBlockDesignerStore.getState().selectedUnitType).not.toBeNull();
 
-        store.clearShapeSelection();
+        store.clearUnitSelection();
 
-        expect(useBlockDesignerStore.getState().selectedShapeType).toBeNull();
+        expect(useBlockDesignerStore.getState().selectedUnitType).toBeNull();
       });
 
       it('clears hoveredCell', () => {
@@ -2226,18 +2226,18 @@ describe('BlockDesignerStore', () => {
 
         expect(useBlockDesignerStore.getState().hoveredCell).not.toBeNull();
 
-        store.clearShapeSelection();
+        store.clearUnitSelection();
 
         expect(useBlockDesignerStore.getState().hoveredCell).toBeNull();
       });
 
-      it('sets mode to idle when in placing_shape mode', () => {
+      it('sets mode to idle when in placing_unit mode', () => {
         const store = useBlockDesignerStore.getState();
-        store.selectShapeForPlacement({ type: 'hst', variant: 'sw' });
+        store.selectUnitForPlacement({ type: 'hst', variant: 'sw' });
 
-        expect(useBlockDesignerStore.getState().mode).toBe('placing_shape');
+        expect(useBlockDesignerStore.getState().mode).toBe('placing_unit');
 
-        store.clearShapeSelection();
+        store.clearUnitSelection();
 
         expect(useBlockDesignerStore.getState().mode).toBe('idle');
       });
@@ -2248,7 +2248,7 @@ describe('BlockDesignerStore', () => {
 
         expect(useBlockDesignerStore.getState().mode).toBe('placing_flying_geese_second');
 
-        store.clearShapeSelection();
+        store.clearUnitSelection();
 
         expect(useBlockDesignerStore.getState().mode).toBe('idle');
       });
@@ -2259,7 +2259,7 @@ describe('BlockDesignerStore', () => {
 
         expect(useBlockDesignerStore.getState().flyingGeesePlacement).not.toBeNull();
 
-        store.clearShapeSelection();
+        store.clearUnitSelection();
 
         expect(useBlockDesignerStore.getState().flyingGeesePlacement).toBeNull();
       });
@@ -2269,7 +2269,7 @@ describe('BlockDesignerStore', () => {
 
         expect(useBlockDesignerStore.getState().mode).toBe('idle');
 
-        store.clearShapeSelection();
+        store.clearUnitSelection();
 
         expect(useBlockDesignerStore.getState().mode).toBe('idle');
       });
@@ -2280,20 +2280,20 @@ describe('BlockDesignerStore', () => {
 
         expect(useBlockDesignerStore.getState().mode).toBe('paint_mode');
 
-        store.clearShapeSelection();
+        store.clearUnitSelection();
 
         expect(useBlockDesignerStore.getState().mode).toBe('paint_mode');
       });
     });
 
     describe('state reset on initBlock', () => {
-      it('resets selectedShapeType to null', () => {
+      it('resets selectedUnitType to null', () => {
         const store = useBlockDesignerStore.getState();
-        store.selectShapeForPlacement({ type: 'square' });
+        store.selectUnitForPlacement({ type: 'square' });
 
         store.initBlock(3);
 
-        expect(useBlockDesignerStore.getState().selectedShapeType).toBeNull();
+        expect(useBlockDesignerStore.getState().selectedUnitType).toBeNull();
       });
 
       it('resets hoveredCell to null', () => {
@@ -2315,7 +2315,7 @@ describe('BlockDesignerStore', () => {
         description: null,
         hashtags: [],
         gridSize: 3,
-        shapes: [],
+        units: [],
         previewPalette: {
           roles: [
             { id: 'background', name: 'Background', color: '#FFFFFF' },
@@ -2328,13 +2328,13 @@ describe('BlockDesignerStore', () => {
         updatedAt: new Date().toISOString(),
       };
 
-      it('resets selectedShapeType to null', () => {
+      it('resets selectedUnitType to null', () => {
         const store = useBlockDesignerStore.getState();
-        store.selectShapeForPlacement({ type: 'flying_geese' });
+        store.selectUnitForPlacement({ type: 'flying_geese' });
 
         store.loadBlock(testBlock);
 
-        expect(useBlockDesignerStore.getState().selectedShapeType).toBeNull();
+        expect(useBlockDesignerStore.getState().selectedUnitType).toBeNull();
       });
 
       it('resets hoveredCell to null', () => {
@@ -2362,14 +2362,14 @@ describe('BlockDesignerStore', () => {
       expect(useBlockDesignerStore.getState().block.gridSize).toBe(5);
     });
 
-    it('returns null when no shapes are removed', () => {
+    it('returns null when no units are removed', () => {
       const store = useBlockDesignerStore.getState();
       store.addSquare({ row: 0, col: 0 });
 
       const result = store.setGridSize(5);
 
       expect(result).toBeNull();
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(1);
     });
 
     it('returns null when size is unchanged', () => {
@@ -2380,58 +2380,58 @@ describe('BlockDesignerStore', () => {
       expect(result).toBeNull();
     });
 
-    it('removes shapes outside new grid bounds when shrinking', () => {
+    it('removes units outside new grid bounds when shrinking', () => {
       const store = useBlockDesignerStore.getState();
       store.initBlock(5);
       store.addSquare({ row: 0, col: 0 }); // In bounds for 3x3
       store.addSquare({ row: 4, col: 4 }); // Out of bounds for 3x3
 
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(2);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(2);
 
       const result = store.setGridSize(3);
 
       expect(result).not.toBeNull();
       expect(result).toHaveLength(1);
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
-      expect(useBlockDesignerStore.getState().block.shapes[0].position).toEqual({ row: 0, col: 0 });
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(1);
+      expect(useBlockDesignerStore.getState().block.units[0].position).toEqual({ row: 0, col: 0 });
     });
 
-    it('clears selection if selected shape is removed', () => {
+    it('clears selection if selected unit is removed', () => {
       const store = useBlockDesignerStore.getState();
       store.initBlock(5);
       const id = store.addSquare({ row: 4, col: 4 });
-      store.selectShape(id);
+      store.selectUnit(id);
 
-      expect(useBlockDesignerStore.getState().selectedShapeId).toBe(id);
+      expect(useBlockDesignerStore.getState().selectedUnitId).toBe(id);
 
       store.setGridSize(3);
 
-      expect(useBlockDesignerStore.getState().selectedShapeId).toBeNull();
+      expect(useBlockDesignerStore.getState().selectedUnitId).toBeNull();
     });
 
-    it('keeps selection if selected shape is not removed', () => {
+    it('keeps selection if selected unit is not removed', () => {
       const store = useBlockDesignerStore.getState();
       store.initBlock(5);
       const id = store.addSquare({ row: 0, col: 0 });
       store.addSquare({ row: 4, col: 4 });
-      store.selectShape(id);
+      store.selectUnit(id);
 
       store.setGridSize(3);
 
-      expect(useBlockDesignerStore.getState().selectedShapeId).toBe(id);
+      expect(useBlockDesignerStore.getState().selectedUnitId).toBe(id);
     });
 
-    it('removes Flying Geese that span outside new bounds', () => {
+    it('removes Flying Geese units that span outside new bounds', () => {
       const store = useBlockDesignerStore.getState();
       store.initBlock(5);
       store.addFlyingGeese({ row: 3, col: 3 }, 'right'); // spans cols 3-4, out of bounds for 3x3
 
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(1);
 
       const result = store.setGridSize(3);
 
       expect(result).toHaveLength(1);
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(0);
     });
 
     it('updates updatedAt timestamp', () => {
@@ -2450,36 +2450,36 @@ describe('BlockDesignerStore', () => {
     });
   });
 
-  describe('getShapesOutOfBounds', () => {
-    it('returns empty array when no shapes are out of bounds', () => {
+  describe('getUnitsOutOfBounds', () => {
+    it('returns empty array when no units are out of bounds', () => {
       const store = useBlockDesignerStore.getState();
       store.addSquare({ row: 0, col: 0 });
       store.addSquare({ row: 1, col: 1 });
 
-      const result = store.getShapesOutOfBounds(3);
+      const result = store.getUnitsOutOfBounds(3);
 
       expect(result).toHaveLength(0);
     });
 
-    it('returns shapes outside given grid size', () => {
+    it('returns units outside given grid size', () => {
       const store = useBlockDesignerStore.getState();
       store.initBlock(5);
       store.addSquare({ row: 0, col: 0 }); // In bounds
       store.addSquare({ row: 3, col: 3 }); // Out of bounds for 3x3
       store.addSquare({ row: 4, col: 4 }); // Out of bounds for 3x3
 
-      const result = store.getShapesOutOfBounds(3);
+      const result = store.getUnitsOutOfBounds(3);
 
       expect(result).toHaveLength(2);
     });
 
-    it('considers shape span when checking bounds', () => {
+    it('considers unit span when checking bounds', () => {
       const store = useBlockDesignerStore.getState();
       store.initBlock(5);
       store.addFlyingGeese({ row: 2, col: 2 }, 'right'); // spans cols 2-3
 
       // For size 3, position (2,2) is in bounds but (2,3) is out
-      const result = store.getShapesOutOfBounds(3);
+      const result = store.getUnitsOutOfBounds(3);
 
       expect(result).toHaveLength(1);
     });
@@ -2488,7 +2488,7 @@ describe('BlockDesignerStore', () => {
       const store = useBlockDesignerStore.getState();
       store.addSquare({ row: 2, col: 2 });
 
-      const result = store.getShapesOutOfBounds(8);
+      const result = store.getUnitsOutOfBounds(8);
 
       expect(result).toHaveLength(0);
     });
@@ -2517,23 +2517,23 @@ describe('BlockDesignerStore', () => {
       expect(useBlockDesignerStore.getState().block.gridSize).toBe(6);
     });
 
-    it('restores removed shapes on undo', () => {
+    it('restores removed units on undo', () => {
       const store = useBlockDesignerStore.getState();
       store.initBlock(5);
       store.addSquare({ row: 0, col: 0 });
       store.addSquare({ row: 4, col: 4 });
 
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(2);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(2);
 
       store.setGridSize(3);
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(1);
 
       store.undo();
       expect(useBlockDesignerStore.getState().block.gridSize).toBe(5);
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(2);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(2);
     });
 
-    it('removes shapes again on redo after undo', () => {
+    it('removes units again on redo after undo', () => {
       const store = useBlockDesignerStore.getState();
       store.initBlock(5);
       store.addSquare({ row: 0, col: 0 });
@@ -2542,11 +2542,11 @@ describe('BlockDesignerStore', () => {
       store.setGridSize(3);
       store.undo();
 
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(2);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(2);
 
       store.redo();
       expect(useBlockDesignerStore.getState().block.gridSize).toBe(3);
-      expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(1);
+      expect(useBlockDesignerStore.getState().block.units).toHaveLength(1);
     });
 
     it('supports multiple grid size changes with undo', () => {
@@ -2632,7 +2632,7 @@ describe('BlockDesignerStore', () => {
 
       it('filters out occupied cells', () => {
         const store = useBlockDesignerStore.getState();
-        // Add a shape at (0, 1)
+        // Add a unit at (0, 1)
         store.addSquare({ row: 0, col: 1 }, 'background');
 
         store.setRangeFillAnchor({ row: 0, col: 0 });
@@ -2693,14 +2693,14 @@ describe('BlockDesignerStore', () => {
       });
     });
 
-    describe('clearShapeSelection clears rangeFillAnchor', () => {
-      it('clears anchor when clearing shape selection', () => {
+    describe('clearUnitSelection clears rangeFillAnchor', () => {
+      it('clears anchor when clearing unit selection', () => {
         const store = useBlockDesignerStore.getState();
-        store.selectShapeForPlacement({ type: 'square' });
+        store.selectUnitForPlacement({ type: 'square' });
         store.setRangeFillAnchor({ row: 1, col: 1 });
         expect(useBlockDesignerStore.getState().rangeFillAnchor).not.toBeNull();
 
-        store.clearShapeSelection();
+        store.clearUnitSelection();
 
         expect(useBlockDesignerStore.getState().rangeFillAnchor).toBeNull();
       });
@@ -2732,7 +2732,7 @@ describe('BlockDesignerStore', () => {
           description: null,
           hashtags: [],
           gridSize: 3,
-          shapes: [],
+          units: [],
           previewPalette: { ...DEFAULT_PALETTE, roles: [...DEFAULT_PALETTE.roles] },
           status: 'draft',
           publishedAt: null,
@@ -2748,7 +2748,7 @@ describe('BlockDesignerStore', () => {
       it('enables shift-click workflow for squares', () => {
         const store = useBlockDesignerStore.getState();
 
-        // First click places shape and sets anchor
+        // First click places unit and sets anchor
         store.addSquare({ row: 0, col: 0 }, 'background');
         store.setRangeFillAnchor({ row: 0, col: 0 });
 
@@ -2758,16 +2758,16 @@ describe('BlockDesignerStore', () => {
         expect(positions).toHaveLength(8);
 
         // Batch place at those positions
-        store.addShapesBatch(positions, { type: 'square' });
+        store.addUnitsBatch(positions, { type: 'square' });
 
-        // Should now have 9 shapes total
-        expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(9);
+        // Should now have 9 units total
+        expect(useBlockDesignerStore.getState().block.units).toHaveLength(9);
       });
 
       it('enables shift-click workflow for HSTs', () => {
         const store = useBlockDesignerStore.getState();
 
-        // First click places shape and sets anchor
+        // First click places unit and sets anchor
         store.addHst({ row: 0, col: 0 }, 'top_left', 'background', 'background');
         store.setRangeFillAnchor({ row: 0, col: 0 });
 
@@ -2777,10 +2777,10 @@ describe('BlockDesignerStore', () => {
         expect(positions).toHaveLength(3);
 
         // Batch place at those positions
-        store.addShapesBatch(positions, { type: 'hst', variant: 'top_left' });
+        store.addUnitsBatch(positions, { type: 'hst', variant: 'top_left' });
 
-        // Should now have 4 shapes total
-        expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(4);
+        // Should now have 4 units total
+        expect(useBlockDesignerStore.getState().block.units).toHaveLength(4);
       });
 
       it('supports chaining range fills', () => {
@@ -2790,34 +2790,34 @@ describe('BlockDesignerStore', () => {
         store.addSquare({ row: 0, col: 0 }, 'background');
         store.setRangeFillAnchor({ row: 0, col: 0 });
         const positions1 = store.getRangeFillPositions({ row: 1, col: 1 });
-        store.addShapesBatch(positions1, { type: 'square' });
+        store.addUnitsBatch(positions1, { type: 'square' });
         store.setRangeFillAnchor({ row: 1, col: 1 });
 
-        expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(4);
+        expect(useBlockDesignerStore.getState().block.units).toHaveLength(4);
 
         // Second range from (1,1) to (2,2)
         const positions2 = store.getRangeFillPositions({ row: 2, col: 2 });
         expect(positions2).toHaveLength(3); // (1,1) is occupied
 
-        store.addShapesBatch(positions2, { type: 'square' });
+        store.addUnitsBatch(positions2, { type: 'square' });
 
-        expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(7);
+        expect(useBlockDesignerStore.getState().block.units).toHaveLength(7);
       });
 
       it('does not apply range fill for Flying Geese (they use two-tap)', () => {
         const store = useBlockDesignerStore.getState();
         store.setRangeFillAnchor({ row: 0, col: 0 });
 
-        // Flying Geese are excluded from addShapesBatch
+        // Flying Geese are excluded from addUnitsBatch (batch placement)
         // This is a design decision - they require two-tap placement
         const positions = store.getRangeFillPositions({ row: 1, col: 1 });
         expect(positions).toHaveLength(4);
 
-        // addShapesBatch should skip Flying Geese types
-        store.addShapesBatch(positions, { type: 'flying_geese' });
+        // addUnitsBatch should skip Flying Geese types
+        store.addUnitsBatch(positions, { type: 'flying_geese' });
 
-        // No shapes should be added (Flying Geese ignored)
-        expect(useBlockDesignerStore.getState().block.shapes).toHaveLength(0);
+        // No units should be added (Flying Geese ignored)
+        expect(useBlockDesignerStore.getState().block.units).toHaveLength(0);
       });
     });
   });

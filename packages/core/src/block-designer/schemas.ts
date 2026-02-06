@@ -43,11 +43,11 @@ export const RotationSchema = z.union([
 ]);
 
 // =============================================================================
-// Shape Type Schemas
+// Unit Type Schemas
 // =============================================================================
 
-/** Shape type enum schema */
-export const ShapeTypeSchema = z.enum(['square', 'hst', 'flying_geese', 'qst']);
+/** Unit type enum schema */
+export const UnitTypeSchema = z.enum(['square', 'hst', 'flying_geese', 'qst']);
 
 /** HST variant schema */
 export const HstVariantSchema = z.enum(['nw', 'ne', 'sw', 'se']);
@@ -55,8 +55,8 @@ export const HstVariantSchema = z.enum(['nw', 'ne', 'sw', 'se']);
 /** Flying Geese direction schema */
 export const FlyingGeeseDirectionSchema = z.enum(['up', 'down', 'left', 'right']);
 
-/** QST part ID schema */
-export const QstPartIdSchema = z.enum(['top', 'right', 'bottom', 'left']);
+/** QST patch ID schema */
+export const QstPatchIdSchema = z.enum(['top', 'right', 'bottom', 'left']);
 
 // =============================================================================
 // Grid & Position Schemas
@@ -103,18 +103,18 @@ export const PaletteSchema = z.object({
 });
 
 // =============================================================================
-// Shape Schemas
+// Unit Schemas
 // =============================================================================
 
-/** Base shape schema (common fields) */
-const BaseShapeSchema = z.object({
+/** Base unit schema (common fields) */
+const BaseUnitSchema = z.object({
   id: UUIDSchema,
   position: GridPositionSchema,
   fabricRole: FabricRoleIdSchema,
 });
 
-/** Square shape schema */
-export const SquareShapeSchema = BaseShapeSchema.extend({
+/** Square unit schema */
+export const SquareUnitSchema = BaseUnitSchema.extend({
   type: z.literal('square'),
   span: z.object({
     rows: z.literal(1),
@@ -122,8 +122,8 @@ export const SquareShapeSchema = BaseShapeSchema.extend({
   }),
 });
 
-/** HST shape schema */
-export const HstShapeSchema = BaseShapeSchema.extend({
+/** HST unit schema */
+export const HstUnitSchema = BaseUnitSchema.extend({
   type: z.literal('hst'),
   span: z.object({
     rows: z.literal(1),
@@ -139,36 +139,36 @@ const FlyingGeeseSpanSchema = z.union([
   z.object({ rows: z.literal(2), cols: z.literal(1) }),
 ]);
 
-/** Flying Geese part ID schema */
-export const FlyingGeesePartIdSchema = z.enum(['goose', 'sky1', 'sky2']);
+/** Flying Geese patch ID schema */
+export const FlyingGeesePatchIdSchema = z.enum(['goose', 'sky1', 'sky2']);
 
-/** Flying Geese part roles schema - fabric role for each of the 3 triangles */
-export const FlyingGeesePartRolesSchema = z.object({
+/** Flying Geese patch roles schema - fabric role for each of the 3 triangles */
+export const FlyingGeesePatchRolesSchema = z.object({
   goose: FabricRoleIdSchema,
   sky1: FabricRoleIdSchema,
   sky2: FabricRoleIdSchema,
 });
 
-/** Flying Geese shape schema - uses partFabricRoles for independent coloring */
-export const FlyingGeeseShapeSchema = z.object({
+/** Flying Geese unit schema - uses patchFabricRoles for independent coloring */
+export const FlyingGeeseUnitSchema = z.object({
   id: UUIDSchema,
   type: z.literal('flying_geese'),
   position: GridPositionSchema,
   span: FlyingGeeseSpanSchema,
   direction: FlyingGeeseDirectionSchema,
-  partFabricRoles: FlyingGeesePartRolesSchema,
+  patchFabricRoles: FlyingGeesePatchRolesSchema,
 });
 
-/** QST part roles schema - fabric role for each of the 4 triangles */
-export const QstPartRolesSchema = z.object({
+/** QST patch roles schema - fabric role for each of the 4 triangles */
+export const QstPatchRolesSchema = z.object({
   top: FabricRoleIdSchema,
   right: FabricRoleIdSchema,
   bottom: FabricRoleIdSchema,
   left: FabricRoleIdSchema,
 });
 
-/** QST shape schema - uses partFabricRoles for independent coloring of 4 triangles */
-export const QstShapeSchema = z.object({
+/** QST unit schema - uses patchFabricRoles for independent coloring of 4 triangles */
+export const QstUnitSchema = z.object({
   id: UUIDSchema,
   type: z.literal('qst'),
   position: GridPositionSchema,
@@ -176,15 +176,15 @@ export const QstShapeSchema = z.object({
     rows: z.literal(1),
     cols: z.literal(1),
   }),
-  partFabricRoles: QstPartRolesSchema,
+  patchFabricRoles: QstPatchRolesSchema,
 });
 
-/** Union schema for all shapes */
-export const ShapeSchema = z.discriminatedUnion('type', [
-  SquareShapeSchema,
-  HstShapeSchema,
-  FlyingGeeseShapeSchema,
-  QstShapeSchema,
+/** Union schema for all units */
+export const UnitSchema = z.discriminatedUnion('type', [
+  SquareUnitSchema,
+  HstUnitSchema,
+  FlyingGeeseUnitSchema,
+  QstUnitSchema,
 ]);
 
 // =============================================================================
@@ -205,7 +205,7 @@ export const BlockSchema = z.object({
   hashtags: z.array(z.string().min(1).max(50)),
 
   gridSize: GridSizeSchema,
-  shapes: z.array(ShapeSchema),
+  units: z.array(UnitSchema),
   previewPalette: PaletteSchema,
 
   status: BlockStatusSchema,
@@ -216,7 +216,7 @@ export const BlockSchema = z.object({
 });
 
 // =============================================================================
-// Shape Creation Input Schemas
+// Unit Creation Input Schemas
 // =============================================================================
 
 /** Input schema for creating a square */
@@ -237,13 +237,13 @@ export const CreateHstInputSchema = z.object({
 export const CreateFlyingGeeseInputSchema = z.object({
   position: GridPositionSchema,
   direction: FlyingGeeseDirectionSchema,
-  partFabricRoles: FlyingGeesePartRolesSchema,
+  patchFabricRoles: FlyingGeesePatchRolesSchema,
 });
 
 /** Input schema for creating QST */
 export const CreateQstInputSchema = z.object({
   position: GridPositionSchema,
-  partFabricRoles: QstPartRolesSchema,
+  patchFabricRoles: QstPatchRolesSchema,
 });
 
 // =============================================================================
@@ -251,7 +251,7 @@ export const CreateQstInputSchema = z.object({
 // =============================================================================
 
 /** Inferred types from schemas (for runtime validation) */
-export type ValidatedShape = z.infer<typeof ShapeSchema>;
+export type ValidatedUnit = z.infer<typeof UnitSchema>;
 export type ValidatedBlock = z.infer<typeof BlockSchema>;
 export type ValidatedPalette = z.infer<typeof PaletteSchema>;
 export type ValidatedFabricRole = z.infer<typeof FabricRoleSchema>;

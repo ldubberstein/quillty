@@ -4,13 +4,13 @@ import { render, screen, fireEvent } from '@testing-library/react';
 // Mock store state
 let mockGridSize = 3;
 const mockSetGridSize = vi.fn();
-const mockGetShapesOutOfBounds = vi.fn(() => []);
+const mockGetUnitsOutOfBounds = vi.fn(() => []);
 
 vi.mock('@quillty/core', () => ({
   useBlockDesignerStore: vi.fn((selector) => {
     const state = {
       setGridSize: mockSetGridSize,
-      getShapesOutOfBounds: mockGetShapesOutOfBounds,
+      getUnitsOutOfBounds: mockGetUnitsOutOfBounds,
     };
     return selector ? selector(state) : state;
   }),
@@ -24,7 +24,7 @@ describe('GridSizeSelector', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGridSize = 3;
-    mockGetShapesOutOfBounds.mockReturnValue([]);
+    mockGetUnitsOutOfBounds.mockReturnValue([]);
   });
 
   describe('rendering', () => {
@@ -116,7 +116,7 @@ describe('GridSizeSelector', () => {
   });
 
   describe('size selection', () => {
-    it('calls setGridSize when selecting a different size with no shapes affected', () => {
+    it('calls setGridSize when selecting a different size with no units affected', () => {
       render(<GridSizeSelector />);
       fireEvent.click(screen.getByRole('button', { name: /change grid size/i }));
 
@@ -143,18 +143,18 @@ describe('GridSizeSelector', () => {
       expect(mockSetGridSize).not.toHaveBeenCalled();
     });
 
-    it('checks for out-of-bounds shapes before changing size', () => {
+    it('checks for out-of-bounds units before changing size', () => {
       render(<GridSizeSelector />);
       fireEvent.click(screen.getByRole('button', { name: /change grid size/i }));
 
       fireEvent.click(screen.getByRole('option', { name: '2×2' }));
 
-      expect(mockGetShapesOutOfBounds).toHaveBeenCalledWith(2);
+      expect(mockGetUnitsOutOfBounds).toHaveBeenCalledWith(2);
     });
   });
 
   describe('confirmation dialog', () => {
-    const mockOutOfBoundsShapes = [
+    const mockOutOfBoundsUnits = [
       {
         id: 'shape-1',
         type: 'square',
@@ -164,21 +164,21 @@ describe('GridSizeSelector', () => {
       },
     ];
 
-    it('shows confirmation dialog when shrinking would remove shapes', () => {
-      mockGetShapesOutOfBounds.mockReturnValue(mockOutOfBoundsShapes);
+    it('shows confirmation dialog when shrinking would remove units', () => {
+      mockGetUnitsOutOfBounds.mockReturnValue(mockOutOfBoundsUnits);
 
       render(<GridSizeSelector />);
       fireEvent.click(screen.getByRole('button', { name: /change grid size/i }));
       fireEvent.click(screen.getByRole('option', { name: '2×2' }));
 
-      expect(screen.getByText('Remove Shapes?')).toBeInTheDocument();
+      expect(screen.getByText('Remove Units?')).toBeInTheDocument();
       expect(screen.getByText(/will remove/)).toBeInTheDocument();
-      expect(screen.getByText('1 shape')).toBeInTheDocument();
+      expect(screen.getByText('1 unit')).toBeInTheDocument();
     });
 
-    it('shows plural text for multiple shapes', () => {
-      mockGetShapesOutOfBounds.mockReturnValue([
-        ...mockOutOfBoundsShapes,
+    it('shows plural text for multiple units', () => {
+      mockGetUnitsOutOfBounds.mockReturnValue([
+        ...mockOutOfBoundsUnits,
         {
           id: 'shape-2',
           type: 'square',
@@ -192,12 +192,12 @@ describe('GridSizeSelector', () => {
       fireEvent.click(screen.getByRole('button', { name: /change grid size/i }));
       fireEvent.click(screen.getByRole('option', { name: '2×2' }));
 
-      expect(screen.getByText('2 shapes')).toBeInTheDocument();
+      expect(screen.getByText('2 units')).toBeInTheDocument();
       expect(screen.getByText(/that are outside/)).toBeInTheDocument();
     });
 
     it('applies size change when confirmation is confirmed', () => {
-      mockGetShapesOutOfBounds.mockReturnValue(mockOutOfBoundsShapes);
+      mockGetUnitsOutOfBounds.mockReturnValue(mockOutOfBoundsUnits);
 
       render(<GridSizeSelector />);
       fireEvent.click(screen.getByRole('button', { name: /change grid size/i }));
@@ -212,7 +212,7 @@ describe('GridSizeSelector', () => {
     });
 
     it('cancels size change when Cancel button is clicked', () => {
-      mockGetShapesOutOfBounds.mockReturnValue(mockOutOfBoundsShapes);
+      mockGetUnitsOutOfBounds.mockReturnValue(mockOutOfBoundsUnits);
 
       render(<GridSizeSelector />);
       fireEvent.click(screen.getByRole('button', { name: /change grid size/i }));
@@ -221,11 +221,11 @@ describe('GridSizeSelector', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
 
       expect(mockSetGridSize).not.toHaveBeenCalled();
-      expect(screen.queryByText('Remove Shapes?')).not.toBeInTheDocument();
+      expect(screen.queryByText('Remove Units?')).not.toBeInTheDocument();
     });
 
     it('cancels size change when close button is clicked', () => {
-      mockGetShapesOutOfBounds.mockReturnValue(mockOutOfBoundsShapes);
+      mockGetUnitsOutOfBounds.mockReturnValue(mockOutOfBoundsUnits);
 
       render(<GridSizeSelector />);
       fireEvent.click(screen.getByRole('button', { name: /change grid size/i }));
@@ -234,11 +234,11 @@ describe('GridSizeSelector', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Close' }));
 
       expect(mockSetGridSize).not.toHaveBeenCalled();
-      expect(screen.queryByText('Remove Shapes?')).not.toBeInTheDocument();
+      expect(screen.queryByText('Remove Units?')).not.toBeInTheDocument();
     });
 
     it('cancels size change when escape is pressed', () => {
-      mockGetShapesOutOfBounds.mockReturnValue(mockOutOfBoundsShapes);
+      mockGetUnitsOutOfBounds.mockReturnValue(mockOutOfBoundsUnits);
 
       render(<GridSizeSelector />);
       fireEvent.click(screen.getByRole('button', { name: /change grid size/i }));
@@ -247,26 +247,26 @@ describe('GridSizeSelector', () => {
       fireEvent.keyDown(document, { key: 'Escape' });
 
       expect(mockSetGridSize).not.toHaveBeenCalled();
-      expect(screen.queryByText('Remove Shapes?')).not.toBeInTheDocument();
+      expect(screen.queryByText('Remove Units?')).not.toBeInTheDocument();
     });
 
     it('cancels size change when backdrop is clicked', () => {
-      mockGetShapesOutOfBounds.mockReturnValue(mockOutOfBoundsShapes);
+      mockGetUnitsOutOfBounds.mockReturnValue(mockOutOfBoundsUnits);
 
       render(<GridSizeSelector />);
       fireEvent.click(screen.getByRole('button', { name: /change grid size/i }));
       fireEvent.click(screen.getByRole('option', { name: '2×2' }));
 
       // Click the backdrop (the fixed overlay div)
-      const backdrop = screen.getByText('Remove Shapes?').closest('.fixed');
+      const backdrop = screen.getByText('Remove Units?').closest('.fixed');
       fireEvent.click(backdrop!);
 
       expect(mockSetGridSize).not.toHaveBeenCalled();
-      expect(screen.queryByText('Remove Shapes?')).not.toBeInTheDocument();
+      expect(screen.queryByText('Remove Units?')).not.toBeInTheDocument();
     });
 
     it('shows undo hint in confirmation dialog', () => {
-      mockGetShapesOutOfBounds.mockReturnValue(mockOutOfBoundsShapes);
+      mockGetUnitsOutOfBounds.mockReturnValue(mockOutOfBoundsUnits);
 
       render(<GridSizeSelector />);
       fireEvent.click(screen.getByRole('button', { name: /change grid size/i }));

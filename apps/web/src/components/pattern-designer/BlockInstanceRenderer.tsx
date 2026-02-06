@@ -6,18 +6,15 @@ import type {
   BlockInstance,
   Palette,
   PaletteOverrides,
-  Shape,
-  SquareShape,
-  HstShape,
-  FlyingGeeseShape,
-  QstShape,
+  Unit,
 } from '@quillty/core';
+import { getUnitTrianglesWithColors } from '@quillty/core';
 
 interface BlockInstanceRendererProps {
   /** The block instance to render */
   instance: BlockInstance;
-  /** The block's shapes (from cached block data) */
-  shapes: Shape[];
+  /** The block's units (from cached block data) */
+  units: Unit[];
   /** Block's grid size (2, 3, or 4) */
   blockGridSize: number;
   /** Pattern's palette for colors */
@@ -34,175 +31,22 @@ interface BlockInstanceRendererProps {
   onClick?: (instanceId: string) => void;
 }
 
-/**
- * Helper to get color for a fabric role
- * Checks instance overrides first, then falls back to pattern palette
- */
-function getColor(
-  palette: Palette,
-  roleId: string,
-  instanceOverrides?: PaletteOverrides
-): string {
-  // Check instance override first
-  if (instanceOverrides?.[roleId]) {
-    return instanceOverrides[roleId];
-  }
-  // Fall back to pattern palette
-  const role = palette.roles.find((r) => r.id === roleId);
-  return role?.color ?? '#CCCCCC';
-}
-
-/** Render a square shape */
-function renderSquare(
-  shape: SquareShape,
+/** Render a single unit using the registry-driven triangle renderer */
+function renderUnitGeneric(
+  unit: Unit,
   unitSize: number,
   palette: Palette,
   instanceOverrides?: PaletteOverrides
 ): JSX.Element {
-  const color = getColor(palette, shape.fabricRole, instanceOverrides);
-  const x = shape.position.col * unitSize;
-  const y = shape.position.row * unitSize;
+  const triangles = getUnitTrianglesWithColors(unit, unitSize, palette, instanceOverrides);
+  const x = unit.position.col * unitSize;
+  const y = unit.position.row * unitSize;
 
   return (
-    <Rect
-      key={shape.id}
-      x={x}
-      y={y}
-      width={unitSize}
-      height={unitSize}
-      fill={color}
-      listening={false}
-    />
-  );
-}
-
-/** Render an HST shape */
-function renderHst(
-  shape: HstShape,
-  unitSize: number,
-  palette: Palette,
-  instanceOverrides?: PaletteOverrides
-): JSX.Element {
-  const primaryColor = getColor(palette, shape.fabricRole, instanceOverrides);
-  const secondaryColor = getColor(palette, shape.secondaryFabricRole, instanceOverrides);
-  const x = shape.position.col * unitSize;
-  const y = shape.position.row * unitSize;
-
-  // Triangle points based on variant (no padding for seamless appearance)
-  let primaryPoints: number[];
-  let secondaryPoints: number[];
-
-  switch (shape.variant) {
-    case 'nw':
-      primaryPoints = [0, 0, unitSize, 0, 0, unitSize];
-      secondaryPoints = [unitSize, 0, unitSize, unitSize, 0, unitSize];
-      break;
-    case 'ne':
-      primaryPoints = [0, 0, unitSize, 0, unitSize, unitSize];
-      secondaryPoints = [0, 0, 0, unitSize, unitSize, unitSize];
-      break;
-    case 'sw':
-      primaryPoints = [0, 0, 0, unitSize, unitSize, unitSize];
-      secondaryPoints = [0, 0, unitSize, 0, unitSize, unitSize];
-      break;
-    case 'se':
-      primaryPoints = [unitSize, 0, unitSize, unitSize, 0, unitSize];
-      secondaryPoints = [0, 0, unitSize, 0, 0, unitSize];
-      break;
-  }
-
-  return (
-    <Group key={shape.id} x={x} y={y} listening={false}>
-      <Line points={secondaryPoints} fill={secondaryColor} closed />
-      <Line points={primaryPoints} fill={primaryColor} closed />
-    </Group>
-  );
-}
-
-/** Render a Flying Geese shape */
-function renderFlyingGeese(
-  shape: FlyingGeeseShape,
-  unitSize: number,
-  palette: Palette,
-  instanceOverrides?: PaletteOverrides
-): JSX.Element {
-  const gooseColor = getColor(palette, shape.partFabricRoles.goose, instanceOverrides);
-  const sky1Color = getColor(palette, shape.partFabricRoles.sky1, instanceOverrides);
-  const sky2Color = getColor(palette, shape.partFabricRoles.sky2, instanceOverrides);
-  const x = shape.position.col * unitSize;
-  const y = shape.position.row * unitSize;
-
-  const isHorizontal = shape.span.cols === 2;
-  const width = isHorizontal ? unitSize * 2 : unitSize;
-  const height = isHorizontal ? unitSize : unitSize * 2;
-
-  let goosePoints: number[];
-  let sky1Points: number[];
-  let sky2Points: number[];
-
-  // No padding for seamless appearance
-  switch (shape.direction) {
-    case 'up':
-      goosePoints = [width / 2, 0, 0, height, width, height];
-      sky1Points = [0, 0, width / 2, 0, 0, height];
-      sky2Points = [width / 2, 0, width, 0, width, height];
-      break;
-    case 'down':
-      goosePoints = [width / 2, height, 0, 0, width, 0];
-      sky1Points = [0, 0, 0, height, width / 2, height];
-      sky2Points = [width, 0, width, height, width / 2, height];
-      break;
-    case 'left':
-      goosePoints = [0, height / 2, width, 0, width, height];
-      sky1Points = [0, 0, width, 0, 0, height / 2];
-      sky2Points = [0, height / 2, width, height, 0, height];
-      break;
-    case 'right':
-      goosePoints = [width, height / 2, 0, 0, 0, height];
-      sky1Points = [0, 0, width, 0, width, height / 2];
-      sky2Points = [0, height, width, height, width, height / 2];
-      break;
-  }
-
-  return (
-    <Group key={shape.id} x={x} y={y} listening={false}>
-      <Line points={sky1Points} fill={sky1Color} closed />
-      <Line points={sky2Points} fill={sky2Color} closed />
-      <Line points={goosePoints} fill={gooseColor} closed />
-    </Group>
-  );
-}
-
-/** Render a QST (Quarter-Square Triangle) shape */
-function renderQst(
-  shape: QstShape,
-  unitSize: number,
-  palette: Palette,
-  instanceOverrides?: PaletteOverrides
-): JSX.Element {
-  const topColor = getColor(palette, shape.partFabricRoles.top, instanceOverrides);
-  const rightColor = getColor(palette, shape.partFabricRoles.right, instanceOverrides);
-  const bottomColor = getColor(palette, shape.partFabricRoles.bottom, instanceOverrides);
-  const leftColor = getColor(palette, shape.partFabricRoles.left, instanceOverrides);
-  const x = shape.position.col * unitSize;
-  const y = shape.position.row * unitSize;
-
-  // Center point
-  const cx = unitSize / 2;
-  const cy = unitSize / 2;
-
-  // Triangle points for each quarter (no padding for seamless appearance)
-  const topPoints = [0, 0, unitSize, 0, cx, cy];
-  const rightPoints = [unitSize, 0, unitSize, unitSize, cx, cy];
-  const bottomPoints = [unitSize, unitSize, 0, unitSize, cx, cy];
-  const leftPoints = [0, unitSize, 0, 0, cx, cy];
-
-  return (
-    <Group key={shape.id} x={x} y={y} listening={false}>
-      <Line points={topPoints} fill={topColor} closed />
-      <Line points={rightPoints} fill={rightColor} closed />
-      <Line points={bottomPoints} fill={bottomColor} closed />
-      <Line points={leftPoints} fill={leftColor} closed />
+    <Group key={unit.id} x={x} y={y} listening={false}>
+      {triangles.map((tri, i) => (
+        <Line key={i} points={tri.points} fill={tri.color} closed />
+      ))}
     </Group>
   );
 }
@@ -218,7 +62,7 @@ function renderQst(
  */
 export function BlockInstanceRenderer({
   instance,
-  shapes,
+  units,
   blockGridSize,
   palette,
   cellSize,
@@ -231,7 +75,7 @@ export function BlockInstanceRenderer({
   const blockX = offsetX + instance.position.col * cellSize;
   const blockY = offsetY + instance.position.row * cellSize;
 
-  // Size of each shape unit within the block
+  // Size of each unit within the block
   const unitSize = cellSize / blockGridSize;
 
   // Apply transformations: rotation and flip
@@ -248,23 +92,10 @@ export function BlockInstanceRenderer({
   // Check if this instance has color overrides
   const hasOverrides = instance.paletteOverrides && Object.keys(instance.paletteOverrides).length > 0;
 
-  // Render all shapes
-  const renderedShapes = useMemo(() => {
-    return shapes.map((shape) => {
-      switch (shape.type) {
-        case 'square':
-          return renderSquare(shape as SquareShape, unitSize, palette, instance.paletteOverrides);
-        case 'hst':
-          return renderHst(shape as HstShape, unitSize, palette, instance.paletteOverrides);
-        case 'flying_geese':
-          return renderFlyingGeese(shape as FlyingGeeseShape, unitSize, palette, instance.paletteOverrides);
-        case 'qst':
-          return renderQst(shape as QstShape, unitSize, palette, instance.paletteOverrides);
-        default:
-          return null;
-      }
-    });
-  }, [shapes, unitSize, palette, instance.paletteOverrides]);
+  // Render all units using registry-driven generic renderer
+  const renderedUnits = useMemo(() => {
+    return units.map((unit) => renderUnitGeneric(unit, unitSize, palette, instance.paletteOverrides));
+  }, [units, unitSize, palette, instance.paletteOverrides]);
 
   const handleClick = () => {
     onClick?.(instance.id);
@@ -292,8 +123,8 @@ export function BlockInstanceRenderer({
         listening={true}
       />
 
-      {/* Render shapes */}
-      {renderedShapes}
+      {/* Render units */}
+      {renderedUnits}
 
       {/* Selection highlight */}
       {isSelected && (

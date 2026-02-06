@@ -10,10 +10,10 @@ import {
   MAX_HISTORY_SIZE,
 } from './undoManager';
 import type { Operation } from './operations';
-import type { Shape } from '../types';
+import type { Unit } from '../types';
 
 describe('undoManager', () => {
-  const createTestShape = (id: string): Shape => ({
+  const createTestUnit = (id: string): Unit => ({
     id,
     type: 'square',
     position: { row: 0, col: 0 },
@@ -33,7 +33,7 @@ describe('undoManager', () => {
   describe('recordOperation', () => {
     it('adds operation to undo stack', () => {
       const state = createUndoManagerState();
-      const op: Operation = { type: 'add_shape', shape: createTestShape('1') };
+      const op: Operation = { type: 'add_unit', unit: createTestUnit('1') };
 
       const newState = recordOperation(state, op);
 
@@ -42,8 +42,8 @@ describe('undoManager', () => {
 
     it('clears redo stack when recording new operation', () => {
       const state = createUndoManagerState();
-      const op1: Operation = { type: 'add_shape', shape: createTestShape('1') };
-      const op2: Operation = { type: 'add_shape', shape: createTestShape('2') };
+      const op1: Operation = { type: 'add_unit', unit: createTestUnit('1') };
+      const op2: Operation = { type: 'add_unit', unit: createTestUnit('2') };
 
       // Add op1, then undo, then add op2
       let current = recordOperation(state, op1);
@@ -62,13 +62,13 @@ describe('undoManager', () => {
 
       // Add MAX_HISTORY_SIZE + 1 operations
       for (let i = 0; i <= MAX_HISTORY_SIZE; i++) {
-        const op: Operation = { type: 'add_shape', shape: createTestShape(`${i}`) };
+        const op: Operation = { type: 'add_unit', unit: createTestUnit(`${i}`) };
         state = recordOperation(state, op);
       }
 
       expect(state.undoStack.length).toBe(MAX_HISTORY_SIZE);
       // First operation should have been trimmed
-      expect((state.undoStack[0] as { shape: Shape }).shape.id).toBe('1');
+      expect((state.undoStack[0] as { unit: Unit }).unit.id).toBe('1');
     });
   });
 
@@ -83,15 +83,15 @@ describe('undoManager', () => {
 
     it('returns inverted operation and moves to redo stack', () => {
       const state = createUndoManagerState();
-      const shape = createTestShape('1');
-      const op: Operation = { type: 'add_shape', shape };
+      const unit = createTestUnit('1');
+      const op: Operation = { type: 'add_unit', unit };
 
       const stateWithOp = recordOperation(state, op);
       const result = undo(stateWithOp);
 
       expect(result).not.toBeNull();
-      // Inverted operation should be remove_shape
-      expect(result!.operation).toEqual({ type: 'remove_shape', shape });
+      // Inverted operation should be remove_unit
+      expect(result!.operation).toEqual({ type: 'remove_unit', unit });
       // Original operation moved to redo stack
       expect(result!.state.redoStack).toEqual([op]);
       expect(result!.state.undoStack).toEqual([]);
@@ -99,8 +99,8 @@ describe('undoManager', () => {
 
     it('handles multiple undo operations', () => {
       let state = createUndoManagerState();
-      const op1: Operation = { type: 'add_shape', shape: createTestShape('1') };
-      const op2: Operation = { type: 'add_shape', shape: createTestShape('2') };
+      const op1: Operation = { type: 'add_unit', unit: createTestUnit('1') };
+      const op2: Operation = { type: 'add_unit', unit: createTestUnit('2') };
 
       state = recordOperation(state, op1);
       state = recordOperation(state, op2);
@@ -132,8 +132,8 @@ describe('undoManager', () => {
 
     it('returns operation and moves back to undo stack', () => {
       let state = createUndoManagerState();
-      const shape = createTestShape('1');
-      const op: Operation = { type: 'add_shape', shape };
+      const unit = createTestUnit('1');
+      const op: Operation = { type: 'add_unit', unit };
 
       state = recordOperation(state, op);
       const undoResult = undo(state);
@@ -160,7 +160,7 @@ describe('undoManager', () => {
 
     it('returns true when undo stack has operations', () => {
       const state = createUndoManagerState();
-      const op: Operation = { type: 'add_shape', shape: createTestShape('1') };
+      const op: Operation = { type: 'add_unit', unit: createTestUnit('1') };
       const stateWithOp = recordOperation(state, op);
 
       expect(canUndo(stateWithOp)).toBe(true);
@@ -176,7 +176,7 @@ describe('undoManager', () => {
 
     it('returns true when redo stack has operations', () => {
       let state = createUndoManagerState();
-      const op: Operation = { type: 'add_shape', shape: createTestShape('1') };
+      const op: Operation = { type: 'add_unit', unit: createTestUnit('1') };
 
       state = recordOperation(state, op);
       const undoResult = undo(state);
@@ -190,7 +190,7 @@ describe('undoManager', () => {
   describe('clearHistory', () => {
     it('returns fresh empty state', () => {
       const initialState = createUndoManagerState();
-      const op: Operation = { type: 'add_shape', shape: createTestShape('1') };
+      const op: Operation = { type: 'add_unit', unit: createTestUnit('1') };
       // Just verifying the setup - state with ops is different from cleared
       recordOperation(initialState, op);
 

@@ -38,7 +38,7 @@ export default function BlockDesignerPage() {
   const initBlock = useBlockDesignerStore((state) => state.initBlock);
   const block = useBlockDesignerStore((state) => state.block);
   const mode = useBlockDesignerStore((state) => state.mode);
-  const [showShapePanel, setShowShapePanel] = useState(true);
+  const [showUnitPanel, setShowUnitPanel] = useState(true);
   const [showFabricPanel, setShowFabricPanel] = useState(true);
   const hasInitialized = useRef(false);
 
@@ -47,7 +47,7 @@ export default function BlockDesignerPage() {
     router.push(`/blocks/${blockId}`);
   }, [router]);
 
-  // Enable Delete/Backspace key to delete selected shape
+  // Enable Delete/Backspace key to delete selected unit
   useDeleteKeyboard();
 
   // Initialize a new block on mount (only once)
@@ -56,14 +56,14 @@ export default function BlockDesignerPage() {
     hasInitialized.current = true;
 
     // Only init if the block is empty (fresh start)
-    if (block.shapes.length === 0 && block.title === '') {
+    if (block.units.length === 0 && block.title === '') {
       initBlock(DEFAULT_GRID_SIZE);
     }
-  }, [initBlock, block.shapes.length, block.title]);
+  }, [initBlock, block.units.length, block.title]);
 
   const isPaintMode = mode === 'paint_mode';
   const isPreviewMode = mode === 'preview';
-  const isPlacingShape = mode === 'placing_shape';
+  const isPlacingUnit = mode === 'placing_unit';
   const isPlacingFlyingGeese = mode === 'placing_flying_geese_second';
 
   return (
@@ -73,14 +73,14 @@ export default function BlockDesignerPage() {
         <div className="flex items-center gap-4">
           {/* Left sidebar toggle */}
           <button
-            onClick={() => setShowShapePanel((prev) => !prev)}
+            onClick={() => setShowUnitPanel((prev) => !prev)}
             className={`p-2 rounded-lg transition-colors ${
-              showShapePanel
+              showUnitPanel
                 ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
                 : 'text-gray-500 hover:bg-gray-100'
             }`}
-            aria-label={showShapePanel ? 'Hide shapes panel' : 'Show shapes panel'}
-            title={showShapePanel ? 'Hide shapes panel' : 'Show shapes panel'}
+            aria-label={showUnitPanel ? 'Hide units panel' : 'Show units panel'}
+            title={showUnitPanel ? 'Hide units panel' : 'Show units panel'}
           >
             <PanelLeft className="w-5 h-5" />
           </button>
@@ -137,8 +137,8 @@ export default function BlockDesignerPage() {
 
       {/* Main Content Area */}
       <main className="flex-1 min-h-0 flex relative">
-        {/* Left Sidebar - Shapes Library */}
-        {showShapePanel && (
+        {/* Left Sidebar - Unit Library */}
+        {showUnitPanel && (
           <aside className="w-48 flex-shrink-0 bg-white border-r border-gray-200 overflow-y-auto">
             <ShapeLibraryPanel />
           </aside>
@@ -165,12 +165,12 @@ export default function BlockDesignerPage() {
           {isPreviewMode
             ? 'Preview mode • Tap anywhere on the canvas to return to editing'
             : isPaintMode
-              ? 'Tap shapes to paint them with the selected fabric'
+              ? 'Tap units to paint them with the selected fabric'
               : isPlacingFlyingGeese
                 ? 'Tap an adjacent cell to complete Flying Geese'
-                : isPlacingShape
-                  ? 'Tap cells to place shape • Click shape again to deselect'
-                  : 'Select a shape from the left panel • Scroll to zoom • Drag to pan'}
+                : isPlacingUnit
+                  ? 'Tap cells to place unit • Click unit again to deselect'
+                  : 'Select a unit from the left panel • Scroll to zoom • Drag to pan'}
         </p>
       </footer>
     </div>

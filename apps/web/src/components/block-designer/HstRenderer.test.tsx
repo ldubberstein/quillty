@@ -8,7 +8,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { HstRenderer } from './HstRenderer';
-import type { HstShape, Palette, HstVariant } from '@quillty/core';
+import type { HstUnit, Palette, HstVariant } from '@quillty/core';
 
 describe('HstRenderer', () => {
   const mockPalette: Palette = {
@@ -20,7 +20,7 @@ describe('HstRenderer', () => {
     ],
   };
 
-  const createMockShape = (variant: HstVariant): HstShape => ({
+  const createMockUnit = (variant: HstVariant): HstUnit => ({
     id: `test-hst-${variant}`,
     type: 'hst',
     position: { row: 0, col: 0 },
@@ -31,7 +31,7 @@ describe('HstRenderer', () => {
   });
 
   const defaultProps = {
-    shape: createMockShape('nw'),
+    unit: createMockUnit('nw'),
     cellSize: 100,
     offsetX: 50,
     offsetY: 50,
@@ -57,8 +57,8 @@ describe('HstRenderer', () => {
     it.each(['nw', 'ne', 'sw', 'se'] as HstVariant[])(
       'renders variant: %s',
       (variant) => {
-        const shape = createMockShape(variant);
-        render(<HstRenderer {...defaultProps} shape={shape} />);
+        const unit = createMockUnit(variant);
+        render(<HstRenderer {...defaultProps} unit={unit} />);
         expect(screen.getByTestId('konva-group')).toBeInTheDocument();
       }
     );
@@ -82,24 +82,24 @@ describe('HstRenderer', () => {
     });
 
     it('uses custom fabric roles', () => {
-      const shape: HstShape = {
-        ...createMockShape('nw'),
+      const unit: HstUnit = {
+        ...createMockUnit('nw'),
         fabricRole: 'accent1',
         secondaryFabricRole: 'accent2',
       };
-      render(<HstRenderer {...defaultProps} shape={shape} />);
+      render(<HstRenderer {...defaultProps} unit={unit} />);
       const lines = screen.getAllByTestId('konva-line');
       expect(lines[0]).toHaveAttribute('fill', '#FAA307'); // accent2 secondary
       expect(lines[1]).toHaveAttribute('fill', '#E85D04'); // accent1 primary
     });
 
     it('uses fallback color when role not found', () => {
-      const shape: HstShape = {
-        ...createMockShape('nw'),
+      const unit: HstUnit = {
+        ...createMockUnit('nw'),
         fabricRole: 'nonexistent',
         secondaryFabricRole: 'alsoNonexistent',
       };
-      render(<HstRenderer {...defaultProps} shape={shape} />);
+      render(<HstRenderer {...defaultProps} unit={unit} />);
       const lines = screen.getAllByTestId('konva-line');
       expect(lines[0]).toHaveAttribute('fill', '#FFFFFF'); // fallback for secondary
       expect(lines[1]).toHaveAttribute('fill', '#CCCCCC'); // fallback for primary
@@ -115,11 +115,11 @@ describe('HstRenderer', () => {
     });
 
     it('renders for different grid positions', () => {
-      const shape: HstShape = {
-        ...createMockShape('nw'),
+      const unit: HstUnit = {
+        ...createMockUnit('nw'),
         position: { row: 2, col: 1 },
       };
-      render(<HstRenderer {...defaultProps} shape={shape} />);
+      render(<HstRenderer {...defaultProps} unit={unit} />);
       const group = screen.getByTestId('konva-group');
       expect(group).toBeInTheDocument();
     });

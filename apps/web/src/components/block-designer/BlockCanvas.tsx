@@ -14,8 +14,8 @@ import { FloatingToolbar } from './FloatingToolbar';
 import { PreviewGrid } from './PreviewGrid';
 import { EmptyCell } from './EmptyCell';
 import { useShiftKey } from '../../hooks';
-import { useBlockDesignerStore, useSelectedShapeType, useHoveredCell, useIsPlacingShape, useBlockRangeFillAnchor } from '@quillty/core';
-import type { GridPosition, SquareShape, HstShape, FlyingGeeseShape, QstShape, Shape, ShapeSelectionType } from '@quillty/core';
+import { useBlockDesignerStore, useSelectedUnitType, useHoveredCell, useIsPlacingUnit, useBlockRangeFillAnchor } from '@quillty/core';
+import type { GridPosition, SquareUnit, HstUnit, FlyingGeeseUnit, QstUnit, Unit, UnitSelectionType } from '@quillty/core';
 
 /** Canvas sizing constants */
 const CANVAS_PADDING = 40;
@@ -41,28 +41,28 @@ export function BlockCanvas() {
   const completeFlyingGeesePlacement = useBlockDesignerStore((state) => state.completeFlyingGeesePlacement);
   const cancelFlyingGeesePlacement = useBlockDesignerStore((state) => state.cancelFlyingGeesePlacement);
   const assignFabricRole = useBlockDesignerStore((state) => state.assignFabricRole);
-  const selectedShapeId = useBlockDesignerStore((state) => state.selectedShapeId);
-  const selectShape = useBlockDesignerStore((state) => state.selectShape);
-  const removeShape = useBlockDesignerStore((state) => state.removeShape);
-  const rotateShape = useBlockDesignerStore((state) => state.rotateShape);
-  const flipShapeHorizontal = useBlockDesignerStore((state) => state.flipShapeHorizontal);
-  const flipShapeVertical = useBlockDesignerStore((state) => state.flipShapeVertical);
+  const selectedUnitId = useBlockDesignerStore((state) => state.selectedUnitId);
+  const selectUnit = useBlockDesignerStore((state) => state.selectUnit);
+  const removeUnit = useBlockDesignerStore((state) => state.removeUnit);
+  const rotateUnit = useBlockDesignerStore((state) => state.rotateUnit);
+  const flipUnitHorizontal = useBlockDesignerStore((state) => state.flipUnitHorizontal);
+  const flipUnitVertical = useBlockDesignerStore((state) => state.flipUnitVertical);
 
-  // Shape library selection
-  const selectedShapeType = useSelectedShapeType();
+  // Unit library selection
+  const selectedUnitType = useSelectedUnitType();
   const hoveredCell = useHoveredCell();
-  const isPlacingShape = useIsPlacingShape();
+  const isPlacingUnit = useIsPlacingUnit();
   const setHoveredCell = useBlockDesignerStore((state) => state.setHoveredCell);
-  const clearShapeSelection = useBlockDesignerStore((state) => state.clearShapeSelection);
+  const clearUnitSelection = useBlockDesignerStore((state) => state.clearUnitSelection);
 
   // Track shift key for range fill
   const isShiftHeld = useShiftKey();
   const rangeFillAnchor = useBlockRangeFillAnchor();
   const setRangeFillAnchor = useBlockDesignerStore((state) => state.setRangeFillAnchor);
   const getRangeFillPositions = useBlockDesignerStore((state) => state.getRangeFillPositions);
-  const addShapesBatch = useBlockDesignerStore((state) => state.addShapesBatch);
+  const addUnitsBatch = useBlockDesignerStore((state) => state.addUnitsBatch);
 
-  const { gridSize, shapes, previewPalette } = block;
+  const { gridSize, units, previewPalette } = block;
   const isPaintMode = mode === 'paint_mode';
   const isPreviewMode = mode === 'preview';
 
@@ -247,16 +247,16 @@ export function BlockCanvas() {
     [scale, gridPixelSize, gridOffsetX, gridOffsetY, dimensions.width, dimensions.height]
   );
 
-  // Place a shape at the given position based on the selected shape type
-  const placeShapeAt = useCallback(
-    (gridPos: GridPosition, shapeType: ShapeSelectionType) => {
-      if (shapeType.type === 'square') {
+  // Place a unit at the given position based on the selected unit type
+  const placeUnitAt = useCallback(
+    (gridPos: GridPosition, unitType: UnitSelectionType) => {
+      if (unitType.type === 'square') {
         addSquare(gridPos, 'background');
-      } else if (shapeType.type === 'hst') {
-        addHst(gridPos, shapeType.variant, 'background', 'background');
-      } else if (shapeType.type === 'qst') {
+      } else if (unitType.type === 'hst') {
+        addHst(gridPos, unitType.variant, 'background', 'background');
+      } else if (unitType.type === 'qst') {
         addQst(gridPos);
-      } else if (shapeType.type === 'flying_geese') {
+      } else if (unitType.type === 'flying_geese') {
         // Check if there are valid adjacent cells
         const validCells = getValidAdjacentCells(gridPos);
         if (validCells.length === 0) {
@@ -270,7 +270,7 @@ export function BlockCanvas() {
     [addSquare, addHst, addQst, getValidAdjacentCells, startFlyingGeesePlacement]
   );
 
-  // Handle click on empty cell (for placing shapes from library)
+  // Handle click on empty cell (for placing units from library)
   const handleEmptyCellClick = useCallback(
     (row: number, col: number, shiftKey: boolean) => {
       const gridPos: GridPosition = { row, col };
@@ -289,38 +289,38 @@ export function BlockCanvas() {
         return;
       }
 
-      // If in placing_shape mode with a selected shape type, place the shape
-      if (isPlacingShape && selectedShapeType) {
+      // If in placing_unit mode with a selected unit type, place the unit
+      if (isPlacingUnit && selectedUnitType) {
         // Range fill doesn't apply to Flying Geese (uses two-tap placement)
-        const canRangeFill = selectedShapeType.type !== 'flying_geese';
+        const canRangeFill = selectedUnitType.type !== 'flying_geese';
 
         if (shiftKey && rangeFillAnchor && canRangeFill) {
-          // Range fill: place shapes in all empty cells between anchor and clicked position
+          // Range fill: place units in all empty cells between anchor and clicked position
           const positions = getRangeFillPositions(gridPos);
           if (positions.length > 0) {
-            addShapesBatch(positions, selectedShapeType);
+            addUnitsBatch(positions, selectedUnitType);
           }
         } else {
           // Single placement
-          placeShapeAt(gridPos, selectedShapeType);
+          placeUnitAt(gridPos, selectedUnitType);
         }
-        // Update anchor to clicked position for chaining (only for non-Flying Geese shapes)
+        // Update anchor to clicked position for chaining (only for non-Flying Geese units)
         if (canRangeFill) {
           setRangeFillAnchor(gridPos);
         }
       }
     },
-    [mode, flyingGeesePlacement, isPlacingShape, selectedShapeType, completeFlyingGeesePlacement, cancelFlyingGeesePlacement, placeShapeAt, rangeFillAnchor, getRangeFillPositions, addShapesBatch, setRangeFillAnchor]
+    [mode, flyingGeesePlacement, isPlacingUnit, selectedUnitType, completeFlyingGeesePlacement, cancelFlyingGeesePlacement, placeUnitAt, rangeFillAnchor, getRangeFillPositions, addUnitsBatch, setRangeFillAnchor]
   );
 
   // Handle hover on empty cell (for ghost preview)
   const handleEmptyCellMouseEnter = useCallback(
     (row: number, col: number) => {
-      if (isPlacingShape || mode === 'placing_flying_geese_second') {
+      if (isPlacingUnit || mode === 'placing_flying_geese_second') {
         setHoveredCell({ row, col });
       }
     },
-    [isPlacingShape, mode, setHoveredCell]
+    [isPlacingUnit, mode, setHoveredCell]
   );
 
   const handleEmptyCellMouseLeave = useCallback(() => {
@@ -330,41 +330,41 @@ export function BlockCanvas() {
   // Handle click on background (outside grid) to clear selection
   const handleBackgroundClick = useCallback(() => {
     clearSelection();
-    clearShapeSelection();
+    clearUnitSelection();
     if (mode === 'placing_flying_geese_second') {
       cancelFlyingGeesePlacement();
     }
-  }, [clearSelection, clearShapeSelection, mode, cancelFlyingGeesePlacement]);
+  }, [clearSelection, clearUnitSelection, mode, cancelFlyingGeesePlacement]);
 
-  // Handle shape click (for paint mode or selection)
-  const handleShapeClick = useCallback(
-    (shapeId: string, partId?: string) => {
+  // Handle unit click (for paint mode or selection)
+  const handleUnitClick = useCallback(
+    (unitId: string, patchId?: string) => {
       if (isPaintMode && activeFabricRole) {
-        assignFabricRole(shapeId, activeFabricRole, partId);
+        assignFabricRole(unitId, activeFabricRole, patchId);
       } else if (!isPaintMode) {
-        // Select the shape when not in paint mode
-        selectShape(shapeId);
+        // Select the unit when not in paint mode
+        selectUnit(unitId);
       }
     },
-    [isPaintMode, activeFabricRole, assignFabricRole, selectShape]
+    [isPaintMode, activeFabricRole, assignFabricRole, selectUnit]
   );
 
-  // Get the selected shape for toolbar positioning
-  const selectedShape = selectedShapeId
-    ? shapes.find((s) => s.id === selectedShapeId)
+  // Get the selected unit for toolbar positioning
+  const selectedUnit = selectedUnitId
+    ? units.find((s) => s.id === selectedUnitId)
     : null;
 
-  // Calculate toolbar position based on selected shape
+  // Calculate toolbar position based on selected unit
   const getToolbarPosition = useCallback(
-    (shape: Shape): { x: number; y: number } => {
-      // Calculate shape center in stage coordinates
-      const shapeCenterX = gridOffsetX + (shape.position.col + shape.span.cols / 2) * cellSize;
-      const shapeTopY = gridOffsetY + shape.position.row * cellSize;
+    (unit: Unit): { x: number; y: number } => {
+      // Calculate unit center in stage coordinates
+      const unitCenterX = gridOffsetX + (unit.position.col + unit.span.cols / 2) * cellSize;
+      const unitTopY = gridOffsetY + unit.position.row * cellSize;
 
       // Convert to screen coordinates
       return {
-        x: shapeCenterX * scale + position.x,
-        y: shapeTopY * scale + position.y,
+        x: unitCenterX * scale + position.x,
+        y: unitTopY * scale + position.y,
       };
     },
     [gridOffsetX, gridOffsetY, cellSize, scale, position]
@@ -372,34 +372,34 @@ export function BlockCanvas() {
 
   // Toolbar action handlers
   const handleRotate = useCallback(() => {
-    if (selectedShapeId) {
-      rotateShape(selectedShapeId);
+    if (selectedUnitId) {
+      rotateUnit(selectedUnitId);
     }
-  }, [selectedShapeId, rotateShape]);
+  }, [selectedUnitId, rotateUnit]);
 
   const handleFlipHorizontal = useCallback(() => {
-    if (selectedShapeId) {
-      flipShapeHorizontal(selectedShapeId);
+    if (selectedUnitId) {
+      flipUnitHorizontal(selectedUnitId);
     }
-  }, [selectedShapeId, flipShapeHorizontal]);
+  }, [selectedUnitId, flipUnitHorizontal]);
 
   const handleFlipVertical = useCallback(() => {
-    if (selectedShapeId) {
-      flipShapeVertical(selectedShapeId);
+    if (selectedUnitId) {
+      flipUnitVertical(selectedUnitId);
     }
-  }, [selectedShapeId, flipShapeVertical]);
+  }, [selectedUnitId, flipUnitVertical]);
 
   const handleDelete = useCallback(() => {
-    if (selectedShapeId) {
-      removeShape(selectedShapeId);
+    if (selectedUnitId) {
+      removeUnit(selectedUnitId);
     }
-  }, [selectedShapeId, removeShape]);
+  }, [selectedUnitId, removeUnit]);
 
-  // Filter shapes by type
-  const squareShapes = shapes.filter((s): s is SquareShape => s.type === 'square');
-  const hstShapes = shapes.filter((s): s is HstShape => s.type === 'hst');
-  const flyingGeeseShapes = shapes.filter((s): s is FlyingGeeseShape => s.type === 'flying_geese');
-  const qstShapes = shapes.filter((s): s is QstShape => s.type === 'qst');
+  // Filter units by type
+  const squareUnits = units.filter((s): s is SquareUnit => s.type === 'square');
+  const hstUnits = units.filter((s): s is HstUnit => s.type === 'hst');
+  const flyingGeeseUnits = units.filter((s): s is FlyingGeeseUnit => s.type === 'flying_geese');
+  const qstUnits = units.filter((s): s is QstUnit => s.type === 'qst');
 
   // Compute empty cell positions for rendering EmptyCell components
   const getEmptyCellPositions = useCallback((): GridPosition[] => {
@@ -419,15 +419,15 @@ export function BlockCanvas() {
   // Calculate range fill preview positions when shift is held
   // Note: Range fill only works for squares and HSTs, not Flying Geese (which use two-tap placement)
   const rangeFillPreviewPositions = useMemo(() => {
-    if (!isPlacingShape || !isShiftHeld || !rangeFillAnchor || !hoveredCell) {
+    if (!isPlacingUnit || !isShiftHeld || !rangeFillAnchor || !hoveredCell) {
       return [];
     }
     // Don't show range fill for Flying Geese
-    if (selectedShapeType?.type === 'flying_geese') {
+    if (selectedUnitType?.type === 'flying_geese') {
       return [];
     }
     return getRangeFillPositions(hoveredCell);
-  }, [isPlacingShape, isShiftHeld, rangeFillAnchor, hoveredCell, selectedShapeType, getRangeFillPositions]);
+  }, [isPlacingUnit, isShiftHeld, rangeFillAnchor, hoveredCell, selectedUnitType, getRangeFillPositions]);
 
   // Whether to show range fill preview instead of single ghost preview
   const showRangeFillPreview = rangeFillPreviewPositions.length > 0;
@@ -488,59 +488,59 @@ export function BlockCanvas() {
                 offsetY={gridOffsetY}
               />
 
-              {/* Render square shapes */}
-              {squareShapes.map((shape) => (
+              {/* Render square units */}
+              {squareUnits.map((unit) => (
                 <SquareRenderer
-                  key={shape.id}
-                  shape={shape}
+                  key={unit.id}
+                  unit={unit}
                   cellSize={cellSize}
                   offsetX={gridOffsetX}
                   offsetY={gridOffsetY}
                   palette={previewPalette}
-                  isSelected={shape.id === selectedShapeId}
-                  onClick={() => handleShapeClick(shape.id)}
+                  isSelected={unit.id === selectedUnitId}
+                  onClick={() => handleUnitClick(unit.id)}
                 />
               ))}
 
-              {/* Render HST shapes */}
-              {hstShapes.map((shape) => (
+              {/* Render HST units */}
+              {hstUnits.map((unit) => (
                 <HstRenderer
-                  key={shape.id}
-                  shape={shape}
+                  key={unit.id}
+                  unit={unit}
                   cellSize={cellSize}
                   offsetX={gridOffsetX}
                   offsetY={gridOffsetY}
                   palette={previewPalette}
-                  isSelected={shape.id === selectedShapeId}
-                  onClick={(partId) => handleShapeClick(shape.id, partId)}
+                  isSelected={unit.id === selectedUnitId}
+                  onClick={(patchId) => handleUnitClick(unit.id, patchId)}
                 />
               ))}
 
-              {/* Render Flying Geese shapes */}
-              {flyingGeeseShapes.map((shape) => (
+              {/* Render Flying Geese units */}
+              {flyingGeeseUnits.map((unit) => (
                 <FlyingGeeseRenderer
-                  key={shape.id}
-                  shape={shape}
+                  key={unit.id}
+                  unit={unit}
                   cellSize={cellSize}
                   offsetX={gridOffsetX}
                   offsetY={gridOffsetY}
                   palette={previewPalette}
-                  isSelected={shape.id === selectedShapeId}
-                  onClick={(partId) => handleShapeClick(shape.id, partId)}
+                  isSelected={unit.id === selectedUnitId}
+                  onClick={(patchId) => handleUnitClick(unit.id, patchId)}
                 />
               ))}
 
-              {/* Render QST shapes */}
-              {qstShapes.map((shape) => (
+              {/* Render QST units */}
+              {qstUnits.map((unit) => (
                 <QstRenderer
-                  key={shape.id}
-                  shape={shape}
+                  key={unit.id}
+                  unit={unit}
                   cellSize={cellSize}
                   offsetX={gridOffsetX}
                   offsetY={gridOffsetY}
                   palette={previewPalette}
-                  isSelected={shape.id === selectedShapeId}
-                  onClick={(partId) => handleShapeClick(shape.id, partId)}
+                  isSelected={unit.id === selectedUnitId}
+                  onClick={(patchId) => handleUnitClick(unit.id, patchId)}
                 />
               ))}
 
@@ -567,7 +567,7 @@ export function BlockCanvas() {
                   cellSize={cellSize}
                   offsetX={gridOffsetX}
                   offsetY={gridOffsetY}
-                  isHighlighted={isPlacingShape}
+                  isHighlighted={isPlacingUnit}
                   isHovered={hoveredCell?.row === row && hoveredCell?.col === col}
                   isValidFlyingGeeseTarget={isValidFlyingGeeseTarget(row, col)}
                   onClick={handleEmptyCellClick}
@@ -576,12 +576,12 @@ export function BlockCanvas() {
                 />
               ))}
 
-              {/* Ghost preview for shape placement (single cell hover) */}
-              {isPlacingShape && hoveredCell && selectedShapeType && !isCellOccupied(hoveredCell) && !showRangeFillPreview && (
+              {/* Ghost preview for unit placement (single cell hover) */}
+              {isPlacingUnit && hoveredCell && selectedUnitType && !isCellOccupied(hoveredCell) && !showRangeFillPreview && (
                 <Group opacity={0.5} listening={false}>
-                  {selectedShapeType.type === 'square' && (
+                  {selectedUnitType.type === 'square' && (
                     <SquareRenderer
-                      shape={{
+                      unit={{
                         id: 'ghost-preview',
                         type: 'square',
                         position: hoveredCell,
@@ -595,14 +595,14 @@ export function BlockCanvas() {
                       isSelected={false}
                     />
                   )}
-                  {selectedShapeType.type === 'hst' && (
+                  {selectedUnitType.type === 'hst' && (
                     <HstRenderer
-                      shape={{
+                      unit={{
                         id: 'ghost-preview',
                         type: 'hst',
                         position: hoveredCell,
                         span: { rows: 1, cols: 1 },
-                        variant: selectedShapeType.variant,
+                        variant: selectedUnitType.variant,
                         fabricRole: 'background',
                         secondaryFabricRole: 'background',
                       }}
@@ -613,14 +613,14 @@ export function BlockCanvas() {
                       isSelected={false}
                     />
                   )}
-                  {selectedShapeType.type === 'qst' && (
+                  {selectedUnitType.type === 'qst' && (
                     <QstRenderer
-                      shape={{
+                      unit={{
                         id: 'ghost-preview',
                         type: 'qst',
                         position: hoveredCell,
                         span: { rows: 1, cols: 1 },
-                        partFabricRoles: {
+                        patchFabricRoles: {
                           top: 'background',
                           right: 'background',
                           bottom: 'background',
@@ -639,13 +639,13 @@ export function BlockCanvas() {
               )}
 
               {/* Range fill ghost preview when shift is held */}
-              {showRangeFillPreview && selectedShapeType && (
+              {showRangeFillPreview && selectedUnitType && (
                 <Group opacity={0.5} listening={false}>
                   {rangeFillPreviewPositions.map(({ row, col }) => (
-                    selectedShapeType.type === 'square' ? (
+                    selectedUnitType.type === 'square' ? (
                       <SquareRenderer
                         key={`ghost-range-${row}-${col}`}
-                        shape={{
+                        unit={{
                           id: `ghost-range-${row}-${col}`,
                           type: 'square',
                           position: { row, col },
@@ -658,15 +658,15 @@ export function BlockCanvas() {
                         palette={previewPalette}
                         isSelected={false}
                       />
-                    ) : selectedShapeType.type === 'hst' ? (
+                    ) : selectedUnitType.type === 'hst' ? (
                       <HstRenderer
                         key={`ghost-range-${row}-${col}`}
-                        shape={{
+                        unit={{
                           id: `ghost-range-${row}-${col}`,
                           type: 'hst',
                           position: { row, col },
                           span: { rows: 1, cols: 1 },
-                          variant: selectedShapeType.variant,
+                          variant: selectedUnitType.variant,
                           fabricRole: 'background',
                           secondaryFabricRole: 'background',
                         }}
@@ -676,15 +676,15 @@ export function BlockCanvas() {
                         palette={previewPalette}
                         isSelected={false}
                       />
-                    ) : selectedShapeType.type === 'qst' ? (
+                    ) : selectedUnitType.type === 'qst' ? (
                       <QstRenderer
                         key={`ghost-range-${row}-${col}`}
-                        shape={{
+                        unit={{
                           id: `ghost-range-${row}-${col}`,
                           type: 'qst',
                           position: { row, col },
                           span: { rows: 1, cols: 1 },
-                          partFabricRoles: {
+                          patchFabricRoles: {
                             top: 'background',
                             right: 'background',
                             bottom: 'background',
@@ -738,17 +738,17 @@ export function BlockCanvas() {
                     previewPalette.roles.find((r) => r.id === activeFabricRole)?.color ?? '#CCC',
                 }}
               />
-              Tap shapes to paint with{' '}
+              Tap units to paint with{' '}
               {previewPalette.roles.find((r) => r.id === activeFabricRole)?.name ?? 'fabric'}
             </div>
           )}
 
-          {/* Shape placement mode indicator */}
-          {isPlacingShape && selectedShapeType && selectedShapeType.type !== 'flying_geese' && (
+          {/* Unit placement mode indicator */}
+          {isPlacingUnit && selectedUnitType && selectedUnitType.type !== 'flying_geese' && (
             <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2">
               Tap to place • Shift+click to fill range
               <button
-                onClick={clearShapeSelection}
+                onClick={clearUnitSelection}
                 className="ml-1 p-1 text-blue-100 hover:text-white hover:bg-blue-600 rounded"
                 aria-label="Cancel placement"
               >
@@ -759,12 +759,12 @@ export function BlockCanvas() {
             </div>
           )}
 
-          {/* Floating toolbar for selected shape */}
-          {selectedShape && !isPaintMode && (
+          {/* Floating toolbar for selected unit */}
+          {selectedUnit && !isPaintMode && (
             <FloatingToolbar
-              position={getToolbarPosition(selectedShape)}
-              canRotate={selectedShape.type === 'hst' || selectedShape.type === 'flying_geese' || selectedShape.type === 'qst'}
-              canFlip={selectedShape.type === 'hst' || selectedShape.type === 'flying_geese' || selectedShape.type === 'qst'}
+              position={getToolbarPosition(selectedUnit)}
+              canRotate={selectedUnit.type === 'hst' || selectedUnit.type === 'flying_geese' || selectedUnit.type === 'qst'}
+              canFlip={selectedUnit.type === 'hst' || selectedUnit.type === 'flying_geese' || selectedUnit.type === 'qst'}
               onRotate={handleRotate}
               onFlipHorizontal={handleFlipHorizontal}
               onFlipVertical={handleFlipVertical}

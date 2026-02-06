@@ -6,31 +6,33 @@ import {
   usePatternDesignerStore,
   useSelectedBlockInstance,
   usePatternPalette,
+  migrateUnits,
+  getAllRoleIds,
 } from '@quillty/core';
-import type { Shape, FabricRoleId } from '@quillty/core';
+import type { Unit, FabricRoleId } from '@quillty/core';
 import { useEscapeDismiss } from '@/hooks/useEscapeDismiss';
 import { ColorSwatch } from '../shared';
 
 /**
- * Helper to extract shapes from a block
- * Handles both direct shapes array and API format with design_data JSON
+ * Helper to extract units from a block
+ * Handles both direct units array and API format with design_data JSON
  */
-function getBlockShapes(block: { shapes?: Shape[]; design_data?: unknown } | null): Shape[] {
+function getBlockUnits(block: { units?: Unit[]; design_data?: unknown } | null): Unit[] {
   if (!block) return [];
 
-  // Direct shapes array (from core Block type)
-  if (block.shapes && Array.isArray(block.shapes)) {
-    return block.shapes;
+  // Direct units array (from core Block type)
+  if (block.units && Array.isArray(block.units)) {
+    return block.units;
   }
 
-  // API format: design_data is a JSON object with shapes
+  // API format: design_data is a JSON object with units
   if (block.design_data) {
     try {
       const designData =
         typeof block.design_data === 'string'
           ? JSON.parse(block.design_data)
           : block.design_data;
-      return (designData as { shapes?: Shape[] }).shapes ?? [];
+      return migrateUnits(designData.units ?? designData.shapes ?? []);
     } catch {
       return [];
     }
@@ -40,24 +42,15 @@ function getBlockShapes(block: { shapes?: Shape[]; design_data?: unknown } | nul
 }
 
 /**
- * Extract all fabric role IDs used by a block's shapes
+ * Extract all fabric role IDs used by a block's units (including QST)
  */
-function getRolesUsedByShapes(shapes: Shape[]): Set<string> {
+function getRolesUsedByUnits(units: Unit[]): Set<string> {
   const roles = new Set<string>();
-
-  for (const shape of shapes) {
-    if (shape.type === 'square') {
-      roles.add(shape.fabricRole);
-    } else if (shape.type === 'hst') {
-      roles.add(shape.fabricRole);
-      roles.add(shape.secondaryFabricRole);
-    } else if (shape.type === 'flying_geese') {
-      roles.add(shape.partFabricRoles.goose);
-      roles.add(shape.partFabricRoles.sky1);
-      roles.add(shape.partFabricRoles.sky2);
+  for (const unit of units) {
+    for (const roleId of getAllRoleIds(unit)) {
+      roles.add(roleId);
     }
   }
-
   return roles;
 }
 
@@ -102,10 +95,10 @@ export function InstanceToolbar({
   // Dismiss on Escape key (canvas click is handled by the parent component)
   useEscapeDismiss(onDismiss);
 
-  // Get block and its shapes
+  // Get block and its units
   const block = instance ? blockCache[instance.blockId] : null;
-  const shapes = useMemo(() => getBlockShapes(block), [block]);
-  const rolesUsed = useMemo(() => getRolesUsedByShapes(shapes), [shapes]);
+  const units = useMemo(() => getBlockUnits(block), [block]);
+  const rolesUsed = useMemo(() => getRolesUsedByUnits(units), [units]);
 
   // Get palette roles used by this block
   const relevantRoles = useMemo(

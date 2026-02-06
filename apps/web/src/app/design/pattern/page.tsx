@@ -47,6 +47,12 @@ const BorderPanel = dynamic(
   { ssr: false }
 );
 
+// UndoRedoControls for undo/redo buttons
+const UndoRedoControls = dynamic(
+  () => import('@/components/pattern-designer/UndoRedoControls').then((mod) => mod.UndoRedoControls),
+  { ssr: false }
+);
+
 // InstanceColorPanel for per-block color customization
 const InstanceColorPanel = dynamic(
   () => import('@/components/pattern-designer/InstanceColorPanel').then((mod) => mod.InstanceColorPanel),
@@ -310,11 +316,12 @@ export default function PatternDesignerPage() {
               Unsaved
             </span>
           )}
+          <UndoRedoControls />
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Last saved indicator */}
-          {lastSaved && !isSaving && (
+          {/* Last saved indicator - only show when not dirty */}
+          {lastSaved && !isSaving && !isDirty && (
             <span className="text-xs text-gray-400 hidden sm:inline">
               Saved {formatLastSaved(lastSaved)}
             </span>
@@ -346,22 +353,19 @@ export default function PatternDesignerPage() {
               >
                 {isSaving ? 'Saving...' : 'Save Draft'}
               </button>
-              <div className="flex flex-col items-end gap-1">
+              <div className="relative group">
                 <button
                   onClick={handlePublishClick}
                   disabled={!canPublish || isSaving || !patternId}
                   className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={!patternId ? 'Save draft first' : !canPublish ? `Fill all ${emptySlotCount} empty slots to publish` : 'Publish pattern'}
                 >
                   Publish
                 </button>
-                {!patternId && (
-                  <span className="text-xs text-gray-500">Save draft first</span>
-                )}
-                {patternId && !canPublish && emptySlotCount > 0 && (
-                  <span className="text-xs text-amber-600">
-                    {emptySlotCount} slot{emptySlotCount > 1 ? 's' : ''} empty
-                  </span>
+                {/* Tooltip shown on hover when disabled */}
+                {(!patternId || !canPublish) && (
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 text-xs text-gray-700 bg-white border border-gray-200 rounded shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    {!patternId ? 'Save draft first' : `${emptySlotCount} slot${emptySlotCount > 1 ? 's' : ''} empty`}
+                  </div>
                 )}
               </div>
             </>

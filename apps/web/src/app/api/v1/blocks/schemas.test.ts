@@ -10,7 +10,7 @@ describe('Block API Schemas', () => {
   // Valid test data
   const validDesignData = {
     version: 1 as const,
-    shapes: [
+    units: [
       {
         id: '123e4567-e89b-12d3-a456-426614174000',
         type: 'square' as const,
@@ -43,7 +43,7 @@ describe('Block API Schemas', () => {
   describe('BlockDesignDataSchema', () => {
     it('should accept valid design data', () => {
       const result = BlockDesignDataSchema.parse(validDesignData);
-      expect(result.shapes).toHaveLength(1);
+      expect(result.units).toHaveLength(1);
       expect(result.previewPalette.roles).toHaveLength(2);
     });
 
@@ -54,14 +54,14 @@ describe('Block API Schemas', () => {
       expect(result.version).toBeUndefined();
     });
 
-    it('should reject empty shapes array', () => {
+    it('should accept empty units array', () => {
       const invalidData = {
         ...validDesignData,
-        shapes: [],
+        units: [],
       };
-      // Empty shapes array is technically valid per schema
+      // Empty units array is technically valid per schema
       const result = BlockDesignDataSchema.parse(invalidData);
-      expect(result.shapes).toHaveLength(0);
+      expect(result.units).toHaveLength(0);
     });
 
     it('should reject missing previewPalette', () => {
@@ -73,7 +73,7 @@ describe('Block API Schemas', () => {
     it('should reject invalid shape structure', () => {
       const invalidData = {
         ...validDesignData,
-        shapes: [{ invalid: 'shape' }],
+        units: [{ invalid: 'shape' }],
       };
       expect(() => BlockDesignDataSchema.parse(invalidData)).toThrow();
     });

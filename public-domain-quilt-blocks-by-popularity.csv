@@ -1,0 +1,732 @@
+name,alternateNames,gridType,category,techniques,pieceCount,colorCount,symmetry,historicalPeriod,difficulty,hasCurves,popularity
+Log Cabin,"[""Log Cabin Quilt""]",log_cabin,log_cabin,"[""strip_piecing""]",17,5,rotational_4,1860s,beginner,false,10
+Nine Patch,"[""Nine-Patch""]",nine_patch,geometric,"[""strip_piecing""]",9,2,rotational_4,1800s,beginner,false,10
+Ohio Star,"[""Variable Star"", ""Lone Star""]",nine_patch,star,"[""hst""]",21,2,rotational_4,1800s,intermediate,false,10
+Bear's Paw,"[""Bear Track"", ""Duck's Foot in the Mud""]",seven_patch,nature,"[""hst""]",36,2,rotational_4,1870s,intermediate,false,10
+Flying Geese,"[""Wild Goose Chase""]",other,nature,"[""flying_geese""]",varies,2,mirror,1850s,beginner,false,10
+Double Wedding Ring,"[""Wedding Ring""]",other,geometric,"[""curved_piecing""]",varies,4,rotational_4,1920s,advanced,true,10
+Pinwheel,"[""Pinwheels""]",four_patch,geometric,"[""hst""]",8,2,rotational_4,1870s,beginner,false,10
+Churn Dash,"[""Churn Dasher"", ""Monkey Wrench""]",nine_patch,geometric,"[""hst""]",13,2,rotational_4,1870s,beginner,false,10
+Irish Chain,"[""Single Irish Chain""]",chain,chain,"[""strip_piecing""]",25,2,rotational_4,1814,beginner,false,10
+Four Patch,"[""Four-Patch""]",four_patch,geometric,"[""strip_piecing""]",4,2,rotational_4,1800s,beginner,false,10
+Grandmother's Flower Garden,"[""Hexagon"", ""Honeycomb""]",other,nature,"[""english_paper_piecing""]",7,3,rotational_4,1920s,intermediate,false,9
+Star of Bethlehem,"[""Lone Star"", ""Blazing Star""]",other,star,"[""diamond_piecing""]",64,5,rotational_4,1830s,advanced,false,9
+Dresden Plate,"[""Grandmother's Sunburst""]",other,geometric,"[""curved_piecing"", ""applique""]",20,5,rotational_4,1920s,intermediate,true,9
+Lone Star,"[""Star of Bethlehem"", ""Blazing Star""]",other,star,"[""diamond_piecing""]",64,5,rotational_4,1830s,advanced,false,9
+Drunkard's Path,"[""Robbing Peter to Pay Paul"", ""Old Maid's Puzzle""]",other,geometric,"[""curved_piecing""]",16,2,rotational_4,1880s,intermediate,true,9
+Grandmother's Fan,"[""Fan"", ""Dresden Fan""]",other,geometric,"[""curved_piecing""]",8,5,asymmetric,1890s,intermediate,true,9
+Jacob's Ladder,"[""Road to California"", ""Underground Railroad""]",four_patch,chain,"[""hst""]",20,2,rotational_4,1850s,beginner,false,9
+Friendship Star,"[""Friendship Block""]",nine_patch,star,"[""hst""]",9,2,rotational_4,1870s,beginner,false,9
+Sawtooth Star,"[""Evening Star"", ""Morning Star""]",nine_patch,star,"[""hst"", ""flying_geese""]",17,2,rotational_4,1850s,intermediate,false,9
+Rail Fence,"[""Fence Rail""]",other,geometric,"[""strip_piecing""]",3,3,rotational_4,1870s,beginner,false,9
+Bow Tie,"[""Necktie"", ""Magic Bow Tie""]",four_patch,geometric,"[""hst""]",8,2,rotational_4,1890s,beginner,false,9
+Double Irish Chain,"[""Triple Irish Chain""]",chain,chain,"[""strip_piecing""]",65,2,rotational_4,1850s,intermediate,false,9
+Tumbling Blocks,"[""Baby Blocks"", ""Tumbling Block""]",other,geometric,"[""english_paper_piecing""]",varies,3,mirror,1850s,intermediate,false,9
+Courthouse Steps,"[""Log Cabin Variation""]",log_cabin,log_cabin,"[""strip_piecing""]",17,4,rotational_2,1860s,beginner,false,9
+Shoo Fly,"[""Shoofly""]",nine_patch,geometric,"[""hst""]",9,2,rotational_4,1870s,beginner,false,9
+Broken Dishes,"[""Double Pinwheel""]",four_patch,geometric,"[""hst""]",16,2,rotational_4,1870s,beginner,false,8
+Maple Leaf,"[""Autumn Leaf""]",nine_patch,nature,"[""hst""]",17,2,asymmetric,1880s,intermediate,false,8
+Pine Tree,"[""Tree of Paradise""]",nine_patch,nature,"[""hst""]",25,2,asymmetric,1850s,intermediate,false,8
+Rose of Sharon,"[""Rose of Sharon""]",nine_patch,nature,"[""applique""]",13,4,rotational_4,1840s,advanced,false,8
+Sunbonnet Sue,"[""Sunbonnet Lassies"", ""Dutch Girl""]",other,nature,"[""applique""]",varies,4,asymmetric,1920s,intermediate,false,8
+LeMoyne Star,"[""Lemon Star"", ""Eight-Pointed Star""]",other,star,"[""diamond_piecing""]",8,2,rotational_4,1830s,intermediate,false,8
+Mariner's Compass,"[""Compass"", ""Sunburst""]",other,star,"[""paper_piecing""]",32,4,rotational_4,1830s,advanced,false,8
+Windmill,"[""Wind Mill""]",four_patch,geometric,"[""hst""]",8,2,rotational_4,1870s,beginner,false,8
+Storm at Sea,"[]",four_patch,geometric,"[""hst""]",24,3,rotational_4,1890s,intermediate,false,8
+Card Trick,"[""Card Tricks""]",nine_patch,geometric,"[""hst""]",17,4,rotational_4,1900s,intermediate,false,8
+Snowball,"[""Snowball Block""]",four_patch,geometric,"[""hst""]",5,2,rotational_4,1880s,beginner,false,8
+Trip Around the World,"[""Sunshine and Shadow""]",other,geometric,"[""strip_piecing""]",varies,varies,rotational_4,1870s,beginner,false,8
+Basket,"[""Fruit Basket"", ""Cake Basket""]",nine_patch,basket,"[""hst""]",15,2,asymmetric,1850s,intermediate,false,8
+Snail's Trail,"[""Monkey Wrench"", ""Virginia Reel""]",four_patch,geometric,"[""hst""]",16,2,rotational_4,1890s,intermediate,false,8
+Hourglass,"[""Hour Glass""]",four_patch,geometric,"[""hst""]",8,2,rotational_4,1870s,beginner,false,8
+Eight-Pointed Star,"[""LeMoyne Star"", ""Star of LeMoyne""]",other,star,"[""diamond_piecing""]",8,2,rotational_4,1830s,intermediate,false,8
+Attic Window,"[""Attic Windows""]",other,geometric,"[""strip_piecing""]",3,3,mirror,1870s,beginner,false,8
+Baby Blocks,"[""Tumbling Blocks"", ""Building Blocks""]",other,geometric,"[""english_paper_piecing""]",3,3,mirror,1850s,intermediate,false,8
+Morning Star,"[""Evening Star"", ""Sawtooth Star""]",nine_patch,star,"[""hst"", ""flying_geese""]",17,2,rotational_4,1850s,intermediate,false,8
+Evening Star,"[""Morning Star"", ""Sawtooth Star""]",nine_patch,star,"[""hst"", ""flying_geese""]",17,2,rotational_4,1850s,intermediate,false,8
+Kansas Troubles,"[""Kansas Trouble""]",four_patch,geometric,"[""hst""]",24,2,rotational_4,1880s,intermediate,false,7
+Dutchman's Puzzle,"[""Dutch Puzzle""]",four_patch,geometric,"[""hst"", ""flying_geese""]",16,2,rotational_4,1890s,intermediate,false,7
+Monkey Wrench,"[""Churn Dash"", ""Snail's Trail""]",nine_patch,geometric,"[""hst""]",13,2,rotational_4,1880s,beginner,false,7
+Blazing Star,"[""Lone Star"", ""Star of Bethlehem""]",other,star,"[""diamond_piecing""]",64,5,rotational_4,1830s,advanced,false,7
+Carolina Lily,"[""North Carolina Lily""]",nine_patch,nature,"[""hst""]",25,3,asymmetric,1850s,intermediate,false,7
+Clay's Choice,"[""Harry's Star"", ""Star of the West""]",nine_patch,star,"[""hst""]",21,2,rotational_4,1850s,intermediate,false,7
+Feather Star,"[""Sawtooth Star"", ""Twinkling Star""]",nine_patch,star,"[""hst""]",49,2,rotational_4,1850s,advanced,false,7
+Ocean Waves,"[""Ocean Wave""]",four_patch,geometric,"[""hst""]",32,2,rotational_4,1870s,intermediate,false,7
+Pineapple,"[""Pineapple Log Cabin""]",log_cabin,log_cabin,"[""foundation_piecing""]",varies,4,rotational_4,1870s,intermediate,false,7
+Schoolhouse,"[""School House"", ""Little Red Schoolhouse""]",nine_patch,house,"[""strip_piecing""]",21,3,asymmetric,1870s,intermediate,false,7
+Delectable Mountain,"[""Delectable Mountains""]",four_patch,geometric,"[""hst""]",24,2,rotational_4,1850s,intermediate,false,7
+Cathedral Window,"[""Cathedral Windows""]",other,geometric,"[""folded_fabric""]",4,3,rotational_4,1920s,advanced,false,7
+Crown of Thorns,"[""Crown and Thorns"", ""Georgetown Circle""]",nine_patch,geometric,"[""hst""]",21,2,rotational_4,1880s,intermediate,false,7
+Wild Goose Chase,"[""Flying Geese""]",other,nature,"[""flying_geese""]",varies,2,mirror,1850s,beginner,false,7
+Robbing Peter to Pay Paul,"[""Rob Peter to Pay Paul"", ""Drunkard's Path""]",other,geometric,"[""curved_piecing""]",16,2,rotational_4,1890s,intermediate,true,7
+Lady of the Lake,"[]",five_patch,geometric,"[""hst""]",41,2,rotational_4,1850s,intermediate,false,7
+Album,"[""Album Block"", ""Chimney Sweep""]",nine_patch,geometric,"[""strip_piecing""]",13,2,rotational_4,1840s,beginner,false,7
+Spool,"[""Spool Block""]",four_patch,geometric,"[""hst""]",5,2,rotational_4,1890s,beginner,false,7
+Yankee Puzzle,"[""Big Dipper""]",four_patch,geometric,"[""hst""]",16,2,rotational_4,1890s,intermediate,false,7
+Cake Stand,"[""Cake Stand and Basket""]",nine_patch,basket,"[""hst""]",15,2,asymmetric,1880s,intermediate,false,7
+Economy,"[""Economy Block""]",four_patch,geometric,"[""hst""]",5,2,rotational_4,1880s,beginner,false,7
+Honeycomb,"[""Grandmother's Flower Garden""]",other,geometric,"[""english_paper_piecing""]",varies,3,rotational_4,1870s,intermediate,false,7
+Arkansas Traveller,"[""Arkansas Traveler"", ""Travel Star""]",nine_patch,star,"[""hst""]",21,3,rotational_4,1880s,intermediate,false,6
+Weathervane,"[""Weather Vane""]",nine_patch,geometric,"[""hst""]",21,2,rotational_4,1890s,intermediate,false,6
+Goose in the Pond,"[""Young Man's Fancy""]",five_patch,nature,"[""hst""]",41,2,rotational_4,1880s,intermediate,false,6
+54-40 or Fight,"[""Fifty-Four Forty or Fight"", ""Railroad""]",nine_patch,star,"[""hst"", ""flying_geese""]",33,3,rotational_4,1840s,intermediate,false,6
+Dove in the Window,"[""Dove at the Window""]",nine_patch,nature,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,6
+Sister's Choice,"[""Sister's Choice""]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,6
+Anvil,"[""Blacksmith Puzzle""]",nine_patch,geometric,"[""hst""]",13,2,rotational_4,1890s,beginner,false,6
+Corn and Beans,"[""Shoo Fly Variation""]",nine_patch,nature,"[""hst""]",21,2,rotational_4,1880s,intermediate,false,6
+Princess Feather,"[""Prince's Feather""]",other,nature,"[""applique""]",4,3,rotational_4,1840s,advanced,false,6
+Whig Rose,"[""Democrat Rose""]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1840s,advanced,false,6
+Square in a Square,"[""Diamond in a Square""]",four_patch,geometric,"[""hst""]",5,2,rotational_4,1850s,beginner,false,6
+Texas Star,"[""Star of Texas"", ""Lone Star""]",other,star,"[""diamond_piecing""]",24,3,rotational_4,1880s,intermediate,false,6
+Flower Basket,"[""Basket of Flowers""]",nine_patch,basket,"[""hst""]",17,3,asymmetric,1880s,intermediate,false,6
+Tree of Paradise,"[""Pine Tree"", ""Tree of Life""]",nine_patch,nature,"[""hst""]",33,2,asymmetric,1850s,intermediate,false,6
+Underground Railroad,"[""Jacob's Ladder""]",four_patch,chain,"[""hst""]",20,2,rotational_4,1850s,beginner,false,6
+Sunflower,"[""Kansas Sunflower""]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1900s,advanced,false,6
+Crossed Canoes,"[""Indian Canoes""]",nine_patch,geometric,"[""hst""]",21,2,rotational_4,1890s,intermediate,false,6
+Hovering Hawks,"[""Hawks""]",nine_patch,nature,"[""hst"", ""flying_geese""]",25,2,rotational_4,1890s,intermediate,false,6
+Goose Tracks,"[""Goosetracks"", ""Bear's Paw""]",seven_patch,nature,"[""hst""]",36,2,rotational_4,1870s,intermediate,false,6
+Double Star,"[""Star Within a Star""]",nine_patch,star,"[""hst""]",33,3,rotational_4,1890s,intermediate,false,6
+Broken Star,"[""Carpenter's Wheel""]",other,star,"[""diamond_piecing""]",72,4,rotational_4,1850s,advanced,false,6
+Roman Stripe,"[""Roman Stripes""]",other,geometric,"[""strip_piecing""]",varies,5,mirror,1880s,beginner,false,6
+Pickle Dish,"[""Double Wedding Ring Variation""]",other,geometric,"[""curved_piecing""]",varies,4,rotational_4,1920s,advanced,true,6
+Spider Web,"[""Spider's Web""]",other,geometric,"[""paper_piecing""]",8,4,rotational_4,1890s,intermediate,false,6
+Variable Star,"[""Ohio Star""]",nine_patch,star,"[""hst""]",21,2,rotational_4,1800s,intermediate,false,6
+Honey Bee,"[""Honeybee""]",nine_patch,nature,"[""hst"", ""applique""]",21,3,rotational_4,1890s,intermediate,false,6
+Tulip,"[""Tulip Block""]",nine_patch,nature,"[""hst"", ""applique""]",17,3,asymmetric,1870s,intermediate,false,6
+Road to California,"[""Jacob's Ladder""]",four_patch,chain,"[""hst""]",20,2,rotational_4,1850s,beginner,false,6
+Kaleidoscope,"[]",four_patch,geometric,"[""hst""]",8,4,rotational_4,1890s,intermediate,false,6
+Joseph's Coat,"[""Joseph's Robe""]",other,geometric,"[""strip_piecing""]",varies,5,rotational_4,1880s,intermediate,false,6
+Butterfly,"[""Butterflies""]",nine_patch,nature,"[""hst"", ""applique""]",21,4,mirror,1920s,intermediate,false,6
+Fox and Geese,"[""Double X""]",nine_patch,nature,"[""hst""]",21,2,rotational_4,1890s,intermediate,false,5
+Bright Hopes,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1930s,intermediate,false,5
+California Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1880s,intermediate,false,5
+Handy Andy,"[]",nine_patch,geometric,"[""hst""]",21,2,rotational_4,1890s,intermediate,false,5
+Bachelor's Puzzle,"[""Old Maid's Puzzle""]",nine_patch,geometric,"[""hst""]",21,2,rotational_4,1880s,intermediate,false,5
+Old Maid's Puzzle,"[""Bachelor's Puzzle""]",nine_patch,geometric,"[""hst""]",21,2,rotational_4,1880s,intermediate,false,5
+Ducks and Ducklings,"[""Duck and Ducklings"", ""Corn and Beans""]",nine_patch,nature,"[""hst""]",21,2,rotational_4,1890s,intermediate,false,5
+Hens and Chickens,"[""Hen and Chickens"", ""Corn and Beans""]",nine_patch,nature,"[""hst""]",21,2,rotational_4,1890s,intermediate,false,5
+King's Crown,"[""King's Crowns""]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,5
+Wheel of Fortune,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,5
+Birds in the Air,"[""Flock of Geese""]",four_patch,nature,"[""hst"", ""flying_geese""]",16,2,asymmetric,1870s,beginner,false,5
+Puss-in-the-Corner,"[""Puss in the Corner""]",nine_patch,geometric,"[""strip_piecing""]",9,2,rotational_4,1880s,beginner,false,5
+Friendship,"[""Friendship Star""]",nine_patch,star,"[""hst""]",9,2,rotational_4,1870s,beginner,false,5
+North Star,"[""Mariner's Compass""]",nine_patch,star,"[""hst""]",25,3,rotational_4,1870s,intermediate,false,5
+Rising Sun,"[""Sunburst""]",other,star,"[""paper_piecing""]",varies,4,rotational_4,1870s,advanced,false,5
+Rolling Star,"[""Rolling Stone""]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,5
+Flower Pot,"[""Flowerpot""]",nine_patch,basket,"[""hst""]",15,3,asymmetric,1890s,intermediate,false,5
+Grape Basket,"[]",nine_patch,basket,"[""hst""]",21,3,asymmetric,1880s,intermediate,false,5
+Fruit Basket,"[""Basket""]",nine_patch,basket,"[""hst""]",17,2,asymmetric,1880s,intermediate,false,5
+Cross and Crown,"[""Goose Tracks""]",nine_patch,geometric,"[""hst""]",25,2,rotational_4,1880s,intermediate,false,5
+Brunswick Star,"[]",nine_patch,star,"[""hst"", ""flying_geese""]",33,3,rotational_4,1890s,advanced,false,5
+Twinkling Star,"[""Feather Star""]",nine_patch,star,"[""hst""]",37,2,rotational_4,1870s,intermediate,false,5
+Orange Peel,"[]",other,geometric,"[""curved_piecing"", ""applique""]",4,2,rotational_4,1890s,intermediate,true,5
+Fan,"[""Grandmother's Fan""]",other,geometric,"[""curved_piecing""]",6,4,asymmetric,1890s,intermediate,true,5
+Crazy Quilt,"[]",other,geometric,"[""foundation_piecing""]",varies,varies,asymmetric,1870s,intermediate,false,5
+String,"[""String Quilt""]",other,geometric,"[""foundation_piecing""]",varies,varies,asymmetric,1880s,beginner,false,5
+Dolly Madison's Star,"[""Dolly Madison Star""]",nine_patch,star,"[""hst""]",25,3,rotational_4,1880s,intermediate,false,5
+Mosaic,"[""Mosaic Block""]",other,geometric,"[""english_paper_piecing""]",varies,3,rotational_4,1870s,intermediate,false,5
+Greek Cross,"[]",nine_patch,geometric,"[""strip_piecing""]",13,2,rotational_4,1880s,beginner,false,5
+3D Bow Tie,"[""Dimensional Bow Tie""]",four_patch,geometric,"[""hst""]",8,3,rotational_4,1900s,intermediate,false,4
+A Dandy,"[]",nine_patch,geometric,"[""hst""]",17,3,rotational_4,1900s,beginner,false,4
+Air Castle,"[""Castle in the Air""]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Aircraft,"[""Airplane""]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1930s,intermediate,false,4
+Alabama Beauty,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1900s,intermediate,false,4
+Album Variation,"[]",nine_patch,geometric,"[""strip_piecing""]",17,3,rotational_4,1850s,beginner,false,4
+All Kinds,"[]",four_patch,geometric,"[""hst""]",16,4,rotational_4,1900s,intermediate,false,4
+All Tangled Up,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_2,1920s,intermediate,false,4
+Alpine Rose,"[]",nine_patch,nature,"[""applique""]",13,4,rotational_4,1900s,advanced,false,4
+American Log Patch,"[""Log Cabin Variation""]",log_cabin,log_cabin,"[""strip_piecing""]",17,5,rotational_4,1860s,beginner,false,4
+Amish Squares,"[""Amish Nine Patch""]",nine_patch,geometric,"[""strip_piecing""]",9,3,rotational_4,1880s,beginner,false,4
+Amish Star,"[]",nine_patch,star,"[""hst""]",17,3,rotational_4,1880s,intermediate,false,4
+Antique Tile,"[""Tile Puzzle""]",four_patch,geometric,"[""hst""]",16,3,rotational_4,1880s,intermediate,false,4
+Apple Hexagon,"[]",other,nature,"[""english_paper_piecing""]",7,3,rotational_4,1870s,intermediate,false,4
+Arabic Lattice,"[""Mosaic""]",four_patch,geometric,"[""hst""]",20,3,rotational_4,1890s,intermediate,false,4
+Arrow Head,"[""Arrowhead""]",four_patch,geometric,"[""hst""]",8,2,rotational_4,1890s,beginner,false,4
+Arrow Point,"[]",four_patch,geometric,"[""hst""]",12,2,rotational_4,1900s,beginner,false,4
+Art Square,"[]",nine_patch,geometric,"[""hst""]",17,3,rotational_4,1900s,intermediate,false,4
+Ashland Rose,"[]",nine_patch,nature,"[""applique""]",13,4,rotational_4,1850s,advanced,false,4
+At the Depot,"[]",nine_patch,geometric,"[""hst""]",21,3,asymmetric,1900s,intermediate,false,4
+Aunt Alice's Blue Wreath,"[]",nine_patch,nature,"[""applique""]",13,4,rotational_4,1900s,advanced,false,4
+Aunt Dinah,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Aunt Eliza's Star Point,"[""Aunt Eliza's Star""]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Aunt Kate's Choice,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1900s,intermediate,false,4
+Aunt Sukey's Choice,"[""Aunt Sukey's Patch""]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Aunt Sukey's Patch,"[""Aunt Sukey's Choice""]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Autograph Quilt,"[""Album Quilt""]",nine_patch,geometric,"[""strip_piecing""]",9,2,rotational_4,1840s,beginner,false,4
+Autumn Leaf,"[""Maple Leaf""]",nine_patch,nature,"[""hst""]",17,2,asymmetric,1880s,intermediate,false,4
+Autumn Leaves,"[]",nine_patch,nature,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Autumn Tints,"[]",nine_patch,nature,"[""hst""]",25,4,rotational_4,1900s,intermediate,false,4
+Baby Bunting,"[]",nine_patch,geometric,"[""hst""]",17,3,rotational_4,1900s,intermediate,false,4
+Baby Shapes,"[]",four_patch,geometric,"[""hst""]",12,3,rotational_4,1920s,beginner,false,4
+Baltimore Belle,"[]",nine_patch,geometric,"[""hst"", ""applique""]",21,4,rotational_4,1840s,advanced,false,4
+Barrister's Blocks,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Base Ball,"[""Baseball""]",nine_patch,geometric,"[""hst""]",21,2,rotational_4,1900s,intermediate,false,4
+Basket of Lilies,"[""Lily Basket""]",nine_patch,basket,"[""hst""]",21,3,asymmetric,1870s,intermediate,false,4
+Basket Quilt,"[]",nine_patch,basket,"[""hst""]",17,2,asymmetric,1860s,intermediate,false,4
+Basket Weave,"[""Basketweave""]",four_patch,geometric,"[""strip_piecing""]",16,2,rotational_2,1880s,beginner,false,4
+Baton Rouge,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1880s,intermediate,false,4
+Bat's Wing,"[""Bat Wing""]",nine_patch,nature,"[""hst""]",21,2,rotational_4,1890s,intermediate,false,4
+Bay Leaf,"[]",nine_patch,nature,"[""hst""]",17,2,rotational_4,1880s,intermediate,false,4
+Bear Track,"[""Bear's Track""]",seven_patch,nature,"[""hst""]",36,2,rotational_4,1870s,intermediate,false,4
+Bear Tracks,"[""Bear's Paw""]",seven_patch,nature,"[""hst""]",36,2,rotational_4,1870s,intermediate,false,4
+Bear's Foot,"[""Bear's Paw""]",seven_patch,nature,"[""hst""]",36,2,rotational_4,1870s,intermediate,false,4
+Bedtime,"[]",nine_patch,geometric,"[""hst""]",17,3,rotational_4,1920s,intermediate,false,4
+Beggar's Block,"[""Beggar's Blocks""]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Beggar's Blocks,"[""Beggar's Block""]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Belles Favourite,"[""Belle's Favorite""]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1900s,intermediate,false,4
+Best of All,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1900s,intermediate,false,4
+Big Dipper,"[""Yankee Puzzle""]",four_patch,star,"[""hst""]",16,2,rotational_4,1890s,intermediate,false,4
+Big O,"[]",nine_patch,geometric,"[""hst""]",21,2,rotational_4,1910s,intermediate,false,4
+Bird's Eye View,"[""Birds Eye View""]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1900s,intermediate,false,4
+Bird's Nest,"[""Birds Nest""]",nine_patch,nature,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Black Magic,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1930s,intermediate,false,4
+Blackford's Beauty,"[]",nine_patch,star,"[""hst""]",29,3,rotational_4,1890s,intermediate,false,4
+Blacks and Whites,"[]",four_patch,geometric,"[""hst""]",16,2,rotational_4,1920s,beginner,false,4
+Blazing Arrows,"[]",nine_patch,geometric,"[""hst"", ""flying_geese""]",25,3,rotational_4,1900s,intermediate,false,4
+Blind Man's Fancy,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Blockade,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1860s,intermediate,false,4
+Block Album,"[]",nine_patch,geometric,"[""strip_piecing""]",13,3,rotational_4,1850s,beginner,false,4
+Blocks and Pinwheels,"[]",four_patch,geometric,"[""hst""]",20,3,rotational_4,1900s,intermediate,false,4
+Bluebird,"[]",nine_patch,nature,"[""hst""]",21,3,asymmetric,1920s,intermediate,false,4
+Boston Puzzle,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Bounding Betty,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1900s,intermediate,false,4
+Bouquet,"[]",nine_patch,nature,"[""applique""]",13,4,rotational_4,1880s,advanced,false,4
+Box Blocks,"[]",four_patch,geometric,"[""strip_piecing""]",12,3,rotational_4,1900s,beginner,false,4
+Boxed I's,"[]",nine_patch,geometric,"[""strip_piecing""]",21,3,rotational_4,1900s,intermediate,false,4
+Boy's Nonsense,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1900s,intermediate,false,4
+Braced Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Brave World,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1930s,intermediate,false,4
+Brick Pile,"[""Brickwork""]",other,geometric,"[""strip_piecing""]",20,2,mirror,1870s,beginner,false,4
+Brickwork,"[""Brick Wall""]",other,geometric,"[""strip_piecing""]",20,2,mirror,1870s,beginner,false,4
+Brickwork Quilt,"[]",other,geometric,"[""strip_piecing""]",20,2,mirror,1870s,beginner,false,4
+Broken Pinwheel,"[]",four_patch,geometric,"[""hst""]",16,2,rotational_4,1890s,beginner,false,4
+Broken Sugar Bowl,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Broken Wheel,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Brown-tailed Moth,"[]",nine_patch,nature,"[""hst""]",21,3,rotational_4,1900s,intermediate,false,4
+Buckeye Beauty,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Bunnies,"[]",nine_patch,nature,"[""hst""]",17,2,asymmetric,1920s,intermediate,false,4
+Bunnies and Baskets,"[]",nine_patch,basket,"[""hst""]",21,3,asymmetric,1920s,intermediate,false,4
+Butterflies,"[""Butterfly""]",nine_patch,nature,"[""hst"", ""applique""]",21,4,mirror,1920s,intermediate,false,4
+Buzzard's Roost,"[]",nine_patch,nature,"[""hst""]",25,3,rotational_4,1900s,intermediate,false,4
+Cabin in the Cotton,"[]",log_cabin,log_cabin,"[""strip_piecing""]",17,4,rotational_4,1870s,beginner,false,4
+Cactus Blossom,"[""Cactus Flower""]",nine_patch,nature,"[""hst""]",21,3,rotational_4,1900s,intermediate,false,4
+Cake Stand and Basket,"[""Cake Stand""]",nine_patch,basket,"[""hst""]",15,2,asymmetric,1880s,intermediate,false,4
+Calgary Stampede,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1920s,intermediate,false,4
+California Oak Leaf,"[]",nine_patch,nature,"[""hst"", ""applique""]",21,3,rotational_4,1880s,advanced,false,4
+California Rose,"[]",nine_patch,nature,"[""applique""]",13,4,rotational_4,1870s,advanced,false,4
+Capital I,"[]",nine_patch,geometric,"[""strip_piecing""]",13,2,rotational_2,1890s,beginner,false,4
+Capital T,"[""T Block""]",nine_patch,geometric,"[""strip_piecing""]",9,2,rotational_4,1880s,beginner,false,4
+Captive Beauty,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1900s,intermediate,false,4
+Carpenter's Rule,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Carpenter's Square,"[""Carpenter's Wheel""]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1880s,intermediate,false,4
+Carrie Nation,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1900s,intermediate,false,4
+Castle Garden,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Cat's Cradle,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1900s,intermediate,false,4
+Cats and Mice,"[""Cat and Mouse""]",nine_patch,nature,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Centennial,"[]",nine_patch,star,"[""hst""]",29,3,rotational_4,1876,intermediate,false,4
+Chain Link,"[]",four_patch,chain,"[""strip_piecing""]",16,2,rotational_4,1890s,beginner,false,4
+Chain of Squares,"[]",nine_patch,chain,"[""strip_piecing""]",21,2,rotational_4,1890s,beginner,false,4
+Chained Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1900s,intermediate,false,4
+Charleston Quilt,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1850s,intermediate,false,4
+Charm,"[]",four_patch,geometric,"[""strip_piecing""]",16,4,rotational_4,1920s,beginner,false,4
+Charter Oak,"[]",nine_patch,nature,"[""hst"", ""applique""]",21,3,asymmetric,1860s,intermediate,false,4
+Cherry Basket,"[]",nine_patch,basket,"[""hst""]",17,3,asymmetric,1880s,intermediate,false,4
+Chevron,"[]",other,geometric,"[""strip_piecing""]",16,2,mirror,1890s,beginner,false,4
+Chicago Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1900s,intermediate,false,4
+Children's Delight,"[]",nine_patch,geometric,"[""hst""]",17,3,rotational_4,1900s,beginner,false,4
+Chimney Swallows,"[""Chimney Sweep""]",nine_patch,nature,"[""hst""]",21,2,rotational_4,1890s,intermediate,false,4
+Chimney Sweep,"[""Chimney Swallows""]",nine_patch,geometric,"[""strip_piecing""]",13,2,rotational_4,1880s,beginner,false,4
+Christmas Cactus,"[]",nine_patch,nature,"[""hst""]",25,3,rotational_4,1920s,intermediate,false,4
+Christmas Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1920s,intermediate,false,4
+Christmas Tree,"[]",nine_patch,nature,"[""hst""]",21,3,asymmetric,1900s,intermediate,false,4
+Chrysanthemums,"[]",nine_patch,nature,"[""applique""]",13,4,rotational_4,1900s,advanced,false,4
+Churn Dasher,"[""Churn Dash""]",nine_patch,geometric,"[""hst""]",13,2,rotational_4,1870s,beginner,false,4
+Circle and Square,"[]",nine_patch,geometric,"[""curved_piecing""]",17,2,rotational_4,1900s,intermediate,true,4
+Circle Within Circle,"[]",other,geometric,"[""curved_piecing""]",9,3,rotational_4,1890s,intermediate,true,4
+Circuit Rider,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+City Streets,"[]",nine_patch,geometric,"[""strip_piecing""]",25,3,rotational_4,1930s,intermediate,false,4
+Cleveland Lilies,"[]",nine_patch,nature,"[""hst""]",21,3,asymmetric,1890s,intermediate,false,4
+Cluster of Stars,"[]",nine_patch,star,"[""hst""]",29,3,rotational_4,1890s,intermediate,false,4
+Coarse Woven Patch,"[]",four_patch,geometric,"[""strip_piecing""]",16,2,rotational_4,1890s,beginner,false,4
+Cockscomb,"[""Coxcomb""]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1840s,advanced,false,4
+Coffin Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1880s,intermediate,false,4
+Cog Wheel,"[""Cogwheel""]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Colonial Basket,"[]",nine_patch,basket,"[""hst""]",17,2,asymmetric,1890s,intermediate,false,4
+Colorado Beauty,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1900s,intermediate,false,4
+Columbian Puzzle,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1893,intermediate,false,4
+Columbia Star,"[""Columbian Star""]",nine_patch,star,"[""hst""]",25,3,rotational_4,1893,intermediate,false,4
+Combination Star,"[]",nine_patch,star,"[""hst""]",29,3,rotational_4,1890s,intermediate,false,4
+Compass Star,"[""Mariner's Compass""]",other,star,"[""paper_piecing""]",32,4,rotational_4,1830s,advanced,false,4
+Complex Rose,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1860s,advanced,false,4
+Confederate Rose,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1860s,advanced,false,4
+Constellation,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Continental,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1900s,intermediate,false,4
+Corner Beam,"[]",nine_patch,geometric,"[""strip_piecing""]",17,3,rotational_4,1900s,beginner,false,4
+Cotton Boll,"[]",nine_patch,nature,"[""hst""]",21,3,rotational_4,1870s,intermediate,false,4
+Cottage Tulip,"[]",nine_patch,nature,"[""hst""]",21,3,asymmetric,1890s,intermediate,false,4
+Country Farm,"[]",nine_patch,house,"[""hst""]",25,4,asymmetric,1900s,intermediate,false,4
+Coverlet,"[]",nine_patch,geometric,"[""strip_piecing""]",21,3,rotational_4,1890s,beginner,false,4
+Coxey's Camp,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1894,intermediate,false,4
+Crazy Ann,"[""Crazy Anne""]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Crazy House,"[]",nine_patch,house,"[""hst""]",25,4,asymmetric,1900s,intermediate,false,4
+Crib Quilt,"[]",four_patch,geometric,"[""strip_piecing""]",16,3,rotational_4,1890s,beginner,false,4
+Cross and Square,"[]",nine_patch,geometric,"[""strip_piecing""]",17,2,rotational_4,1890s,beginner,false,4
+Cross and Star,"[""Star and Cross""]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Cross Patch,"[]",nine_patch,geometric,"[""hst""]",17,2,rotational_4,1890s,beginner,false,4
+Cross The,"[]",nine_patch,geometric,"[""strip_piecing""]",13,2,rotational_4,1880s,beginner,false,4
+Crosses and Losses,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Crosses and Stars,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Crossroads,"[""Cross Roads""]",nine_patch,geometric,"[""hst""]",17,2,rotational_4,1890s,beginner,false,4
+Cross Roads to Texas,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Cross Within A Cross,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Crossword Puzzle,"[]",nine_patch,geometric,"[""strip_piecing""]",25,2,rotational_4,1930s,intermediate,false,4
+Crown and Thorns,"[""Crown of Thorns""]",nine_patch,geometric,"[""hst""]",21,2,rotational_4,1880s,intermediate,false,4
+Crowning Glory,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1900s,intermediate,false,4
+Crow's Foot,"[""Crows Foot""]",nine_patch,nature,"[""hst""]",21,2,rotational_4,1890s,intermediate,false,4
+Crow's Nest,"[""Crows Nest""]",nine_patch,nature,"[""hst""]",21,2,rotational_4,1890s,intermediate,false,4
+Crystal Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1900s,intermediate,false,4
+Cube Lattice,"[]",other,geometric,"[""diamond_piecing""]",24,3,rotational_4,1890s,intermediate,false,4
+Cube Work,"[""Baby Blocks""]",other,geometric,"[""english_paper_piecing""]",varies,3,mirror,1870s,intermediate,false,4
+Cupid's Own,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1900s,intermediate,false,4
+Cut Glass Dish,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Cypress Leaf,"[]",nine_patch,nature,"[""hst""]",21,3,asymmetric,1890s,intermediate,false,4
+Dad's Bow Tie,"[""Bow Tie""]",four_patch,geometric,"[""hst""]",8,2,rotational_4,1920s,beginner,false,4
+Daffodils and Butterflies,"[]",nine_patch,nature,"[""applique""]",21,4,asymmetric,1920s,advanced,false,4
+Daisy Fan,"[]",other,nature,"[""applique"", ""curved_piecing""]",12,4,rotational_4,1920s,advanced,true,4
+Daisy Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1920s,intermediate,false,4
+Darting Minnows,"[]",nine_patch,nature,"[""hst""]",21,2,rotational_4,1890s,intermediate,false,4
+David and Goliath,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Democrat Rose,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1850s,advanced,false,4
+Dervish Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1900s,intermediate,false,4
+Devil's Claws,"[""Devil's Claw""]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Devil's Puzzle,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Dewey Block,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1898,intermediate,false,4
+Dewey Dream,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1898,intermediate,false,4
+Diagonal Log Chain,"[]",log_cabin,chain,"[""strip_piecing""]",17,4,rotational_2,1890s,intermediate,false,4
+Diadem,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Diamond Cross,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Diamond Cube,"[]",other,geometric,"[""diamond_piecing""]",12,3,rotational_4,1880s,intermediate,false,4
+Diamond Design,"[]",other,geometric,"[""diamond_piecing""]",16,3,rotational_4,1890s,intermediate,false,4
+Diamond in a Square,"[""Square in a Diamond""]",four_patch,geometric,"[""hst""]",9,2,rotational_4,1850s,beginner,false,4
+Diamond Rectangle,"[]",four_patch,geometric,"[""hst""]",12,2,rotational_4,1890s,beginner,false,4
+Diamond Ring,"[""Wedding Ring""]",four_patch,geometric,"[""curved_piecing""]",20,3,rotational_4,1890s,intermediate,true,4
+Diamond Star,"[]",other,star,"[""diamond_piecing""]",24,3,rotational_4,1880s,intermediate,false,4
+Diamond The,"[]",four_patch,geometric,"[""hst""]",8,2,rotational_4,1880s,beginner,false,4
+Diamonds,"[]",other,geometric,"[""diamond_piecing""]",16,3,rotational_4,1880s,intermediate,false,4
+Disk The,"[]",nine_patch,geometric,"[""curved_piecing""]",17,2,rotational_4,1890s,intermediate,true,4
+Dogwood,"[]",nine_patch,nature,"[""applique""]",17,3,rotational_4,1920s,advanced,false,4
+Dogtooth Violet,"[]",nine_patch,nature,"[""hst""]",21,3,asymmetric,1890s,intermediate,false,4
+Domino,"[]",four_patch,geometric,"[""strip_piecing""]",8,2,rotational_2,1890s,beginner,false,4
+Domino and Square,"[]",four_patch,geometric,"[""strip_piecing""]",12,2,rotational_4,1890s,beginner,false,4
+Doris' Delight,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1920s,intermediate,false,4
+Double Cross,"[]",nine_patch,geometric,"[""hst""]",21,2,rotational_4,1890s,intermediate,false,4
+Double Dutch,"[]",four_patch,geometric,"[""hst""]",16,2,rotational_4,1890s,beginner,false,4
+Double Four Patch,"[""Sixteen Patch""]",four_patch,geometric,"[""strip_piecing""]",16,2,rotational_4,1870s,beginner,false,4
+Double Hearts,"[]",nine_patch,geometric,"[""curved_piecing"", ""applique""]",17,3,rotational_4,1920s,intermediate,true,4
+Double Necktie,"[]",four_patch,geometric,"[""hst""]",12,3,rotational_4,1920s,beginner,false,4
+Double Peony,"[]",nine_patch,nature,"[""applique""]",21,4,rotational_4,1870s,advanced,false,4
+Double Pinwheel,"[""Broken Dishes""]",four_patch,geometric,"[""hst""]",16,2,rotational_4,1880s,beginner,false,4
+Double Quartet,"[]",four_patch,geometric,"[""hst""]",16,3,rotational_4,1900s,intermediate,false,4
+Double Squares,"[]",four_patch,geometric,"[""strip_piecing""]",8,2,rotational_4,1890s,beginner,false,4
+Double T,"[]",nine_patch,geometric,"[""strip_piecing""]",13,2,rotational_4,1890s,beginner,false,4
+Double Windmill,"[]",four_patch,geometric,"[""hst""]",16,2,rotational_4,1890s,beginner,false,4
+Double Wrench,"[""Monkey Wrench""]",nine_patch,geometric,"[""hst""]",17,2,rotational_4,1890s,intermediate,false,4
+Double X,"[""Fox and Geese""]",nine_patch,geometric,"[""hst""]",21,2,rotational_4,1890s,intermediate,false,4
+Double Z,"[]",nine_patch,geometric,"[""hst""]",17,2,rotational_4,1890s,intermediate,false,4
+Drunkard's Patchwork,"[""Drunkard's Path""]",other,geometric,"[""curved_piecing""]",16,2,rotational_4,1880s,intermediate,true,4
+Dublin Steps,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Duck and Ducklings,"[""Ducks and Ducklings""]",nine_patch,nature,"[""hst""]",21,2,rotational_4,1890s,intermediate,false,4
+Duck Tracks,"[]",nine_patch,nature,"[""hst""]",21,2,rotational_4,1890s,intermediate,false,4
+Dutch Rose,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1870s,advanced,false,4
+Ecclesiastical,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Eddystone Light,"[""Lighthouse""]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Eight Hands Around,"[""Eight Hands Round""]",nine_patch,geometric,"[""hst""]",33,3,rotational_4,1890s,intermediate,false,4
+Eight Hands Round,"[""Eight Hands Around""]",nine_patch,geometric,"[""hst""]",33,3,rotational_4,1890s,intermediate,false,4
+Eight-Point Design,"[""Eight-Pointed Star""]",other,star,"[""diamond_piecing""]",16,3,rotational_4,1850s,intermediate,false,4
+Enigma,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+English Rose,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1860s,advanced,false,4
+Everybody's Favorite,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1920s,intermediate,false,4
+Fan and Rainbow,"[]",other,geometric,"[""curved_piecing""]",10,5,asymmetric,1900s,intermediate,true,4
+Fan Patch,"[]",other,geometric,"[""curved_piecing""]",8,4,asymmetric,1890s,intermediate,true,4
+Fanny's Fan,"[]",other,geometric,"[""curved_piecing""]",8,4,asymmetric,1900s,intermediate,true,4
+Fantastic Patch,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1900s,intermediate,false,4
+Fence Rail,"[""Rail Fence""]",other,geometric,"[""strip_piecing""]",3,3,rotational_4,1870s,beginner,false,4
+Fence Row,"[]",other,geometric,"[""strip_piecing""]",12,3,rotational_4,1890s,beginner,false,4
+Ferris Wheel,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1900s,intermediate,false,4
+Field Daisies,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1920s,advanced,false,4
+Fifty Four Forty,"[""54-40 or Fight""]",nine_patch,star,"[""hst"", ""flying_geese""]",33,3,rotational_4,1840s,intermediate,false,4
+Five-Pointed Star,"[]",other,star,"[""paper_piecing""]",10,2,rotational_4,1880s,intermediate,false,4
+Five Stripes,"[]",other,geometric,"[""strip_piecing""]",5,5,mirror,1890s,beginner,false,4
+Flagstones,"[]",other,geometric,"[""strip_piecing""]",16,2,mirror,1890s,beginner,false,4
+Fleur-de-Lis,"[""Fleur de Lis""]",nine_patch,nature,"[""applique""]",13,3,rotational_4,1860s,advanced,false,4
+Flutter Wheel,"[""Flutterwheel""]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1900s,intermediate,false,4
+Flying Bat,"[]",nine_patch,nature,"[""hst""]",17,2,rotational_4,1890s,intermediate,false,4
+Flying Fish,"[]",nine_patch,nature,"[""hst""]",21,3,rotational_4,1900s,intermediate,false,4
+Flying Shuttles,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Flying Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1900s,intermediate,false,4
+Fool's Puzzle,"[""Fool's Square""]",other,geometric,"[""curved_piecing""]",16,2,rotational_4,1890s,intermediate,true,4
+Fool's Square,"[""Fool's Puzzle""]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Forbidden Fruit Tree,"[]",nine_patch,nature,"[""hst"", ""applique""]",25,4,asymmetric,1880s,advanced,false,4
+Forest Pattern,"[""Pine Tree""]",nine_patch,nature,"[""hst""]",25,2,asymmetric,1890s,intermediate,false,4
+Four Crown,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Four E's,"[]",nine_patch,geometric,"[""strip_piecing""]",17,2,rotational_4,1900s,beginner,false,4
+Four Frogs Quilt,"[]",nine_patch,nature,"[""hst""]",21,3,rotational_4,1900s,intermediate,false,4
+Four Little Birds,"[]",nine_patch,nature,"[""hst""]",21,3,rotational_4,1920s,intermediate,false,4
+Four Points,"[]",nine_patch,geometric,"[""hst""]",17,2,rotational_4,1890s,intermediate,false,4
+Four Stars Patch,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1900s,intermediate,false,4
+Four X Star,"[]",nine_patch,star,"[""hst""]",21,3,rotational_4,1900s,intermediate,false,4
+Freedom Quilt,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1860s,intermediate,false,4
+French Basket,"[]",nine_patch,basket,"[""hst""]",17,3,asymmetric,1890s,intermediate,false,4
+Friendship Quilt,"[""Album Block""]",nine_patch,geometric,"[""strip_piecing""]",13,2,rotational_4,1840s,beginner,false,4
+Garden of Eden,"[]",nine_patch,nature,"[""hst"", ""applique""]",25,4,rotational_4,1880s,advanced,false,4
+Garfield's Monument,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1881,intermediate,false,4
+Garret Windows,"[""Attic Windows""]",other,geometric,"[""strip_piecing""]",3,3,mirror,1880s,beginner,false,4
+Gentleman's Fancy,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Georgetown Circle,"[""Crown of Thorns""]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1880s,intermediate,false,4
+Girl's Favorite,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1920s,intermediate,false,4
+Girl's Joy,"[]",nine_patch,geometric,"[""hst""]",17,3,rotational_4,1920s,intermediate,false,4
+Globe The,"[]",nine_patch,geometric,"[""curved_piecing""]",17,3,rotational_4,1890s,intermediate,true,4
+Golden Gates,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Goosetracks,"[""Goose Tracks""]",seven_patch,nature,"[""hst""]",36,2,rotational_4,1870s,intermediate,false,4
+Gourd Vine,"[]",nine_patch,nature,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Grandmother's Basket,"[""Basket""]",nine_patch,basket,"[""hst""]",17,2,asymmetric,1890s,intermediate,false,4
+Grandmother's Choice,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Grandmother's Cross,"[""Grandma's Cross""]",nine_patch,geometric,"[""hst""]",21,2,rotational_4,1880s,intermediate,false,4
+Grandmother's Dream,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Grandmother's Engagement Ring,"[]",other,geometric,"[""curved_piecing""]",varies,3,rotational_4,1920s,advanced,true,4
+Grandmother's Own,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Grandmother's Puzzle,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Grapes and Vines,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1870s,advanced,false,4
+Grecian Design,"[""Greek Design""]",nine_patch,geometric,"[""strip_piecing""]",21,2,rotational_4,1890s,intermediate,false,4
+Greek Key,"[]",other,geometric,"[""strip_piecing""]",varies,2,rotational_4,1890s,intermediate,false,4
+Greek Square,"[]",nine_patch,geometric,"[""strip_piecing""]",17,2,rotational_4,1890s,intermediate,false,4
+Guiding Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Hairpin Catcher,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Hand The,"[""The Hand""]",nine_patch,geometric,"[""applique""]",5,2,asymmetric,1880s,intermediate,false,4
+Hands All Around,"[""Hands All Round""]",nine_patch,geometric,"[""hst"", ""curved_piecing""]",25,3,rotational_4,1890s,intermediate,true,4
+Harrison Rose,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1840s,advanced,false,4
+Harvest Rose,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1880s,advanced,false,4
+Hatchet,"[""Tomahawk""]",nine_patch,geometric,"[""hst""]",13,2,asymmetric,1890s,beginner,false,4
+Hearts and Gizzards,"[""Drunkard's Path Variation""]",other,geometric,"[""curved_piecing""]",16,2,rotational_4,1890s,intermediate,true,4
+Hen and Chickens,"[""Hens and Chickens""]",nine_patch,nature,"[""hst""]",21,2,rotational_4,1890s,intermediate,false,4
+Hexagonal,"[""Hexagon""]",other,geometric,"[""english_paper_piecing""]",7,3,rotational_4,1870s,intermediate,false,4
+Hickory Leaf,"[]",nine_patch,nature,"[""hst""]",21,2,rotational_4,1890s,intermediate,false,4
+Hidden Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1900s,intermediate,false,4
+Hither and Yon,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1920s,intermediate,false,4
+Hobson's Kiss,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1900s,intermediate,false,4
+Home Treasure,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Honeycomb Patch,"[]",other,geometric,"[""english_paper_piecing""]",19,3,rotational_4,1880s,intermediate,false,4
+Hopes and Wishes,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Hour Glass,"[""Hourglass""]",four_patch,geometric,"[""hst""]",8,2,rotational_4,1870s,beginner,false,4
+House That Jack Built,"[""Schoolhouse""]",nine_patch,house,"[""strip_piecing""]",17,3,asymmetric,1870s,intermediate,false,4
+Ice Cream Bowl,"[""Ice Cream Cone""]",nine_patch,geometric,"[""curved_piecing""]",13,3,rotational_4,1920s,intermediate,true,4
+Imperial Tea,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Indiana Wreath,"[]",nine_patch,nature,"[""applique""]",13,4,rotational_4,1860s,advanced,false,4
+Indian Hatchets,"[""Tomahawk""]",nine_patch,geometric,"[""hst""]",17,2,rotational_4,1890s,intermediate,false,4
+Indian Plumes,"[]",nine_patch,nature,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Interlaced Blocks,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Iris,"[""Iris Flower""]",nine_patch,nature,"[""applique""]",13,4,rotational_4,1920s,advanced,false,4
+Irish Puzzle,"[]",four_patch,geometric,"[""hst""]",16,2,rotational_4,1890s,intermediate,false,4
+Jack in the Pulpit,"[]",nine_patch,nature,"[""hst""]",21,3,asymmetric,1890s,intermediate,false,4
+Jack's Blocks,"[]",four_patch,geometric,"[""hst""]",16,3,rotational_4,1900s,intermediate,false,4
+Jack's House,"[""House Block""]",nine_patch,house,"[""strip_piecing""]",17,3,asymmetric,1890s,intermediate,false,4
+Job's Tears,"[""Slave Chain""]",nine_patch,geometric,"[""curved_piecing""]",17,2,rotational_4,1880s,intermediate,true,4
+Job's Troubles,"[""Job's Tears""]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1880s,intermediate,false,4
+Johnnie Round the Corner,"[""Johnny Round the Corner""]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Joining Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1900s,intermediate,false,4
+Jonquils,"[]",nine_patch,nature,"[""applique""]",13,3,rotational_4,1920s,advanced,false,4
+Joseph's Necktie,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Joy Bells,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1920s,intermediate,false,4
+Kansas Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Kansas Sunflower,"[""Sunflower""]",nine_patch,nature,"[""hst"", ""applique""]",29,4,rotational_4,1900s,intermediate,false,4
+King's Crows,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Ladies Aid Block,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1900s,intermediate,false,4
+Ladies' Beautiful Star,"[]",nine_patch,star,"[""hst""]",29,3,rotational_4,1890s,intermediate,false,4
+Ladies' Delight,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Ladies' Wreath,"[""Wreath""]",nine_patch,nature,"[""applique""]",13,4,rotational_4,1870s,advanced,false,4
+Lady Fingers,"[]",nine_patch,geometric,"[""hst""]",17,2,rotational_4,1890s,intermediate,false,4
+Lattice Square,"[]",nine_patch,geometric,"[""strip_piecing""]",21,2,rotational_4,1890s,beginner,false,4
+Leap Frog,"[""Leapfrog""]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1900s,intermediate,false,4
+Letter H,"[""Capital H""]",nine_patch,geometric,"[""strip_piecing""]",13,2,rotational_2,1890s,beginner,false,4
+Letter X,"[""Capital X""]",nine_patch,geometric,"[""hst""]",17,2,rotational_4,1890s,beginner,false,4
+Lightning Streak,"[""Streak of Lightning""]",other,geometric,"[""strip_piecing""]",varies,2,mirror,1890s,beginner,false,4
+Lilies of the Field,"[]",nine_patch,nature,"[""hst""]",21,3,asymmetric,1890s,intermediate,false,4
+Lily,"[""Lily Block""]",nine_patch,nature,"[""hst""]",17,3,asymmetric,1870s,intermediate,false,4
+Lily of the Valley,"[]",nine_patch,nature,"[""applique""]",13,4,asymmetric,1880s,advanced,false,4
+Lily Quilt Pattern,"[]",nine_patch,nature,"[""hst""]",21,3,asymmetric,1880s,intermediate,false,4
+Lincoln's Platform,"[]",seven_patch,geometric,"[""hst""]",49,3,rotational_4,1860s,intermediate,false,4
+Linoleum,"[]",nine_patch,geometric,"[""strip_piecing""]",25,3,rotational_4,1920s,intermediate,false,4
+Linton,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1900s,intermediate,false,4
+Little Beech Tree,"[]",nine_patch,nature,"[""hst""]",17,2,asymmetric,1890s,intermediate,false,4
+Little Red House The,"[""Schoolhouse""]",nine_patch,house,"[""strip_piecing""]",17,3,asymmetric,1880s,intermediate,false,4
+Live Oak Tree,"[]",nine_patch,nature,"[""hst""]",21,3,asymmetric,1890s,intermediate,false,4
+Lobster The,"[]",nine_patch,nature,"[""hst""]",21,3,rotational_4,1900s,intermediate,false,4
+Log Patch,"[""Log Cabin Variation""]",log_cabin,log_cabin,"[""strip_piecing""]",13,4,rotational_4,1870s,beginner,false,4
+London Roads,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Love Rose,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1870s,advanced,false,4
+Lover's Knot,"[""Lover's Knot"", ""True Lover's Knot""]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Lover's Links,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Lover's Quarrel,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Lucky Clover,"[""Four Leaf Clover""]",nine_patch,nature,"[""curved_piecing""]",17,2,rotational_4,1900s,intermediate,true,4
+Magic Circle,"[]",other,geometric,"[""curved_piecing""]",varies,3,rotational_4,1890s,intermediate,true,4
+Magic Cross,"[]",nine_patch,geometric,"[""hst""]",21,2,rotational_4,1890s,intermediate,false,4
+Maltese Cross No. 1,"[""Maltese Cross""]",nine_patch,geometric,"[""hst""]",25,2,rotational_4,1890s,intermediate,false,4
+Maltese Cross No. 2,"[]",nine_patch,geometric,"[""hst""]",29,2,rotational_4,1890s,intermediate,false,4
+Mary's Garden,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1900s,advanced,false,4
+May Basket,"[""Basket""]",nine_patch,basket,"[""hst""]",17,2,asymmetric,1890s,intermediate,false,4
+May Berry Leaf,"[]",nine_patch,nature,"[""hst""]",17,3,asymmetric,1890s,intermediate,false,4
+Mayflower The,"[]",nine_patch,nature,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Medallion,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Memory Blocks,"[""Album Block""]",nine_patch,geometric,"[""strip_piecing""]",13,3,rotational_4,1880s,beginner,false,4
+Memory Circle,"[]",other,geometric,"[""curved_piecing""]",17,3,rotational_4,1900s,intermediate,true,4
+Memory Lane,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1920s,intermediate,false,4
+Merry Go Round,"[""Merry-Go-Round""]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1920s,intermediate,false,4
+Merry Kite,"[]",nine_patch,geometric,"[""hst""]",21,3,asymmetric,1920s,intermediate,false,4
+Mexican Rose,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1880s,advanced,false,4
+Mexican Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Milky Way,"[]",four_patch,star,"[""hst""]",16,2,rotational_4,1890s,intermediate,false,4
+Missouri Beauty,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Missouri Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Modern Tulip,"[]",nine_patch,nature,"[""hst""]",21,3,asymmetric,1920s,intermediate,false,4
+Mollie's Choice,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1900s,intermediate,false,4
+Moon and Stars,"[]",nine_patch,star,"[""hst"", ""applique""]",25,3,rotational_4,1900s,intermediate,false,4
+Morning Glory,"[]",nine_patch,nature,"[""applique""]",13,4,rotational_4,1890s,advanced,false,4
+Morning Glory Wreath,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1890s,advanced,false,4
+Mother's Dream,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Mother's Fancy,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Mrs. Cleveland's Choice,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Mrs. Morgan's Choice,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Navajo,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1920s,intermediate,false,4
+Neck Tie,"[""Necktie"", ""Bow Tie""]",four_patch,geometric,"[""hst""]",8,2,rotational_4,1890s,beginner,false,4
+Necktie,"[""Bow Tie"", ""Neck Tie""]",four_patch,geometric,"[""hst""]",8,2,rotational_4,1890s,beginner,false,4
+Needle Book,"[]",nine_patch,geometric,"[""hst""]",17,2,asymmetric,1890s,intermediate,false,4
+Nelson's Victory,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+New Album,"[]",nine_patch,geometric,"[""strip_piecing""]",17,3,rotational_4,1900s,beginner,false,4
+New Four Patch,"[]",four_patch,geometric,"[""hst""]",16,2,rotational_4,1900s,beginner,false,4
+New Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1900s,intermediate,false,4
+No Name Quilt,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Nonsuch,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Novel Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1900s,intermediate,false,4
+Oak Leaf,"[""Oak Leaf and Reel""]",nine_patch,nature,"[""applique""]",17,3,rotational_4,1850s,advanced,false,4
+Oak Leaf and Acorns,"[]",nine_patch,nature,"[""applique""]",21,4,rotational_4,1860s,advanced,false,4
+Oak Leaf and Tulip,"[]",nine_patch,nature,"[""applique""]",21,4,rotational_4,1860s,advanced,false,4
+Ocean Wave,"[""Ocean Waves""]",four_patch,geometric,"[""hst""]",16,2,rotational_4,1870s,intermediate,false,4
+Octagon,"[""Octagonal""]",other,geometric,"[""strip_piecing""]",9,2,rotational_4,1880s,beginner,false,4
+Octagon File,"[]",other,geometric,"[""strip_piecing""]",13,2,rotational_4,1890s,intermediate,false,4
+Odd Fellows' Chain,"[""Odd Fellows Chain""]",nine_patch,chain,"[""hst""]",25,3,rotational_4,1880s,intermediate,false,4
+Odd Patchwork,"[]",nine_patch,geometric,"[""hst""]",varies,3,asymmetric,1890s,intermediate,false,4
+Odd Pattern An,"[]",nine_patch,geometric,"[""hst""]",21,3,asymmetric,1890s,intermediate,false,4
+Odds and Ends,"[]",nine_patch,geometric,"[""hst""]",varies,4,asymmetric,1890s,intermediate,false,4
+Odd Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Ohio Beauty,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Oklahoma Boomer,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Old Bachelor's Puzzle,"[""Bachelor's Puzzle""]",nine_patch,geometric,"[""hst""]",21,2,rotational_4,1890s,intermediate,false,4
+Old Homestead The,"[""Schoolhouse""]",nine_patch,house,"[""strip_piecing""]",21,4,asymmetric,1880s,intermediate,false,4
+Old Maid's Ramble,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Old Patchwork An,"[]",nine_patch,geometric,"[""hst""]",varies,3,asymmetric,1890s,intermediate,false,4
+Old Scrap Patchwork,"[]",nine_patch,geometric,"[""hst""]",varies,4,asymmetric,1890s,intermediate,false,4
+Old Tippecanoe,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1840s,intermediate,false,4
+Olive Branch,"[]",nine_patch,nature,"[""applique""]",17,3,rotational_4,1870s,advanced,false,4
+Ozark Trail,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1920s,intermediate,false,4
+Pansies and Butterflies,"[]",nine_patch,nature,"[""applique""]",21,4,asymmetric,1920s,advanced,false,4
+Patch as Patch Can,"[]",nine_patch,geometric,"[""hst""]",varies,3,asymmetric,1890s,intermediate,false,4
+Paving Blocks,"[]",other,geometric,"[""strip_piecing""]",12,2,rotational_2,1890s,beginner,false,4
+Peacocks and Flowers,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1880s,advanced,false,4
+Pennsylvania Rose,"[""Penn Rose""]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1850s,advanced,false,4
+Peony Block,"[""Peony""]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1860s,advanced,false,4
+Persian Palm Lily,"[]",nine_patch,nature,"[""hst"", ""applique""]",21,4,rotational_4,1890s,advanced,false,4
+Philadelphia Beauty,"[]",other,star,"[""paper_piecing""]",varies,4,rotational_4,1890s,advanced,false,4
+Philadelphia Pavement,"[]",nine_patch,geometric,"[""strip_piecing""]",25,3,rotational_4,1890s,intermediate,false,4
+Philippines The,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1898,intermediate,false,4
+Picture Frame,"[]",nine_patch,geometric,"[""strip_piecing""]",17,3,rotational_4,1920s,beginner,false,4
+Pieced Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Pilgrim's Pride,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Pincushion,"[]",nine_patch,geometric,"[""hst""]",17,2,rotational_4,1890s,intermediate,false,4
+Pincushion and Burr,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Pineapple Patterns,"[]",log_cabin,log_cabin,"[""foundation_piecing""]",varies,4,rotational_4,1870s,intermediate,false,4
+Pinwheels,"[""Pinwheel""]",four_patch,geometric,"[""hst""]",8,2,rotational_4,1870s,beginner,false,4
+Poinsettia,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1920s,advanced,false,4
+Poppy,"[""California Poppy""]",nine_patch,nature,"[""applique""]",13,4,rotational_4,1920s,advanced,false,4
+Prairie Rose,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1870s,advanced,false,4
+Premium Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+President's Quilt,"[]",nine_patch,star,"[""hst""]",29,3,rotational_4,1890s,intermediate,false,4
+Priscilla The,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Propeller,"[]",four_patch,geometric,"[""hst""]",16,2,rotational_4,1920s,intermediate,false,4
+Providence,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Pullman Puzzle,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Puzzle File,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Pyrotechnics,"[""Fireworks""]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Quartette The,"[]",four_patch,geometric,"[""hst""]",16,3,rotational_4,1890s,intermediate,false,4
+Radical Rose,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1860s,advanced,false,4
+Railroad The,"[""Railroad Block""]",nine_patch,geometric,"[""strip_piecing""]",17,2,rotational_4,1890s,beginner,false,4
+Rainbow,"[]",other,geometric,"[""curved_piecing""]",varies,7,asymmetric,1920s,intermediate,true,4
+Rambler Block,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1920s,intermediate,false,4
+Red Cross,"[]",nine_patch,geometric,"[""strip_piecing""]",13,2,rotational_4,1917,beginner,false,4
+Ribbon Squares,"[]",four_patch,geometric,"[""strip_piecing""]",16,3,rotational_4,1890s,beginner,false,4
+Ribbon Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Right and Left,"[]",nine_patch,geometric,"[""hst""]",17,2,rotational_2,1890s,intermediate,false,4
+Rising Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Road to Oklahoma,"[]",four_patch,chain,"[""hst""]",20,2,rotational_4,1890s,intermediate,false,4
+Rob Peter to Pay Paul,"[""Robbing Peter to Pay Paul""]",other,geometric,"[""curved_piecing""]",16,2,rotational_4,1890s,intermediate,true,4
+Rockingham's Beauty,"[]",nine_patch,star,"[""hst""]",29,3,rotational_4,1890s,intermediate,false,4
+Rocky Glen,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Rocky Road to California,"[]",four_patch,chain,"[""hst""]",24,2,rotational_4,1890s,intermediate,false,4
+Rocky Road to Kansas,"[]",four_patch,chain,"[""hst""]",24,2,rotational_4,1890s,intermediate,false,4
+Rolling Pinwheel,"[]",four_patch,geometric,"[""hst""]",16,2,rotational_4,1890s,beginner,false,4
+Rolling Stone,"[""Rolling Star""]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Rolling Stones,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Roman Cross,"[]",nine_patch,geometric,"[""strip_piecing""]",17,2,rotational_4,1880s,beginner,false,4
+Rose,"[""Rose Block""]",nine_patch,nature,"[""applique""]",13,4,rotational_4,1850s,advanced,false,4
+Rose Album,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1850s,advanced,false,4
+Rose and Feather,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1860s,advanced,false,4
+Rose of Dixie,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1860s,advanced,false,4
+Rose of LeMoine,"[""Rose of LeMoyne""]",nine_patch,nature,"[""applique"", ""diamond_piecing""]",17,4,rotational_4,1840s,advanced,false,4
+Rose of St. Louis,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1870s,advanced,false,4
+Rose of the Carolinas,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1860s,advanced,false,4
+Rose Sprig,"[]",nine_patch,nature,"[""applique""]",9,3,rotational_4,1870s,intermediate,false,4
+Rosebud,"[""Rose Bud""]",nine_patch,nature,"[""applique""]",13,4,rotational_4,1880s,advanced,false,4
+Round Robin,"[]",other,geometric,"[""curved_piecing""]",varies,4,rotational_4,1920s,intermediate,true,4
+Royal Japanese Vase,"[]",nine_patch,nature,"[""applique""]",13,4,rotational_4,1890s,advanced,false,4
+Royal The,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Salem,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Sarah's Favorite,"[""Sarah's Favourite""]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Sashed Album,"[]",nine_patch,geometric,"[""strip_piecing""]",17,3,rotational_4,1870s,beginner,false,4
+Sashed Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Sawtooth,"[""Sawtooth Border""]",other,geometric,"[""hst""]",varies,2,mirror,1850s,beginner,false,4
+Sawtooth Patchwork,"[]",other,geometric,"[""hst""]",varies,2,mirror,1860s,beginner,false,4
+School Girl's Puzzle,"[""Schoolgirl Puzzle""]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Scissors Chain,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Seven Stars,"[]",nine_patch,star,"[""hst""]",33,3,rotational_4,1890s,intermediate,false,4
+Shelf Chain,"[]",nine_patch,chain,"[""strip_piecing""]",21,2,rotational_4,1890s,intermediate,false,4
+Shield,"[""Shield Block""]",nine_patch,geometric,"[""hst""]",17,2,rotational_4,1890s,intermediate,false,4
+Shooting Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Simple Design,"[]",four_patch,geometric,"[""strip_piecing""]",8,2,rotational_4,1890s,beginner,false,4
+Single Sunflowers,"[""Sunflower""]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1900s,advanced,false,4
+Skyrocket,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Snowflake,"[]",nine_patch,nature,"[""hst""]",25,3,rotational_4,1920s,intermediate,false,4
+Solomon's Crown,"[""Solomon's Temple""]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Solomon's Temple,"[""Solomon's Crown""]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Spider's Den,"[""Spider Web""]",other,nature,"[""paper_piecing""]",varies,4,rotational_4,1890s,intermediate,false,4
+Spider's Web,"[""Spider Web"", ""Spiderweb""]",other,geometric,"[""paper_piecing""]",varies,4,rotational_4,1890s,intermediate,false,4
+Split Nine Patch,"[]",nine_patch,geometric,"[""hst""]",17,2,rotational_4,1900s,intermediate,false,4
+Square and a Half,"[]",four_patch,geometric,"[""hst""]",9,2,rotational_4,1890s,beginner,false,4
+Square and Swallow,"[]",nine_patch,nature,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Square and Triangle,"[]",four_patch,geometric,"[""hst""]",8,2,rotational_4,1890s,beginner,false,4
+Square Log Cabin,"[]",log_cabin,log_cabin,"[""strip_piecing""]",17,4,rotational_4,1870s,beginner,false,4
+Squares and Stars,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Squares and Stripes,"[]",four_patch,geometric,"[""strip_piecing""]",12,2,rotational_4,1890s,beginner,false,4
+Star A,"[]",nine_patch,star,"[""hst""]",21,2,rotational_4,1890s,intermediate,false,4
+Star and Chains,"[]",nine_patch,star,"[""hst""]",29,3,rotational_4,1890s,intermediate,false,4
+Star and Cross,"[""Cross and Star""]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Star and Cubes,"[]",nine_patch,star,"[""hst"", ""diamond_piecing""]",29,3,rotational_4,1890s,intermediate,false,4
+Star and Squares,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Star Lane,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Star of Many Points,"[]",other,star,"[""paper_piecing""]",varies,4,rotational_4,1890s,advanced,false,4
+Star of North Carolina,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Star of Texas,"[""Texas Star""]",other,star,"[""diamond_piecing""]",24,3,rotational_4,1880s,intermediate,false,4
+Star of the East,"[""Eastern Star""]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Star Puzzle,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Star-Spangled Banner,"[]",nine_patch,star,"[""hst""]",33,3,rotational_4,1890s,intermediate,false,4
+Stars upon Stars,"[]",nine_patch,star,"[""hst""]",33,3,rotational_4,1890s,intermediate,false,4
+State House Steps,"[""Courthouse Steps""]",log_cabin,log_cabin,"[""strip_piecing""]",17,4,rotational_2,1870s,beginner,false,4
+Steps to the Altar,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+St. Louis Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Stone Wall,"[]",other,geometric,"[""strip_piecing""]",varies,2,mirror,1890s,beginner,false,4
+Storm Signal,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Straight Four Patch,"[""Four Patch""]",four_patch,geometric,"[""strip_piecing""]",4,2,rotational_4,1850s,beginner,false,4
+Strawberry,"[]",nine_patch,nature,"[""applique""]",13,3,rotational_4,1880s,advanced,false,4
+String of Beads,"[]",other,geometric,"[""strip_piecing""]",varies,4,mirror,1890s,beginner,false,4
+Stripe Squares,"[]",four_patch,geometric,"[""strip_piecing""]",16,3,rotational_4,1890s,beginner,false,4
+Sugar Bowl,"[]",nine_patch,geometric,"[""hst""]",17,2,rotational_4,1890s,intermediate,false,4
+Sugar Loaf,"[""Sugarloaf""]",four_patch,geometric,"[""hst""]",12,2,rotational_4,1890s,beginner,false,4
+Sunbonnet Lassies,"[""Sunbonnet Sue""]",other,nature,"[""applique""]",varies,4,asymmetric,1920s,intermediate,false,4
+Sunburst,"[""Rising Sun""]",other,star,"[""paper_piecing""]",varies,4,rotational_4,1870s,advanced,false,4
+Sunflowers,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1900s,advanced,false,4
+Sunshine,"[""Sunshine and Shadows""]",other,geometric,"[""strip_piecing""]",varies,varies,rotational_4,1890s,beginner,false,4
+Susannah,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Susannah Variation,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Swarm of Bees,"[""Beehive""]",nine_patch,nature,"[""hst""]",21,2,rotational_4,1890s,intermediate,false,4
+Sweet Gum Leaf,"[]",nine_patch,nature,"[""hst""]",21,2,asymmetric,1890s,intermediate,false,4
+Swing in the Center,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Swinging Corners,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+T Quartette,"[]",nine_patch,geometric,"[""strip_piecing""]",13,2,rotational_4,1890s,beginner,false,4
+T Square,"[""T-Square""]",nine_patch,geometric,"[""strip_piecing""]",13,2,rotational_4,1890s,beginner,false,4
+Tangled Garter,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Tassel Plant,"[]",nine_patch,nature,"[""hst""]",21,3,asymmetric,1890s,intermediate,false,4
+Tea Leaf,"[]",nine_patch,nature,"[""applique""]",13,2,rotational_4,1880s,intermediate,false,4
+Tea Rose,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1890s,advanced,false,4
+Teddy's Choice,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1910s,intermediate,false,4
+Temple Court,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Temperance Tree,"[""Pine Tree""]",nine_patch,nature,"[""hst""]",25,2,asymmetric,1880s,intermediate,false,4
+Texas Flower,"[]",nine_patch,nature,"[""hst"", ""applique""]",21,4,rotational_4,1890s,intermediate,false,4
+Texas Tears,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+The Palm,"[""Palm Leaf""]",nine_patch,nature,"[""hst""]",21,2,asymmetric,1890s,intermediate,false,4
+Three-flowered Sunflower,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1900s,advanced,false,4
+Tick-Tack-Toe,"[""Tic Tac Toe""]",nine_patch,geometric,"[""strip_piecing""]",9,2,rotational_4,1920s,beginner,false,4
+Tile Patchwork,"[]",four_patch,geometric,"[""hst""]",16,3,rotational_4,1890s,intermediate,false,4
+Toad in the Puddle,"[]",nine_patch,nature,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Trailing Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Triangle Puzzle,"[]",four_patch,geometric,"[""hst""]",16,2,rotational_4,1890s,intermediate,false,4
+Triangles,"[]",other,geometric,"[""hst""]",varies,2,varies,1850s,beginner,false,4
+Triangular Triangle,"[]",other,geometric,"[""hst""]",12,2,rotational_4,1890s,intermediate,false,4
+Triple Irish Chain,"[""Double Irish Chain""]",chain,chain,"[""strip_piecing""]",varies,2,rotational_4,1860s,intermediate,false,4
+Triple Stripe,"[]",other,geometric,"[""strip_piecing""]",varies,3,mirror,1890s,beginner,false,4
+True Lover's Knot,"[""Lover's Knot""]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Tufted Cherry,"[]",nine_patch,nature,"[""applique""]",13,3,rotational_4,1880s,advanced,false,4
+Tulip Blocks,"[]",nine_patch,nature,"[""hst""]",21,3,asymmetric,1880s,intermediate,false,4
+Tulip Bouquet,"[]",nine_patch,nature,"[""applique""]",17,4,asymmetric,1890s,advanced,false,4
+Tulip in Vase,"[]",nine_patch,nature,"[""applique""]",17,4,asymmetric,1890s,advanced,false,4
+Tulip Lady Finger,"[]",nine_patch,nature,"[""hst""]",21,3,asymmetric,1890s,intermediate,false,4
+Tulip Tree Leaves,"[]",nine_patch,nature,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Tumbler The,"[]",other,geometric,"[""strip_piecing""]",varies,4,mirror,1890s,beginner,false,4
+Tumbling Block,"[""Tumbling Blocks"", ""Baby Blocks""]",other,geometric,"[""english_paper_piecing""]",3,3,mirror,1850s,intermediate,false,4
+Twelve Triangles,"[]",nine_patch,geometric,"[""hst""]",17,2,rotational_4,1890s,intermediate,false,4
+Twin Sisters,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Twist and Turn,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Twist Patchwork,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Two Doves The,"[]",nine_patch,nature,"[""hst""]",21,3,asymmetric,1890s,intermediate,false,4
+Union,"[""Union Block""]",nine_patch,star,"[""hst""]",25,3,rotational_4,1860s,intermediate,false,4
+Union Calico Quilt,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1860s,intermediate,false,4
+Union Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1860s,intermediate,false,4
+Unknown Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Valentine Quilt,"[]",nine_patch,geometric,"[""curved_piecing"", ""applique""]",21,3,rotational_4,1900s,intermediate,true,4
+Variegated Diamonds,"[]",other,geometric,"[""diamond_piecing""]",varies,4,rotational_4,1890s,intermediate,false,4
+Variegated Hexagons,"[]",other,geometric,"[""english_paper_piecing""]",varies,4,rotational_4,1890s,intermediate,false,4
+Venetian Design,"[]",nine_patch,geometric,"[""strip_piecing""]",21,3,rotational_4,1890s,intermediate,false,4
+Vestibule,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Vice-President's Quilt,"[]",nine_patch,star,"[""hst""]",29,3,rotational_4,1890s,intermediate,false,4
+Village Church,"[""Church""]",nine_patch,house,"[""strip_piecing""]",21,4,asymmetric,1900s,intermediate,false,4
+Virginia Gentleman,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Wagon Wheel,"[""Wheel""]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Wandering Jew,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Washington's Plumes,"[""Princess Feather""]",other,nature,"[""applique""]",4,3,rotational_4,1840s,advanced,false,4
+Washington's Puzzle,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Washington's Sidewalk,"[]",nine_patch,geometric,"[""strip_piecing""]",21,2,rotational_4,1890s,intermediate,false,4
+Watered Ribbon,"[]",other,geometric,"[""strip_piecing""]",varies,4,mirror,1890s,beginner,false,4
+Way of the World,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Wedding Knot,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Wedding Ring,"[""Double Wedding Ring""]",other,geometric,"[""curved_piecing""]",varies,4,rotational_4,1920s,advanced,true,4
+Wedge and Circle,"[]",other,geometric,"[""curved_piecing""]",17,2,rotational_4,1890s,intermediate,true,4
+Western Spy,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Western Star,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+W. C. T. Union,"[""WCTU""]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1880s,intermediate,false,4
+Wheel and Star,"[]",nine_patch,star,"[""hst""]",29,3,rotational_4,1890s,intermediate,false,4
+Wheel The,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Whig Pattern,"[""Whig's Defeat""]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1840s,intermediate,false,4
+Whigs Defeat,"[""Whig's Defeat""]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1840s,intermediate,false,4
+Whirlwind,"[]",four_patch,geometric,"[""hst""]",16,2,rotational_4,1890s,beginner,false,4
+Whirligig,"[]",four_patch,geometric,"[""hst""]",8,2,rotational_4,1890s,beginner,false,4
+White Day Lily,"[]",nine_patch,nature,"[""applique""]",17,3,asymmetric,1890s,advanced,false,4
+Widower's Choice,"[]",nine_patch,geometric,"[""hst""]",21,3,rotational_4,1890s,intermediate,false,4
+Wild Rose,"[]",nine_patch,nature,"[""applique""]",13,4,rotational_4,1870s,advanced,false,4
+Wind-blown Tulips,"[]",nine_patch,nature,"[""hst""]",21,3,asymmetric,1920s,intermediate,false,4
+Winding Walk,"[""Winding Way""]",other,geometric,"[""curved_piecing""]",16,2,rotational_4,1890s,intermediate,true,4
+Wonder of the World,"[""World's Wonder""]",other,geometric,"[""curved_piecing""]",16,2,rotational_4,1890s,intermediate,true,4
+Workbox,"[]",nine_patch,geometric,"[""hst""]",17,3,asymmetric,1890s,intermediate,false,4
+World's Fair Blocks,"[""World's Fair""]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1893,intermediate,false,4
+World's Fair Puzzle,"[]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1893,intermediate,false,4
+World's Fair The,"[]",nine_patch,star,"[""hst""]",25,3,rotational_4,1893,intermediate,false,4
+Wreath of Roses,"[]",nine_patch,nature,"[""applique""]",17,4,rotational_4,1870s,advanced,false,4
+Wrench,"[""Monkey Wrench""]",nine_patch,geometric,"[""hst""]",13,2,rotational_4,1880s,beginner,false,4
+X quisite The,"[""Exquisite""]",nine_patch,geometric,"[""hst""]",25,3,rotational_4,1890s,intermediate,false,4
+Young Man's Fancy,"[""Goose in the Pond""]",five_patch,geometric,"[""hst""]",41,2,rotational_4,1880s,intermediate,false,4

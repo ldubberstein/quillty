@@ -6,7 +6,7 @@ import {
   validateBlockForPublish,
   type BlockDesignData,
 } from './persistence';
-import type { Block, Shape, Palette, GridSize } from './types';
+import type { Block, Unit, Palette, GridSize } from './types';
 
 // Helper to create a minimal valid Block
 function createTestBlock(overrides: Partial<Block> = {}): Block {
@@ -27,7 +27,7 @@ function createTestBlock(overrides: Partial<Block> = {}): Block {
     description: 'A test block',
     hashtags: [],
     gridSize: 3,
-    shapes: [],
+    units: [],
     previewPalette: defaultPalette,
     status: 'draft',
     publishedAt: null,
@@ -37,8 +37,8 @@ function createTestBlock(overrides: Partial<Block> = {}): Block {
   };
 }
 
-// Helper to create a test shape
-function createSquareShape(row: number, col: number, fabricRole = 'background'): Shape {
+// Helper to create a test unit
+function createSquareUnit(row: number, col: number, fabricRole = 'background'): Unit {
   return {
     id: `shape-${row}-${col}`,
     type: 'square',
@@ -49,13 +49,13 @@ function createSquareShape(row: number, col: number, fabricRole = 'background'):
 }
 
 describe('serializeBlockForDb', () => {
-  it('serializes a block with shapes to database format', () => {
-    const shape = createSquareShape(0, 0, 'feature');
+  it('serializes a block with units to database format', () => {
+    const unit = createSquareUnit(0, 0, 'feature');
     const block = createTestBlock({
       title: 'My Block',
       description: 'Description here',
       gridSize: 3,
-      shapes: [shape],
+      units: [unit],
     });
 
     const result = serializeBlockForDb(block);
@@ -65,7 +65,7 @@ describe('serializeBlockForDb', () => {
     expect(result.gridSize).toBe(3);
     expect(result.pieceCount).toBe(1);
     expect(result.designData.version).toBe(1);
-    expect(result.designData.shapes).toEqual([shape]);
+    expect(result.designData.units).toEqual([unit]);
     expect(result.designData.previewPalette).toEqual(block.previewPalette);
   });
 
@@ -82,12 +82,12 @@ describe('serializeBlockForDb', () => {
   });
 
   it('calculates correct piece count', () => {
-    const shapes = [
-      createSquareShape(0, 0),
-      createSquareShape(0, 1),
-      createSquareShape(1, 0),
+    const units = [
+      createSquareUnit(0, 0),
+      createSquareUnit(0, 1),
+      createSquareUnit(1, 0),
     ];
-    const block = createTestBlock({ shapes });
+    const block = createTestBlock({ units });
     const result = serializeBlockForDb(block);
     expect(result.pieceCount).toBe(3);
   });
@@ -97,7 +97,7 @@ describe('deserializeBlockFromDb', () => {
   it('deserializes a database record to Block format', () => {
     const designData: BlockDesignData = {
       version: 1,
-      shapes: [createSquareShape(0, 0)],
+      units: [createSquareUnit(0, 0)],
       previewPalette: {
         roles: [{ id: 'test', name: 'Test', color: '#FF0000' }],
       },
@@ -124,7 +124,7 @@ describe('deserializeBlockFromDb', () => {
     expect(result.title).toBe('DB Block');
     expect(result.description).toBe('From database');
     expect(result.gridSize).toBe(4);
-    expect(result.shapes).toEqual(designData.shapes);
+    expect(result.units).toEqual(designData.units);
     expect(result.previewPalette).toEqual(designData.previewPalette);
     expect(result.status).toBe('published');
     expect(result.publishedAt).toBe('2024-01-02T12:00:00Z');
@@ -148,12 +148,12 @@ describe('deserializeBlockFromDb', () => {
 
     const result = deserializeBlockFromDb(dbBlock);
 
-    expect(result.shapes).toEqual([]);
+    expect(result.units).toEqual([]);
     expect(result.previewPalette.roles).toHaveLength(4);
     expect(result.previewPalette.roles[0].id).toBe('background');
   });
 
-  it('handles missing shapes in design_data', () => {
+  it('handles missing units in design_data', () => {
     const dbBlock = {
       id: 'block-123',
       creator_id: 'user-456',
@@ -169,7 +169,7 @@ describe('deserializeBlockFromDb', () => {
 
     const result = deserializeBlockFromDb(dbBlock);
 
-    expect(result.shapes).toEqual([]);
+    expect(result.units).toEqual([]);
   });
 });
 
@@ -222,18 +222,18 @@ describe('extractHashtags', () => {
 });
 
 describe('validateBlockForPublish', () => {
-  it('returns invalid for block with no shapes', () => {
-    const block = createTestBlock({ shapes: [] });
+  it('returns invalid for block with no units', () => {
+    const block = createTestBlock({ units: [] });
     const result = validateBlockForPublish(block);
 
     expect(result.valid).toBe(false);
-    expect(result.error).toBe('Add at least one shape before publishing');
+    expect(result.error).toBe('Add at least one unit before publishing');
   });
 
   it('returns invalid when grid has empty cells (2x2 grid)', () => {
     const block = createTestBlock({
       gridSize: 2,
-      shapes: [createSquareShape(0, 0)], // Only 1 of 4 cells filled
+      units: [createSquareUnit(0, 0)], // Only 1 of 4 cells filled
     });
     const result = validateBlockForPublish(block);
 
@@ -244,10 +244,10 @@ describe('validateBlockForPublish', () => {
   it('returns invalid with singular cell message', () => {
     const block = createTestBlock({
       gridSize: 2,
-      shapes: [
-        createSquareShape(0, 0),
-        createSquareShape(0, 1),
-        createSquareShape(1, 0),
+      units: [
+        createSquareUnit(0, 0),
+        createSquareUnit(0, 1),
+        createSquareUnit(1, 0),
         // Missing (1, 1)
       ],
     });
@@ -260,11 +260,11 @@ describe('validateBlockForPublish', () => {
   it('returns valid when all cells are covered (2x2 grid)', () => {
     const block = createTestBlock({
       gridSize: 2,
-      shapes: [
-        createSquareShape(0, 0),
-        createSquareShape(0, 1),
-        createSquareShape(1, 0),
-        createSquareShape(1, 1),
+      units: [
+        createSquareUnit(0, 0),
+        createSquareUnit(0, 1),
+        createSquareUnit(1, 0),
+        createSquareUnit(1, 1),
       ],
     });
     const result = validateBlockForPublish(block);
@@ -273,15 +273,15 @@ describe('validateBlockForPublish', () => {
     expect(result.error).toBeUndefined();
   });
 
-  it('handles shapes that span multiple cells', () => {
-    // A flying geese shape spans 2 cells
-    const flyingGeeseShape: Shape = {
+  it('handles units that span multiple cells', () => {
+    // A flying geese unit spans 2 cells
+    const flyingGeeseUnit: Unit = {
       id: 'fg-1',
       type: 'flying_geese',
       position: { row: 0, col: 0 },
       span: { rows: 1, cols: 2 }, // Horizontal flying geese
       direction: 'right',
-      partFabricRoles: {
+      patchFabricRoles: {
         goose: 'feature',
         sky1: 'background',
         sky2: 'background',
@@ -290,10 +290,10 @@ describe('validateBlockForPublish', () => {
 
     const block = createTestBlock({
       gridSize: 2,
-      shapes: [
-        flyingGeeseShape, // Covers (0,0) and (0,1)
-        createSquareShape(1, 0),
-        createSquareShape(1, 1),
+      units: [
+        flyingGeeseUnit, // Covers (0,0) and (0,1)
+        createSquareUnit(1, 0),
+        createSquareUnit(1, 1),
       ],
     });
     const result = validateBlockForPublish(block);
@@ -302,28 +302,28 @@ describe('validateBlockForPublish', () => {
   });
 
   it('validates a 3x3 grid correctly', () => {
-    const shapes: Shape[] = [];
+    const units: Unit[] = [];
     for (let row = 0; row < 3; row++) {
       for (let col = 0; col < 3; col++) {
-        shapes.push(createSquareShape(row, col));
+        units.push(createSquareUnit(row, col));
       }
     }
 
-    const block = createTestBlock({ gridSize: 3, shapes });
+    const block = createTestBlock({ gridSize: 3, units });
     const result = validateBlockForPublish(block);
 
     expect(result.valid).toBe(true);
   });
 
   it('validates a 4x4 grid correctly', () => {
-    const shapes: Shape[] = [];
+    const units: Unit[] = [];
     for (let row = 0; row < 4; row++) {
       for (let col = 0; col < 4; col++) {
-        shapes.push(createSquareShape(row, col));
+        units.push(createSquareUnit(row, col));
       }
     }
 
-    const block = createTestBlock({ gridSize: 4, shapes });
+    const block = createTestBlock({ gridSize: 4, units });
     const result = validateBlockForPublish(block);
 
     expect(result.valid).toBe(true);

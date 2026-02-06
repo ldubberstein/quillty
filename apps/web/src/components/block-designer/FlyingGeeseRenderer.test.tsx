@@ -8,7 +8,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { FlyingGeeseRenderer } from './FlyingGeeseRenderer';
-import type { FlyingGeeseShape, Palette, FlyingGeeseDirection } from '@quillty/core';
+import type { FlyingGeeseUnit, Palette, FlyingGeeseDirection } from '@quillty/core';
 
 describe('FlyingGeeseRenderer', () => {
   const mockPalette: Palette = {
@@ -20,7 +20,7 @@ describe('FlyingGeeseRenderer', () => {
     ],
   };
 
-  const createMockShape = (direction: FlyingGeeseDirection): FlyingGeeseShape => {
+  const createMockUnit = (direction: FlyingGeeseDirection): FlyingGeeseUnit => {
     const isHorizontal = direction === 'left' || direction === 'right';
     return {
       id: `test-flying-geese-${direction}`,
@@ -28,7 +28,7 @@ describe('FlyingGeeseRenderer', () => {
       position: { row: 0, col: 0 },
       span: isHorizontal ? { rows: 1, cols: 2 } : { rows: 2, cols: 1 },
       direction,
-      partFabricRoles: {
+      patchFabricRoles: {
         goose: 'feature',
         sky1: 'background',
         sky2: 'background',
@@ -37,7 +37,7 @@ describe('FlyingGeeseRenderer', () => {
   };
 
   const defaultProps = {
-    shape: createMockShape('right'),
+    unit: createMockUnit('right'),
     cellSize: 100,
     offsetX: 50,
     offsetY: 50,
@@ -62,8 +62,8 @@ describe('FlyingGeeseRenderer', () => {
     it.each(['up', 'down', 'left', 'right'] as FlyingGeeseDirection[])(
       'renders direction: %s',
       (direction) => {
-        const shape = createMockShape(direction);
-        render(<FlyingGeeseRenderer {...defaultProps} shape={shape} />);
+        const unit = createMockUnit(direction);
+        render(<FlyingGeeseRenderer {...defaultProps} unit={unit} />);
         expect(screen.getByTestId('konva-group')).toBeInTheDocument();
       }
     );
@@ -87,15 +87,15 @@ describe('FlyingGeeseRenderer', () => {
     });
 
     it('uses custom fabric roles', () => {
-      const shape: FlyingGeeseShape = {
-        ...createMockShape('right'),
-        partFabricRoles: {
+      const unit: FlyingGeeseUnit = {
+        ...createMockUnit('right'),
+        patchFabricRoles: {
           goose: 'accent1',
           sky1: 'accent2',
           sky2: 'accent2',
         },
       };
-      render(<FlyingGeeseRenderer {...defaultProps} shape={shape} />);
+      render(<FlyingGeeseRenderer {...defaultProps} unit={unit} />);
       const lines = screen.getAllByTestId('konva-line');
       expect(lines[0]).toHaveAttribute('fill', '#FAA307'); // accent2 sky1
       expect(lines[1]).toHaveAttribute('fill', '#FAA307'); // accent2 sky2
@@ -103,15 +103,15 @@ describe('FlyingGeeseRenderer', () => {
     });
 
     it('supports independent sky colors', () => {
-      const shape: FlyingGeeseShape = {
-        ...createMockShape('right'),
-        partFabricRoles: {
+      const unit: FlyingGeeseUnit = {
+        ...createMockUnit('right'),
+        patchFabricRoles: {
           goose: 'feature',
           sky1: 'accent1',
           sky2: 'accent2',
         },
       };
-      render(<FlyingGeeseRenderer {...defaultProps} shape={shape} />);
+      render(<FlyingGeeseRenderer {...defaultProps} unit={unit} />);
       const lines = screen.getAllByTestId('konva-line');
       expect(lines[0]).toHaveAttribute('fill', '#E85D04'); // accent1 sky1
       expect(lines[1]).toHaveAttribute('fill', '#FAA307'); // accent2 sky2
@@ -119,15 +119,15 @@ describe('FlyingGeeseRenderer', () => {
     });
 
     it('uses fallback colors when roles not found', () => {
-      const shape: FlyingGeeseShape = {
-        ...createMockShape('right'),
-        partFabricRoles: {
+      const unit: FlyingGeeseUnit = {
+        ...createMockUnit('right'),
+        patchFabricRoles: {
           goose: 'nonexistent',
           sky1: 'alsoNonexistent',
           sky2: 'stillNonexistent',
         },
       };
-      render(<FlyingGeeseRenderer {...defaultProps} shape={shape} />);
+      render(<FlyingGeeseRenderer {...defaultProps} unit={unit} />);
       const lines = screen.getAllByTestId('konva-line');
       expect(lines[0]).toHaveAttribute('fill', '#FFFFFF'); // fallback for sky1
       expect(lines[1]).toHaveAttribute('fill', '#FFFFFF'); // fallback for sky2
@@ -143,11 +143,11 @@ describe('FlyingGeeseRenderer', () => {
     });
 
     it('renders for different grid positions', () => {
-      const shape: FlyingGeeseShape = {
-        ...createMockShape('right'),
+      const unit: FlyingGeeseUnit = {
+        ...createMockUnit('right'),
         position: { row: 2, col: 1 },
       };
-      render(<FlyingGeeseRenderer {...defaultProps} shape={shape} />);
+      render(<FlyingGeeseRenderer {...defaultProps} unit={unit} />);
       const group = screen.getByTestId('konva-group');
       expect(group).toBeInTheDocument();
     });
@@ -155,16 +155,16 @@ describe('FlyingGeeseRenderer', () => {
 
   describe('span handling', () => {
     it('renders horizontal Flying Geese (2 cols)', () => {
-      const shape = createMockShape('right');
-      expect(shape.span).toEqual({ rows: 1, cols: 2 });
-      render(<FlyingGeeseRenderer {...defaultProps} shape={shape} />);
+      const unit = createMockUnit('right');
+      expect(unit.span).toEqual({ rows: 1, cols: 2 });
+      render(<FlyingGeeseRenderer {...defaultProps} unit={unit} />);
       expect(screen.getByTestId('konva-group')).toBeInTheDocument();
     });
 
     it('renders vertical Flying Geese (2 rows)', () => {
-      const shape = createMockShape('up');
-      expect(shape.span).toEqual({ rows: 2, cols: 1 });
-      render(<FlyingGeeseRenderer {...defaultProps} shape={shape} />);
+      const unit = createMockUnit('up');
+      expect(unit.span).toEqual({ rows: 2, cols: 1 });
+      render(<FlyingGeeseRenderer {...defaultProps} unit={unit} />);
       expect(screen.getByTestId('konva-group')).toBeInTheDocument();
     });
   });

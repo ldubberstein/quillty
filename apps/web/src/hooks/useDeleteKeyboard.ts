@@ -2,14 +2,14 @@ import { useEffect } from 'react';
 import { useBlockDesignerStore } from '@quillty/core';
 
 /**
- * Hook to handle keyboard shortcut for deleting selected shape.
- * - Delete or Backspace: Delete selected shape
+ * Hook to handle keyboard shortcut for deleting selected unit.
+ * - Delete or Backspace: Delete selected unit
  *
- * Only triggers when a shape is selected and user is not typing in an input.
+ * Only triggers when a unit is selected and user is not typing in an input.
  */
 export function useDeleteKeyboard() {
-  const selectedShapeId = useBlockDesignerStore((state) => state.selectedShapeId);
-  const removeShape = useBlockDesignerStore((state) => state.removeShape);
+  const selectedUnitId = useBlockDesignerStore((state) => state.selectedUnitId);
+  const removeUnit = useBlockDesignerStore((state) => state.removeUnit);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -25,14 +25,14 @@ export function useDeleteKeyboard() {
 
       // Delete or Backspace key
       if (event.key === 'Delete' || event.key === 'Backspace') {
-        if (selectedShapeId) {
+        if (selectedUnitId) {
           event.preventDefault();
-          removeShape(selectedShapeId);
+          removeUnit(selectedUnitId);
         }
       }
     }
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [selectedShapeId, removeShape]);
+  }, [selectedUnitId, removeUnit]);
 }

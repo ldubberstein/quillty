@@ -41,7 +41,7 @@ vi.mock('@quillty/api', () => ({
 }));
 
 // Store state that can be modified between renders
-let mockShapes: unknown[] = [];
+let mockUnits: unknown[] = [];
 let mockTitle = '';
 const mockInitBlock = vi.fn();
 
@@ -52,7 +52,7 @@ vi.mock('@quillty/core', () => ({
       block: {
         id: 'test-block',
         gridSize: 3,
-        shapes: mockShapes,
+        units: mockUnits,
         title: mockTitle,
         previewPalette: {
           roles: [
@@ -63,7 +63,7 @@ vi.mock('@quillty/core', () => ({
       },
       initBlock: mockInitBlock,
       mode: 'idle',
-      selectedShapeType: null,
+      selectedUnitType: null,
       hoveredCell: null,
       undo: vi.fn(),
       redo: vi.fn(),
@@ -72,11 +72,11 @@ vi.mock('@quillty/core', () => ({
       enterPreview: vi.fn(),
       exitPreview: vi.fn(),
       setPreviewRotationPreset: vi.fn(),
-      selectShapeForPlacement: vi.fn(),
+      selectUnitForPlacement: vi.fn(),
       setHoveredCell: vi.fn(),
-      clearShapeSelection: vi.fn(),
+      clearUnitSelection: vi.fn(),
       setGridSize: vi.fn(),
-      getShapesOutOfBounds: vi.fn(() => []),
+      getUnitsOutOfBounds: vi.fn(() => []),
     };
     return selector ? selector(state) : state;
   }),
@@ -84,9 +84,9 @@ vi.mock('@quillty/core', () => ({
   useCanRedo: vi.fn(() => false),
   useIsPreviewMode: vi.fn(() => false),
   usePreviewRotationPreset: vi.fn(() => 'all_same'),
-  useSelectedShapeType: vi.fn(() => null),
+  useSelectedUnitType: vi.fn(() => null),
   useHoveredCell: vi.fn(() => null),
-  useIsPlacingShape: vi.fn(() => false),
+  useIsPlacingUnit: vi.fn(() => false),
   useBlockGridSize: vi.fn(() => 3),
   DEFAULT_GRID_SIZE: 3,
   GRID_SIZES: [2, 3, 4, 5, 6, 7, 8, 9],
@@ -96,7 +96,7 @@ vi.mock('@quillty/core', () => ({
     designData: {},
     pieceCount: 0,
   })),
-  validateBlockForPublish: vi.fn(() => ({ valid: false, error: 'Add at least one shape' })),
+  validateBlockForPublish: vi.fn(() => ({ valid: false, error: 'Add at least one unit' })),
 }));
 
 // Import component after mocks
@@ -105,7 +105,7 @@ import BlockDesignerPage from './page';
 describe('BlockDesignerPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockShapes = [];
+    mockUnits = [];
     mockTitle = '';
   });
 
@@ -139,7 +139,7 @@ describe('BlockDesignerPage', () => {
   describe('footer', () => {
     it('renders usage hint text', () => {
       render(<BlockDesignerPage />);
-      expect(screen.getByText(/select a shape from the left panel/i)).toBeInTheDocument();
+      expect(screen.getByText(/select a unit from the left panel/i)).toBeInTheDocument();
     });
 
     it('renders zoom hint', () => {
@@ -175,7 +175,7 @@ describe('BlockDesignerPage', () => {
 
   describe('initialization', () => {
     it('calls initBlock on mount when block is empty', () => {
-      mockShapes = [];
+      mockUnits = [];
       mockTitle = '';
 
       render(<BlockDesignerPage />);
@@ -183,8 +183,8 @@ describe('BlockDesignerPage', () => {
       expect(mockInitBlock).toHaveBeenCalledTimes(1);
     });
 
-    it('does not call initBlock when block already has shapes', () => {
-      mockShapes = [{ id: 'shape-1', type: 'square' }];
+    it('does not call initBlock when block already has units', () => {
+      mockUnits = [{ id: 'unit-1', type: 'square' }];
       mockTitle = '';
 
       render(<BlockDesignerPage />);
@@ -193,7 +193,7 @@ describe('BlockDesignerPage', () => {
     });
 
     it('does not call initBlock when block has a title', () => {
-      mockShapes = [];
+      mockUnits = [];
       mockTitle = 'My Block';
 
       render(<BlockDesignerPage />);
@@ -201,18 +201,18 @@ describe('BlockDesignerPage', () => {
       expect(mockInitBlock).not.toHaveBeenCalled();
     });
 
-    it('does not re-initialize when shapes.length changes from non-zero to zero', () => {
-      // Start with shapes
-      mockShapes = [{ id: 'shape-1', type: 'square' }];
+    it('does not re-initialize when units.length changes from non-zero to zero', () => {
+      // Start with units
+      mockUnits = [{ id: 'unit-1', type: 'square' }];
       mockTitle = '';
 
       const { rerender } = render(<BlockDesignerPage />);
 
-      // initBlock should NOT be called (block has shapes)
+      // initBlock should NOT be called (block has units)
       expect(mockInitBlock).not.toHaveBeenCalled();
 
-      // Simulate undo removing all shapes
-      mockShapes = [];
+      // Simulate undo removing all units
+      mockUnits = [];
 
       rerender(<BlockDesignerPage />);
 

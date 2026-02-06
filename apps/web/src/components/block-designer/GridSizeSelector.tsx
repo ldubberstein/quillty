@@ -2,16 +2,16 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { ChevronDown, AlertTriangle, X } from 'lucide-react';
-import { useBlockDesignerStore, useBlockGridSize, GRID_SIZES, type GridSize, type Shape } from '@quillty/core';
+import { useBlockDesignerStore, useBlockGridSize, GRID_SIZES, type GridSize, type Unit } from '@quillty/core';
 
 interface ConfirmationDialogProps {
   newSize: GridSize;
-  shapesToRemove: Shape[];
+  unitsToRemove: Unit[];
   onConfirm: () => void;
   onCancel: () => void;
 }
 
-function ConfirmationDialog({ newSize, shapesToRemove, onConfirm, onCancel }: ConfirmationDialogProps) {
+function ConfirmationDialog({ newSize, unitsToRemove, onConfirm, onCancel }: ConfirmationDialogProps) {
   // Handle escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -30,8 +30,8 @@ function ConfirmationDialog({ newSize, shapesToRemove, onConfirm, onCancel }: Co
     }
   }, [onCancel]);
 
-  const shapeCount = shapesToRemove.length;
-  const shapeWord = shapeCount === 1 ? 'shape' : 'shapes';
+  const unitCount = unitsToRemove.length;
+  const unitWord = unitCount === 1 ? 'unit' : 'units';
 
   return (
     <div
@@ -43,7 +43,7 @@ function ConfirmationDialog({ newSize, shapesToRemove, onConfirm, onCancel }: Co
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-amber-500" />
-            <h2 className="text-base font-semibold text-gray-900">Remove Shapes?</h2>
+            <h2 className="text-base font-semibold text-gray-900">Remove Units?</h2>
           </div>
           <button
             onClick={onCancel}
@@ -58,8 +58,8 @@ function ConfirmationDialog({ newSize, shapesToRemove, onConfirm, onCancel }: Co
         <div className="px-5 py-4">
           <p className="text-sm text-gray-600">
             Changing to a {newSize}×{newSize} grid will remove{' '}
-            <span className="font-medium text-gray-900">{shapeCount} {shapeWord}</span>{' '}
-            that {shapeCount === 1 ? 'is' : 'are'} outside the new grid bounds.
+            <span className="font-medium text-gray-900">{unitCount} {unitWord}</span>{' '}
+            that {unitCount === 1 ? 'is' : 'are'} outside the new grid bounds.
           </p>
           <p className="mt-2 text-sm text-gray-500">
             You can undo this action if needed.
@@ -89,11 +89,11 @@ function ConfirmationDialog({ newSize, shapesToRemove, onConfirm, onCancel }: Co
 export function GridSizeSelector() {
   const gridSize = useBlockGridSize();
   const setGridSize = useBlockDesignerStore((state) => state.setGridSize);
-  const getShapesOutOfBounds = useBlockDesignerStore((state) => state.getShapesOutOfBounds);
+  const getUnitsOutOfBounds = useBlockDesignerStore((state) => state.getUnitsOutOfBounds);
 
   const [isOpen, setIsOpen] = useState(false);
   const [pendingSize, setPendingSize] = useState<GridSize | null>(null);
-  const [shapesToRemove, setShapesToRemove] = useState<Shape[]>([]);
+  const [unitsToRemove, setUnitsToRemove] = useState<Unit[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -126,32 +126,32 @@ export function GridSizeSelector() {
       return;
     }
 
-    // Check if any shapes would be removed
-    const outOfBounds = getShapesOutOfBounds(size);
+    // Check if any units would be removed
+    const outOfBounds = getUnitsOutOfBounds(size);
 
     if (outOfBounds.length > 0) {
       // Show confirmation dialog
       setPendingSize(size);
-      setShapesToRemove(outOfBounds);
+      setUnitsToRemove(outOfBounds);
       setIsOpen(false);
     } else {
-      // No shapes affected, apply immediately
+      // No units affected, apply immediately
       setGridSize(size);
       setIsOpen(false);
     }
-  }, [gridSize, getShapesOutOfBounds, setGridSize]);
+  }, [gridSize, getUnitsOutOfBounds, setGridSize]);
 
   const handleConfirmResize = useCallback(() => {
     if (pendingSize !== null) {
       setGridSize(pendingSize);
       setPendingSize(null);
-      setShapesToRemove([]);
+      setUnitsToRemove([]);
     }
   }, [pendingSize, setGridSize]);
 
   const handleCancelResize = useCallback(() => {
     setPendingSize(null);
-    setShapesToRemove([]);
+    setUnitsToRemove([]);
   }, []);
 
   return (
@@ -192,10 +192,10 @@ export function GridSizeSelector() {
       </div>
 
       {/* Confirmation dialog */}
-      {pendingSize !== null && shapesToRemove.length > 0 && (
+      {pendingSize !== null && unitsToRemove.length > 0 && (
         <ConfirmationDialog
           newSize={pendingSize}
-          shapesToRemove={shapesToRemove}
+          unitsToRemove={unitsToRemove}
           onConfirm={handleConfirmResize}
           onCancel={handleCancelResize}
         />

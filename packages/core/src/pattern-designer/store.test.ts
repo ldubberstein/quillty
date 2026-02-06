@@ -65,7 +65,7 @@ function createMockBlock(id: string): Block {
     description: null,
     hashtags: [],
     gridSize: 3,
-    shapes: [],
+    units: [],
     previewPalette: { ...DEFAULT_PALETTE, roles: [...DEFAULT_PALETTE.roles] },
     status: 'published',
     publishedAt: new Date().toISOString(),

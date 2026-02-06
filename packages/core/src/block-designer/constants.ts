@@ -62,7 +62,7 @@ export const MAX_BLOCK_GRID_SIZE: GridSize = 9;
 export const DEFAULT_GRID_SIZE: GridSize = 3;
 
 // =============================================================================
-// Shape Constants
+// Unit Constants
 // =============================================================================
 
 /** All HST variants with their visual representations */
@@ -108,8 +108,8 @@ export const HASHTAG_MAX_LENGTH = 50;
 /** Minimum touch target size in pixels (per PRD accessibility requirements) */
 export const MIN_TOUCH_TARGET_SIZE = 48;
 
-/** Shape picker button size in pixels */
-export const SHAPE_PICKER_BUTTON_SIZE = 56;
+/** Unit picker button size in pixels */
+export const UNIT_PICKER_BUTTON_SIZE = 56;
 
 // =============================================================================
 // Default Fabric Role IDs

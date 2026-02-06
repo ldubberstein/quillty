@@ -36,8 +36,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const input = parseResult.data;
 
-    // Calculate piece count from shapes
-    const pieceCount = input.designData.shapes.length;
+    // Calculate piece count from units
+    const pieceCount = input.designData.units.length;
 
     // Create block in database
     const supabase = createServiceClient();

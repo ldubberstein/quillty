@@ -2,20 +2,18 @@
  * Block Designer Zustand Store
  *
  * State management for the Block Designer using Zustand with Immer middleware.
- * Provides reactive state for shapes, selection, palette, and designer mode.
+ * Provides reactive state for units, selection, palette, and designer mode.
  */
 
 import { create, type StoreApi, type UseBoundStore } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import type {
   Block,
-  Shape,
-  SquareShape,
-  HstShape,
-  FlyingGeeseShape,
-  FlyingGeesePartId,
-  QstShape,
-  QstPartId,
+  Unit,
+  SquareUnit,
+  HstUnit,
+  FlyingGeeseUnit,
+  QstUnit,
   GridSize,
   GridPosition,
   FabricRoleId,
@@ -24,19 +22,26 @@ import type {
   DesignerMode,
   FlyingGeesePlacementState,
   PreviewRotationPreset,
-  ShapeSelectionType,
+  UnitSelectionType,
   UUID,
 } from './types';
 import { DEFAULT_PALETTE, DEFAULT_GRID_SIZE, MAX_PALETTE_ROLES, ADDITIONAL_ROLE_COLORS } from './constants';
-import type { Operation, BatchOperation, ResizeGridOperation, AddRoleOperation, RemoveRoleOperation, RenameRoleOperation, ShapeRoleState } from './history/operations';
+import type { Operation, BatchOperation, ResizeGridOperation, AddRoleOperation, RemoveRoleOperation, RenameRoleOperation, UnitRoleState } from './history/operations';
 import {
-  applyOperationToShapes,
+  applyOperationToUnits,
   applyOperationToPalette,
   applyOperationToGridSize,
-  getShapesOutOfBounds,
-  extractRolesFromShape,
-  getShapesUsingRole as getShapesUsingRoleHelper,
+  getUnitsOutOfBounds,
+  extractRolesFromUnit,
 } from './history/operations';
+import {
+  applyRotation,
+  applyFlipHorizontal,
+  applyFlipVertical,
+  assignPatchRole as bridgeAssignPatchRole,
+  replaceRole as bridgeReplaceRole,
+  unitUsesRole,
+} from './unit-bridge';
 import type { UndoManagerState } from './history/undoManager';
 import {
   createUndoManagerState,
@@ -76,7 +81,7 @@ function createEmptyBlock(gridSize: GridSize = DEFAULT_GRID_SIZE, creatorId: UUI
     description: null,
     hashtags: [],
     gridSize,
-    shapes: [],
+    units: [],
     previewPalette: { ...DEFAULT_PALETTE, roles: [...DEFAULT_PALETTE.roles] },
     status: 'draft',
     publishedAt: null,
@@ -93,8 +98,8 @@ interface BlockDesignerState {
   /** The current block being edited */
   block: Block;
 
-  /** ID of the currently selected shape (null if none) */
-  selectedShapeId: UUID | null;
+  /** ID of the currently selected unit (null if none) */
+  selectedUnitId: UUID | null;
 
   /** Active fabric role for paint mode (null if not in paint mode) */
   activeFabricRole: FabricRoleId | null;
@@ -111,8 +116,8 @@ interface BlockDesignerState {
   /** Preview mode rotation preset */
   previewRotationPreset: PreviewRotationPreset;
 
-  /** Shape type selected from library for placement (null if none) */
-  selectedShapeType: ShapeSelectionType | null;
+  /** Unit type selected from library for placement (null if none) */
+  selectedUnitType: UnitSelectionType | null;
 
   /** Cell being hovered during placement mode (for ghost preview) */
   hoveredCell: GridPosition | null;
@@ -129,64 +134,64 @@ interface BlockDesignerActions {
   loadBlock: (block: Block) => void;
   /** Update block metadata (title, description, hashtags) */
   updateBlockMetadata: (updates: Partial<Pick<Block, 'title' | 'description' | 'hashtags'>>) => void;
-  /** Set the grid size (returns shapes that would be removed, or null if none) */
-  setGridSize: (size: GridSize) => Shape[] | null;
-  /** Get shapes that would be out of bounds for a new grid size */
-  getShapesOutOfBounds: (size: GridSize) => Shape[];
+  /** Set the grid size (returns units that would be removed, or null if none) */
+  setGridSize: (size: GridSize) => Unit[] | null;
+  /** Get units that would be out of bounds for a new grid size */
+  getUnitsOutOfBounds: (size: GridSize) => Unit[];
 
-  // Shape management
-  /** Add a square shape at position */
+  // Unit management
+  /** Add a square unit at position */
   addSquare: (position: GridPosition, fabricRole?: FabricRoleId) => UUID;
-  /** Add an HST shape at position */
+  /** Add an HST unit at position */
   addHst: (
     position: GridPosition,
     variant: HstVariant,
     fabricRole?: FabricRoleId,
     secondaryFabricRole?: FabricRoleId
   ) => UUID;
-  /** Add a Flying Geese shape spanning two cells */
+  /** Add a Flying Geese unit spanning two cells */
   addFlyingGeese: (
     position: GridPosition,
     direction: FlyingGeeseDirection,
-    partFabricRoles?: Partial<FlyingGeeseShape['partFabricRoles']>
+    patchFabricRoles?: Partial<FlyingGeeseUnit['patchFabricRoles']>
   ) => UUID;
-  /** Add a QST (Quarter-Square Triangle) shape at position */
+  /** Add a QST (Quarter-Square Triangle) unit at position */
   addQst: (
     position: GridPosition,
-    partFabricRoles?: Partial<QstShape['partFabricRoles']>
+    patchFabricRoles?: Partial<QstUnit['patchFabricRoles']>
   ) => UUID;
-  /** Remove a shape by ID */
-  removeShape: (shapeId: UUID) => void;
-  /** Add multiple shapes in a batch (single undo operation) - Flying Geese not supported */
-  addShapesBatch: (positions: GridPosition[], shapeType: ShapeSelectionType) => UUID[];
-  /** Update a shape's properties */
-  updateShape: (shapeId: UUID, updates: Partial<Shape>) => void;
+  /** Remove a unit by ID */
+  removeUnit: (unitId: UUID) => void;
+  /** Add multiple units in a batch (single undo operation) - Flying Geese not supported */
+  addUnitsBatch: (positions: GridPosition[], unitType: UnitSelectionType) => UUID[];
+  /** Update a unit's properties */
+  updateUnit: (unitId: UUID, updates: Partial<Unit>) => void;
 
   // Selection
-  /** Select a shape by ID */
-  selectShape: (shapeId: UUID | null) => void;
+  /** Select a unit by ID */
+  selectUnit: (unitId: UUID | null) => void;
   /** Clear current selection */
   clearSelection: () => void;
 
   // Paint mode
   /** Set the active fabric role for paint mode */
   setActiveFabricRole: (roleId: FabricRoleId | null) => void;
-  /** Assign a fabric role to a shape (partId for multi-part shapes like HST or Flying Geese) */
-  assignFabricRole: (shapeId: UUID, roleId: FabricRoleId, partId?: string) => void;
+  /** Assign a fabric role to a unit (patchId for multi-patch units like HST or Flying Geese) */
+  assignFabricRole: (unitId: UUID, roleId: FabricRoleId, patchId?: string) => void;
 
   // Palette
   /** Change a palette role's color (records undo) */
   setRoleColor: (roleId: FabricRoleId, color: string) => void;
   /** Add a new fabric role to the palette */
   addRole: (name?: string, color?: string) => string;
-  /** Remove a fabric role from the palette (reassigns shapes to fallback role) */
+  /** Remove a fabric role from the palette (reassigns units to fallback role) */
   removeRole: (roleId: FabricRoleId, fallbackRoleId?: FabricRoleId) => void;
   /** Rename a fabric role */
   renameRole: (roleId: FabricRoleId, newName: string) => void;
   /** Check if a role can be removed (not the last one) */
   canRemoveRole: () => boolean;
-  /** Get shapes that use a specific role */
-  getShapesUsingRole: (roleId: FabricRoleId) => Shape[];
+  /** Get units that use a specific role */
+  getUnitsUsingRole: (roleId: FabricRoleId) => Unit[];
 
   // Mode management
   /** Set the designer mode */
@@ -200,17 +205,17 @@ interface BlockDesignerActions {
   /** Cancel Flying Geese placement */
   cancelFlyingGeesePlacement: () => void;
 
-  // Shape transformations
-  /** Rotate a shape 90° clockwise */
-  rotateShape: (shapeId: UUID) => void;
-  /** Flip a shape horizontally */
-  flipShapeHorizontal: (shapeId: UUID) => void;
-  /** Flip a shape vertically */
-  flipShapeVertical: (shapeId: UUID) => void;
+  // Unit transformations
+  /** Rotate a unit 90° clockwise */
+  rotateUnit: (unitId: UUID) => void;
+  /** Flip a unit horizontally */
+  flipUnitHorizontal: (unitId: UUID) => void;
+  /** Flip a unit vertically */
+  flipUnitVertical: (unitId: UUID) => void;
 
   // Utility
-  /** Get shape at a grid position */
-  getShapeAt: (position: GridPosition) => Shape | undefined;
+  /** Get unit at a grid position */
+  getUnitAt: (position: GridPosition) => Unit | undefined;
   /** Check if a cell is occupied */
   isCellOccupied: (position: GridPosition) => boolean;
   /** Get valid adjacent cells for Flying Geese placement */
@@ -234,13 +239,13 @@ interface BlockDesignerActions {
   /** Set the preview rotation preset */
   setPreviewRotationPreset: (preset: PreviewRotationPreset) => void;
 
-  // Shape library selection
-  /** Select a shape from library for placement */
-  selectShapeForPlacement: (shape: ShapeSelectionType | null) => void;
+  // Unit library selection
+  /** Select a unit from library for placement */
+  selectUnitForPlacement: (unitType: UnitSelectionType | null) => void;
   /** Set hovered cell (for ghost preview) */
   setHoveredCell: (position: GridPosition | null) => void;
-  /** Clear shape selection and exit placing mode */
-  clearShapeSelection: () => void;
+  /** Clear unit selection and exit placing mode */
+  clearUnitSelection: () => void;
 
   // Range fill (shift-click)
   /** Set the anchor position for range fill */
@@ -259,13 +264,13 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
   immer((set, get) => ({
     // Initial state
     block: createEmptyBlock(),
-    selectedShapeId: null,
+    selectedUnitId: null,
     activeFabricRole: null,
     mode: 'idle',
     flyingGeesePlacement: null,
     undoManager: createUndoManagerState(),
     previewRotationPreset: 'all_same',
-    selectedShapeType: null,
+    selectedUnitType: null,
     hoveredCell: null,
     rangeFillAnchor: null,
 
@@ -273,13 +278,13 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
     initBlock: (gridSize = DEFAULT_GRID_SIZE, creatorId = '') => {
       set((state) => {
         state.block = createEmptyBlock(gridSize, creatorId);
-        state.selectedShapeId = null;
+        state.selectedUnitId = null;
         state.activeFabricRole = null;
         state.mode = 'idle';
         state.flyingGeesePlacement = null;
         state.undoManager = createUndoManagerState();
         state.previewRotationPreset = 'all_same';
-        state.selectedShapeType = null;
+        state.selectedUnitType = null;
         state.hoveredCell = null;
         state.rangeFillAnchor = null;
       });
@@ -288,13 +293,13 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
     loadBlock: (block) => {
       set((state) => {
         state.block = block;
-        state.selectedShapeId = null;
+        state.selectedUnitId = null;
         state.activeFabricRole = null;
         state.mode = 'idle';
         state.flyingGeesePlacement = null;
         state.undoManager = createUndoManagerState();
         state.previewRotationPreset = 'all_same';
-        state.selectedShapeType = null;
+        state.selectedUnitType = null;
         state.hoveredCell = null;
         state.rangeFillAnchor = null;
       });
@@ -313,17 +318,17 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
       const currentSize = get().block.gridSize;
       if (size === currentSize) return null;
 
-      const shapesToRemove = getShapesOutOfBounds(get().block.shapes, size);
+      const unitsToRemove = getUnitsOutOfBounds(get().block.units, size);
 
       set((state) => {
-        // Remove out-of-bounds shapes
-        if (shapesToRemove.length > 0) {
-          state.block.shapes = state.block.shapes.filter(
-            (s) => !shapesToRemove.some((r) => r.id === s.id)
+        // Remove out-of-bounds units
+        if (unitsToRemove.length > 0) {
+          state.block.units = state.block.units.filter(
+            (u) => !unitsToRemove.some((r) => r.id === u.id)
           );
-          // Clear selection if selected shape was removed
-          if (state.selectedShapeId && shapesToRemove.some((s) => s.id === state.selectedShapeId)) {
-            state.selectedShapeId = null;
+          // Clear selection if selected unit was removed
+          if (state.selectedUnitId && unitsToRemove.some((u) => u.id === state.selectedUnitId)) {
+            state.selectedUnitId = null;
           }
         }
 
@@ -336,22 +341,22 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
           type: 'resize_grid',
           prevSize: currentSize,
           nextSize: size,
-          removedShapes: shapesToRemove,
+          removedUnits: unitsToRemove,
         };
         state.undoManager = recordOperation(state.undoManager, operation);
       });
 
-      return shapesToRemove.length > 0 ? shapesToRemove : null;
+      return unitsToRemove.length > 0 ? unitsToRemove : null;
     },
 
-    getShapesOutOfBounds: (size) => {
-      return getShapesOutOfBounds(get().block.shapes, size);
+    getUnitsOutOfBounds: (size) => {
+      return getUnitsOutOfBounds(get().block.units, size);
     },
 
-    // Shape management
+    // Unit management
     addSquare: (position, fabricRole = 'background') => {
       const id = generateUUID();
-      const shape: SquareShape = {
+      const unit: SquareUnit = {
         id,
         type: 'square',
         position,
@@ -359,10 +364,10 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
         fabricRole,
       };
       set((state) => {
-        state.block.shapes.push(shape);
+        state.block.units.push(unit);
         state.block.updatedAt = getCurrentTimestamp();
         // Record operation for undo
-        const operation: Operation = { type: 'add_shape', shape };
+        const operation: Operation = { type: 'add_unit', unit };
         state.undoManager = recordOperation(state.undoManager, operation);
       });
       return id;
@@ -370,7 +375,7 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
 
     addHst: (position, variant, fabricRole = 'background', secondaryFabricRole = 'background') => {
       const id = generateUUID();
-      const shape: HstShape = {
+      const unit: HstUnit = {
         id,
         type: 'hst',
         position,
@@ -380,86 +385,86 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
         secondaryFabricRole,
       };
       set((state) => {
-        state.block.shapes.push(shape);
+        state.block.units.push(unit);
         state.block.updatedAt = getCurrentTimestamp();
         // Record operation for undo
-        const operation: Operation = { type: 'add_shape', shape };
+        const operation: Operation = { type: 'add_unit', unit };
         state.undoManager = recordOperation(state.undoManager, operation);
       });
       return id;
     },
 
-    addFlyingGeese: (position, direction, partFabricRoles) => {
+    addFlyingGeese: (position, direction, patchFabricRoles) => {
       const id = generateUUID();
       const isHorizontal = direction === 'left' || direction === 'right';
-      const shape: FlyingGeeseShape = {
+      const unit: FlyingGeeseUnit = {
         id,
         type: 'flying_geese',
         position,
         span: isHorizontal ? { rows: 1, cols: 2 } : { rows: 2, cols: 1 },
         direction,
-        partFabricRoles: {
-          goose: partFabricRoles?.goose ?? 'background',
-          sky1: partFabricRoles?.sky1 ?? 'background',
-          sky2: partFabricRoles?.sky2 ?? 'background',
+        patchFabricRoles: {
+          goose: patchFabricRoles?.goose ?? 'background',
+          sky1: patchFabricRoles?.sky1 ?? 'background',
+          sky2: patchFabricRoles?.sky2 ?? 'background',
         },
       };
       set((state) => {
-        state.block.shapes.push(shape);
+        state.block.units.push(unit);
         state.block.updatedAt = getCurrentTimestamp();
         // Record operation for undo
-        const operation: Operation = { type: 'add_shape', shape };
+        const operation: Operation = { type: 'add_unit', unit };
         state.undoManager = recordOperation(state.undoManager, operation);
       });
       return id;
     },
 
-    addQst: (position, partFabricRoles) => {
+    addQst: (position, patchFabricRoles) => {
       const id = generateUUID();
-      const shape: QstShape = {
+      const unit: QstUnit = {
         id,
         type: 'qst',
         position,
         span: { rows: 1, cols: 1 },
-        partFabricRoles: {
-          top: partFabricRoles?.top ?? 'background',
-          right: partFabricRoles?.right ?? 'background',
-          bottom: partFabricRoles?.bottom ?? 'background',
-          left: partFabricRoles?.left ?? 'background',
+        patchFabricRoles: {
+          top: patchFabricRoles?.top ?? 'background',
+          right: patchFabricRoles?.right ?? 'background',
+          bottom: patchFabricRoles?.bottom ?? 'background',
+          left: patchFabricRoles?.left ?? 'background',
         },
       };
       set((state) => {
-        state.block.shapes.push(shape);
+        state.block.units.push(unit);
         state.block.updatedAt = getCurrentTimestamp();
         // Record operation for undo
-        const operation: Operation = { type: 'add_shape', shape };
+        const operation: Operation = { type: 'add_unit', unit };
         state.undoManager = recordOperation(state.undoManager, operation);
       });
       return id;
     },
 
-    removeShape: (shapeId) => {
-      const shapeToRemove = get().block.shapes.find((s) => s.id === shapeId);
-      if (!shapeToRemove) return;
+    removeUnit: (unitId) => {
+      const unitToRemove = get().block.units.find((u) => u.id === unitId);
+      if (!unitToRemove) return;
 
       set((state) => {
-        const index = state.block.shapes.findIndex((s) => s.id === shapeId);
+        const index = state.block.units.findIndex((u) => u.id === unitId);
         if (index !== -1) {
-          state.block.shapes.splice(index, 1);
+          state.block.units.splice(index, 1);
           state.block.updatedAt = getCurrentTimestamp();
-          if (state.selectedShapeId === shapeId) {
-            state.selectedShapeId = null;
+          if (state.selectedUnitId === unitId) {
+            state.selectedUnitId = null;
           }
-          // Record operation for undo (store full shape for redo)
-          const operation: Operation = { type: 'remove_shape', shape: shapeToRemove };
+          // Record operation for undo (store full unit for redo)
+          const operation: Operation = { type: 'remove_unit', unit: unitToRemove };
           state.undoManager = recordOperation(state.undoManager, operation);
         }
       });
     },
 
-    addShapesBatch: (positions, shapeType) => {
+    addUnitsBatch: (positions, unitType) => {
       // Flying Geese not supported for batch (requires two-tap placement)
-      if (shapeType.type === 'flying_geese') {
+      if (unitType.type === 'flying_geese') {
         return [];
       }
 
@@ -467,10 +472,10 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
         return [];
       }
 
-      // Create shapes for each position
-      const shapes: (SquareShape | HstShape | QstShape)[] = positions.map((position) => {
+      // Create units for each position
+      const units: (SquareUnit | HstUnit | QstUnit)[] = positions.map((position) => {
         const id = generateUUID();
-        if (shapeType.type === 'square') {
+        if (unitType.type === 'square') {
           return {
             id,
             type: 'square' as const,
@@ -478,14 +483,14 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
             span: { rows: 1 as const, cols: 1 as const },
             fabricRole: 'background' as const,
           };
-        } else if (shapeType.type === 'hst') {
+        } else if (unitType.type === 'hst') {
           return {
             id,
             type: 'hst' as const,
             position,
             span: { rows: 1 as const, cols: 1 as const },
             fabricRole: 'background' as const,
-            variant: shapeType.variant,
+            variant: unitType.variant,
             secondaryFabricRole: 'background' as const,
           };
         } else {
@@ -495,7 +500,7 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
             type: 'qst' as const,
             position,
             span: { rows: 1 as const, cols: 1 as const },
-            partFabricRoles: {
+            patchFabricRoles: {
               top: 'background' as const,
               right: 'background' as const,
               bottom: 'background' as const,
@@ -506,37 +511,37 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
       });
 
       set((state) => {
-        // Add all shapes
-        state.block.shapes.push(...shapes);
+        // Add all units
+        state.block.units.push(...units);
         state.block.updatedAt = getCurrentTimestamp();
 
         // Record as batch operation for single undo
         const batchOperation: BatchOperation = {
           type: 'batch',
-          operations: shapes.map((shape) => ({ type: 'add_shape' as const, shape })),
+          operations: units.map((unit) => ({ type: 'add_unit' as const, unit })),
         };
         state.undoManager = recordOperation(state.undoManager, batchOperation);
       });
 
-      return shapes.map((s) => s.id);
+      return units.map((u) => u.id);
     },
 
-    updateShape: (shapeId, updates) => {
+    updateUnit: (unitId, updates) => {
       set((state) => {
-        const shape = state.block.shapes.find((s) => s.id === shapeId);
-        if (shape) {
-          Object.assign(shape, updates);
+        const unit = state.block.units.find((u) => u.id === unitId);
+        if (unit) {
+          Object.assign(unit, updates);
           state.block.updatedAt = getCurrentTimestamp();
         }
       });
     },
 
     // Selection
-    selectShape: (shapeId) => {
+    selectUnit: (unitId) => {
       set((state) => {
-        state.selectedShapeId = shapeId;
-        // Exit paint mode when selecting a shape
-        if (shapeId !== null && state.mode === 'paint_mode') {
+        state.selectedUnitId = unitId;
+        // Exit paint mode when selecting a unit
+        if (unitId !== null && state.mode === 'paint_mode') {
           state.mode = 'idle';
           state.activeFabricRole = null;
         }
@@ -545,7 +550,7 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
 
     clearSelection: () => {
       set((state) => {
-        state.selectedShapeId = null;
+        state.selectedUnitId = null;
       });
     },
 
@@ -556,81 +561,23 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
         state.mode = roleId !== null ? 'paint_mode' : 'idle';
         // Clear selection when entering paint mode
         if (roleId !== null) {
-          state.selectedShapeId = null;
+          state.selectedUnitId = null;
         }
       });
     },
 
-    assignFabricRole: (shapeId, roleId, partId) => {
-      const shape = get().block.shapes.find((s) => s.id === shapeId);
-      if (!shape) return;
+    assignFabricRole: (unitId, roleId, patchId) => {
+      const unit = get().block.units.find((u) => u.id === unitId);
+      if (!unit) return;
 
-      // Capture previous state for undo
-      let prev: Partial<Shape>;
-      let next: Partial<Shape>;
-
-      if (shape.type === 'flying_geese') {
-        const fgShape = shape as FlyingGeeseShape;
-        const validPartIds: FlyingGeesePartId[] = ['goose', 'sky1', 'sky2'];
-        const targetPartId = partId && validPartIds.includes(partId as FlyingGeesePartId)
-          ? (partId as FlyingGeesePartId)
-          : 'goose';
-        prev = { partFabricRoles: { ...fgShape.partFabricRoles } };
-        next = { partFabricRoles: { ...fgShape.partFabricRoles, [targetPartId]: roleId } };
-      } else if (shape.type === 'qst') {
-        const qstShape = shape as QstShape;
-        const validPartIds: QstPartId[] = ['top', 'right', 'bottom', 'left'];
-        const targetPartId = partId && validPartIds.includes(partId as QstPartId)
-          ? (partId as QstPartId)
-          : 'top';
-        prev = { partFabricRoles: { ...qstShape.partFabricRoles } };
-        next = { partFabricRoles: { ...qstShape.partFabricRoles, [targetPartId]: roleId } };
-      } else if (shape.type === 'hst') {
-        const hstShape = shape as HstShape;
-        if (partId === 'secondary') {
-          prev = { secondaryFabricRole: hstShape.secondaryFabricRole };
-          next = { secondaryFabricRole: roleId };
-        } else {
-          prev = { fabricRole: hstShape.fabricRole };
-          next = { fabricRole: roleId };
-        }
-      } else {
-        prev = { fabricRole: shape.fabricRole };
-        next = { fabricRole: roleId };
-      }
+      const { prev, next } = bridgeAssignPatchRole(unit, roleId, patchId);
 
       set((state) => {
-        const stateShape = state.block.shapes.find((s) => s.id === shapeId);
-        if (stateShape) {
-          if (stateShape.type === 'flying_geese') {
-            const fgShape = stateShape as FlyingGeeseShape;
-            const validPartIds: FlyingGeesePartId[] = ['goose', 'sky1', 'sky2'];
-            if (partId && validPartIds.includes(partId as FlyingGeesePartId)) {
-              fgShape.partFabricRoles[partId as FlyingGeesePartId] = roleId;
-            } else {
-              fgShape.partFabricRoles.goose = roleId;
-            }
-          } else if (stateShape.type === 'qst') {
-            const qstShape = stateShape as QstShape;
-            const validPartIds: QstPartId[] = ['top', 'right', 'bottom', 'left'];
-            if (partId && validPartIds.includes(partId as QstPartId)) {
-              qstShape.partFabricRoles[partId as QstPartId] = roleId;
-            } else {
-              qstShape.partFabricRoles.top = roleId;
-            }
-          } else if (stateShape.type === 'hst') {
-            const hstShape = stateShape as HstShape;
-            if (partId === 'secondary') {
-              hstShape.secondaryFabricRole = roleId;
-            } else {
-              hstShape.fabricRole = roleId;
-            }
-          } else {
-            stateShape.fabricRole = roleId;
-          }
+        const stateUnit = state.block.units.find((u) => u.id === unitId);
+        if (stateUnit) {
+          Object.assign(stateUnit, next);
           state.block.updatedAt = getCurrentTimestamp();
-          // Record operation for undo
-          const operation: Operation = { type: 'update_shape', shapeId, prev, next };
+          const operation: Operation = { type: 'update_unit', unitId, prev, next };
           state.undoManager = recordOperation(state.undoManager, operation);
         }
       });
@@ -695,7 +642,7 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
 
     removeRole: (roleId, fallbackRoleId) => {
       const palette = get().block.previewPalette;
-      const shapes = get().block.shapes;
+      const units = get().block.units;
 
       // Cannot remove last role
       if (palette.roles.length <= 1) return;
@@ -710,42 +657,24 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
       const fallback =
         fallbackRoleId ?? (palette.roles[0].id === roleId ? palette.roles[1].id : palette.roles[0].id);
 
-      // Find affected shapes and record their current role assignments
-      const affectedShapes: Array<{ shapeId: string; prevRoles: ShapeRoleState }> = [];
+      // Find affected units and record their current role assignments
+      const affectedUnits: Array<{ unitId: string; prevRoles: UnitRoleState }> = [];
 
-      for (const shape of shapes) {
-        const usesRole = getShapesUsingRoleHelper([shape], roleId).length > 0;
-        if (usesRole) {
-          affectedShapes.push({
-            shapeId: shape.id,
-            prevRoles: extractRolesFromShape(shape),
+      for (const unit of units) {
+        if (unitUsesRole(unit, roleId)) {
+          affectedUnits.push({
+            unitId: unit.id,
+            prevRoles: extractRolesFromUnit(unit),
           });
         }
       }
 
       set((state) => {
-        // Reassign shapes to fallback role
-        for (const shape of state.block.shapes) {
-          if (shape.type === 'square' || shape.type === 'hst') {
-            if (shape.fabricRole === roleId) {
-              shape.fabricRole = fallback;
-            }
-          }
-          if (shape.type === 'hst' && shape.secondaryFabricRole === roleId) {
-            shape.secondaryFabricRole = fallback;
-          }
-          if (shape.type === 'flying_geese') {
-            const fg = shape as FlyingGeeseShape;
-            if (fg.partFabricRoles.goose === roleId) fg.partFabricRoles.goose = fallback;
-            if (fg.partFabricRoles.sky1 === roleId) fg.partFabricRoles.sky1 = fallback;
-            if (fg.partFabricRoles.sky2 === roleId) fg.partFabricRoles.sky2 = fallback;
-          }
-          if (shape.type === 'qst') {
-            const qst = shape as QstShape;
-            if (qst.partFabricRoles.top === roleId) qst.partFabricRoles.top = fallback;
-            if (qst.partFabricRoles.right === roleId) qst.partFabricRoles.right = fallback;
-            if (qst.partFabricRoles.bottom === roleId) qst.partFabricRoles.bottom = fallback;
-            if (qst.partFabricRoles.left === roleId) qst.partFabricRoles.left = fallback;
+        // Reassign units to fallback role
+        for (const unit of state.block.units) {
+          const update = bridgeReplaceRole(unit, roleId, fallback);
+          if (Object.keys(update).length > 0) {
+            Object.assign(unit, update);
           }
         }
 
@@ -766,7 +695,7 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
           type: 'remove_role',
           role: removedRole,
           index: roleIndex,
-          affectedShapes,
+          affectedUnits,
           fallbackRoleId: fallback,
         };
         state.undoManager = recordOperation(state.undoManager, operation);
@@ -796,8 +725,8 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
       return get().block.previewPalette.roles.length > 1;
     },
 
-    getShapesUsingRole: (roleId) => {
-      return getShapesUsingRoleHelper(get().block.shapes, roleId);
+    getUnitsUsingRole: (roleId) => {
+      return get().block.units.filter((unit) => unitUsesRole(unit, roleId));
     },
 
     // Mode management
@@ -859,8 +788,8 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
 
       set((state) => {
         state.flyingGeesePlacement = null;
-        // Return to placing_shape mode so user can place another Flying Geese
-        state.mode = 'placing_shape';
+        // Return to placing_unit mode so user can place another Flying Geese
+        state.mode = 'placing_unit';
       });
 
       return id;
@@ -869,322 +798,100 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
     cancelFlyingGeesePlacement: () => {
       set((state) => {
         state.flyingGeesePlacement = null;
-        // Return to placing_shape mode so user can try placing again
-        state.mode = 'placing_shape';
+        // Return to placing_unit mode so user can try placing again
+        state.mode = 'placing_unit';
       });
     },
 
-    // Shape transformations
-    rotateShape: (shapeId) => {
-      const shape = get().block.shapes.find((s) => s.id === shapeId);
-      if (!shape) return;
+    // Unit transformations (registry-driven via unit-bridge)
+    rotateUnit: (unitId) => {
+      const unit = get().block.units.find((u) => u.id === unitId);
+      if (!unit) return;
 
-      if (shape.type === 'hst') {
-        const hstShape = shape as HstShape;
-        const rotationMap: Record<HstVariant, HstVariant> = {
-          nw: 'ne',
-          ne: 'se',
-          se: 'sw',
-          sw: 'nw',
-        };
-        const prevVariant = hstShape.variant;
-        const nextVariant = rotationMap[hstShape.variant];
+      const next = applyRotation(unit);
+      if (!next) return; // Unit doesn't rotate (e.g., Square)
 
-        set((state) => {
-          const stateShape = state.block.shapes.find((s) => s.id === shapeId);
-          if (stateShape?.type === 'hst') {
-            (stateShape as HstShape).variant = nextVariant;
-            state.block.updatedAt = getCurrentTimestamp();
-            const operation: Operation = {
-              type: 'update_shape',
-              shapeId,
-              prev: { variant: prevVariant },
-              next: { variant: nextVariant },
-            };
-            state.undoManager = recordOperation(state.undoManager, operation);
-          }
-        });
-      } else if (shape.type === 'flying_geese') {
-        const fgShape = shape as FlyingGeeseShape;
-        const rotationMap: Record<FlyingGeeseDirection, FlyingGeeseDirection> = {
-          up: 'right',
-          right: 'down',
-          down: 'left',
-          left: 'up',
-        };
-        const prevDirection = fgShape.direction;
-        const prevSpan = { ...fgShape.span };
-        const nextDirection = rotationMap[fgShape.direction];
-        // Swap rows/cols when rotating
-        const nextSpan = fgShape.span.rows === 2
-          ? { rows: 1 as const, cols: 2 as const }
-          : { rows: 2 as const, cols: 1 as const };
-
-        set((state) => {
-          const stateShape = state.block.shapes.find((s) => s.id === shapeId);
-          if (stateShape?.type === 'flying_geese') {
-            const fg = stateShape as FlyingGeeseShape;
-            fg.direction = nextDirection;
-            fg.span = nextSpan;
-            state.block.updatedAt = getCurrentTimestamp();
-            const operation: Operation = {
-              type: 'update_shape',
-              shapeId,
-              prev: { direction: prevDirection, span: prevSpan },
-              next: { direction: nextDirection, span: nextSpan },
-            };
-            state.undoManager = recordOperation(state.undoManager, operation);
-          }
-        });
-      } else if (shape.type === 'qst') {
-        // For QST, rotate by cycling the part colors clockwise: top→right→bottom→left→top
-        const qstShape = shape as QstShape;
-        const prevRoles = { ...qstShape.partFabricRoles };
-        const nextRoles = {
-          top: prevRoles.left,
-          right: prevRoles.top,
-          bottom: prevRoles.right,
-          left: prevRoles.bottom,
-        };
-
-        set((state) => {
-          const stateShape = state.block.shapes.find((s) => s.id === shapeId);
-          if (stateShape?.type === 'qst') {
-            (stateShape as QstShape).partFabricRoles = nextRoles;
-            state.block.updatedAt = getCurrentTimestamp();
-            const operation: Operation = {
-              type: 'update_shape',
-              shapeId,
-              prev: { partFabricRoles: prevRoles },
-              next: { partFabricRoles: nextRoles },
-            };
-            state.undoManager = recordOperation(state.undoManager, operation);
-          }
-        });
+      // Capture prev values for undo by picking the same keys from current unit
+      const prev: Partial<Unit> = {};
+      for (const key of Object.keys(next)) {
+        (prev as Record<string, unknown>)[key] = (unit as Record<string, unknown>)[key];
       }
-      // Squares don't rotate (they're symmetric)
+
+      set((state) => {
+        const stateUnit = state.block.units.find((u) => u.id === unitId);
+        if (stateUnit) {
+          Object.assign(stateUnit, next);
+          state.block.updatedAt = getCurrentTimestamp();
+          const operation: Operation = { type: 'update_unit', unitId, prev, next };
+          state.undoManager = recordOperation(state.undoManager, operation);
+        }
+      });
     },
 
-    flipShapeHorizontal: (shapeId) => {
-      const shape = get().block.shapes.find((s) => s.id === shapeId);
-      if (!shape) return;
+    flipUnitHorizontal: (unitId) => {
+      const unit = get().block.units.find((u) => u.id === unitId);
+      if (!unit) return;
 
-      if (shape.type === 'hst') {
-        const hstShape = shape as HstShape;
-        const flipMap: Record<HstVariant, HstVariant> = {
-          nw: 'ne',
-          ne: 'nw',
-          sw: 'se',
-          se: 'sw',
-        };
-        const prevVariant = hstShape.variant;
-        const nextVariant = flipMap[hstShape.variant];
+      const next = applyFlipHorizontal(unit);
+      if (!next) return;
 
-        set((state) => {
-          const stateShape = state.block.shapes.find((s) => s.id === shapeId);
-          if (stateShape?.type === 'hst') {
-            (stateShape as HstShape).variant = nextVariant;
-            state.block.updatedAt = getCurrentTimestamp();
-            const operation: Operation = {
-              type: 'update_shape',
-              shapeId,
-              prev: { variant: prevVariant },
-              next: { variant: nextVariant },
-            };
-            state.undoManager = recordOperation(state.undoManager, operation);
-          }
-        });
-      } else if (shape.type === 'flying_geese') {
-        const fgShape = shape as FlyingGeeseShape;
-        if (fgShape.direction === 'left' || fgShape.direction === 'right') {
-          const prevDirection = fgShape.direction;
-          const nextDirection = fgShape.direction === 'left' ? 'right' : 'left';
-
-          set((state) => {
-            const stateShape = state.block.shapes.find((s) => s.id === shapeId);
-            if (stateShape?.type === 'flying_geese') {
-              (stateShape as FlyingGeeseShape).direction = nextDirection;
-              state.block.updatedAt = getCurrentTimestamp();
-              const operation: Operation = {
-                type: 'update_shape',
-                shapeId,
-                prev: { direction: prevDirection },
-                next: { direction: nextDirection },
-              };
-              state.undoManager = recordOperation(state.undoManager, operation);
-            }
-          });
-        } else {
-          // For up/down, swap sky1 and sky2
-          const prevRoles = { ...fgShape.partFabricRoles };
-          const nextRoles = {
-            ...fgShape.partFabricRoles,
-            sky1: fgShape.partFabricRoles.sky2,
-            sky2: fgShape.partFabricRoles.sky1,
-          };
-
-          set((state) => {
-            const stateShape = state.block.shapes.find((s) => s.id === shapeId);
-            if (stateShape?.type === 'flying_geese') {
-              (stateShape as FlyingGeeseShape).partFabricRoles = nextRoles;
-              state.block.updatedAt = getCurrentTimestamp();
-              const operation: Operation = {
-                type: 'update_shape',
-                shapeId,
-                prev: { partFabricRoles: prevRoles },
-                next: { partFabricRoles: nextRoles },
-              };
-              state.undoManager = recordOperation(state.undoManager, operation);
-            }
-          });
-        }
-      } else if (shape.type === 'qst') {
-        // For QST, horizontal flip swaps left and right
-        const qstShape = shape as QstShape;
-        const prevRoles = { ...qstShape.partFabricRoles };
-        const nextRoles = {
-          ...qstShape.partFabricRoles,
-          left: qstShape.partFabricRoles.right,
-          right: qstShape.partFabricRoles.left,
-        };
-
-        set((state) => {
-          const stateShape = state.block.shapes.find((s) => s.id === shapeId);
-          if (stateShape?.type === 'qst') {
-            (stateShape as QstShape).partFabricRoles = nextRoles;
-            state.block.updatedAt = getCurrentTimestamp();
-            const operation: Operation = {
-              type: 'update_shape',
-              shapeId,
-              prev: { partFabricRoles: prevRoles },
-              next: { partFabricRoles: nextRoles },
-            };
-            state.undoManager = recordOperation(state.undoManager, operation);
-          }
-        });
+      const prev: Partial<Unit> = {};
+      for (const key of Object.keys(next)) {
+        (prev as Record<string, unknown>)[key] = (unit as Record<string, unknown>)[key];
       }
-      // Squares don't flip (they're symmetric)
+
+      set((state) => {
+        const stateUnit = state.block.units.find((u) => u.id === unitId);
+        if (stateUnit) {
+          Object.assign(stateUnit, next);
+          state.block.updatedAt = getCurrentTimestamp();
+          const operation: Operation = { type: 'update_unit', unitId, prev, next };
+          state.undoManager = recordOperation(state.undoManager, operation);
+        }
+      });
     },
 
-    flipShapeVertical: (shapeId) => {
-      const shape = get().block.shapes.find((s) => s.id === shapeId);
-      if (!shape) return;
+    flipUnitVertical: (unitId) => {
+      const unit = get().block.units.find((u) => u.id === unitId);
+      if (!unit) return;
 
-      if (shape.type === 'hst') {
-        const hstShape = shape as HstShape;
-        const flipMap: Record<HstVariant, HstVariant> = {
-          nw: 'sw',
-          sw: 'nw',
-          ne: 'se',
-          se: 'ne',
-        };
-        const prevVariant = hstShape.variant;
-        const nextVariant = flipMap[hstShape.variant];
+      const next = applyFlipVertical(unit);
+      if (!next) return;
 
-        set((state) => {
-          const stateShape = state.block.shapes.find((s) => s.id === shapeId);
-          if (stateShape?.type === 'hst') {
-            (stateShape as HstShape).variant = nextVariant;
-            state.block.updatedAt = getCurrentTimestamp();
-            const operation: Operation = {
-              type: 'update_shape',
-              shapeId,
-              prev: { variant: prevVariant },
-              next: { variant: nextVariant },
-            };
-            state.undoManager = recordOperation(state.undoManager, operation);
-          }
-        });
-      } else if (shape.type === 'flying_geese') {
-        const fgShape = shape as FlyingGeeseShape;
-        if (fgShape.direction === 'up' || fgShape.direction === 'down') {
-          const prevDirection = fgShape.direction;
-          const nextDirection = fgShape.direction === 'up' ? 'down' : 'up';
-
-          set((state) => {
-            const stateShape = state.block.shapes.find((s) => s.id === shapeId);
-            if (stateShape?.type === 'flying_geese') {
-              (stateShape as FlyingGeeseShape).direction = nextDirection;
-              state.block.updatedAt = getCurrentTimestamp();
-              const operation: Operation = {
-                type: 'update_shape',
-                shapeId,
-                prev: { direction: prevDirection },
-                next: { direction: nextDirection },
-              };
-              state.undoManager = recordOperation(state.undoManager, operation);
-            }
-          });
-        } else {
-          // For left/right, swap sky1 and sky2
-          const prevRoles = { ...fgShape.partFabricRoles };
-          const nextRoles = {
-            ...fgShape.partFabricRoles,
-            sky1: fgShape.partFabricRoles.sky2,
-            sky2: fgShape.partFabricRoles.sky1,
-          };
-
-          set((state) => {
-            const stateShape = state.block.shapes.find((s) => s.id === shapeId);
-            if (stateShape?.type === 'flying_geese') {
-              (stateShape as FlyingGeeseShape).partFabricRoles = nextRoles;
-              state.block.updatedAt = getCurrentTimestamp();
-              const operation: Operation = {
-                type: 'update_shape',
-                shapeId,
-                prev: { partFabricRoles: prevRoles },
-                next: { partFabricRoles: nextRoles },
-              };
-              state.undoManager = recordOperation(state.undoManager, operation);
-            }
-          });
-        }
-      } else if (shape.type === 'qst') {
-        // For QST, vertical flip swaps top and bottom
-        const qstShape = shape as QstShape;
-        const prevRoles = { ...qstShape.partFabricRoles };
-        const nextRoles = {
-          ...qstShape.partFabricRoles,
-          top: qstShape.partFabricRoles.bottom,
-          bottom: qstShape.partFabricRoles.top,
-        };
-
-        set((state) => {
-          const stateShape = state.block.shapes.find((s) => s.id === shapeId);
-          if (stateShape?.type === 'qst') {
-            (stateShape as QstShape).partFabricRoles = nextRoles;
-            state.block.updatedAt = getCurrentTimestamp();
-            const operation: Operation = {
-              type: 'update_shape',
-              shapeId,
-              prev: { partFabricRoles: prevRoles },
-              next: { partFabricRoles: nextRoles },
-            };
-            state.undoManager = recordOperation(state.undoManager, operation);
-          }
-        });
+      const prev: Partial<Unit> = {};
+      for (const key of Object.keys(next)) {
+        (prev as Record<string, unknown>)[key] = (unit as Record<string, unknown>)[key];
       }
-      // Squares don't flip (they're symmetric)
+
+      set((state) => {
+        const stateUnit = state.block.units.find((u) => u.id === unitId);
+        if (stateUnit) {
+          Object.assign(stateUnit, next);
+          state.block.updatedAt = getCurrentTimestamp();
+          const operation: Operation = { type: 'update_unit', unitId, prev, next };
+          state.undoManager = recordOperation(state.undoManager, operation);
+        }
+      });
     },
 
     // Utility
-    getShapeAt: (position) => {
-      const { shapes } = get().block;
-      return shapes.find((shape) => {
-        const { row: shapeRow, col: shapeCol } = shape.position;
-        const { rows: spanRows, cols: spanCols } = shape.span;
+    getUnitAt: (position) => {
+      const { units } = get().block;
+      return units.find((unit) => {
+        const { row: unitRow, col: unitCol } = unit.position;
+        const { rows: spanRows, cols: spanCols } = unit.span;
 
         return (
-          position.row >= shapeRow &&
-          position.row < shapeRow + spanRows &&
-          position.col >= shapeCol &&
-          position.col < shapeCol + spanCols
+          position.row >= unitRow &&
+          position.row < unitRow + spanRows &&
+          position.col >= unitCol &&
+          position.col < unitCol + spanCols
         );
       });
     },
 
     isCellOccupied: (position) => {
-      return get().getShapeAt(position) !== undefined;
+      return get().getUnitAt(position) !== undefined;
     },
 
     getValidAdjacentCells: (position) => {
@@ -1227,7 +934,7 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
 
       set((state) => {
         // Apply the inverse operation
-        state.block.shapes = applyOperationToShapes(state.block.shapes, operation);
+        state.block.units = applyOperationToUnits(state.block.units, operation);
         state.block.previewPalette = applyOperationToPalette(state.block.previewPalette, operation);
         // Apply grid size change if applicable
         const newGridSize = applyOperationToGridSize(state.block.gridSize, operation);
@@ -1236,9 +943,9 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
         }
         state.block.updatedAt = getCurrentTimestamp();
         state.undoManager = newUndoState;
-        // Clear selection if the selected shape was removed
-        if (state.selectedShapeId && !state.block.shapes.find((s) => s.id === state.selectedShapeId)) {
-          state.selectedShapeId = null;
+        // Clear selection if the selected unit was removed
+        if (state.selectedUnitId && !state.block.units.find((u) => u.id === state.selectedUnitId)) {
+          state.selectedUnitId = null;
         }
       });
     },
@@ -1251,7 +958,7 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
 
       set((state) => {
         // Apply the operation
-        state.block.shapes = applyOperationToShapes(state.block.shapes, operation);
+        state.block.units = applyOperationToUnits(state.block.units, operation);
         state.block.previewPalette = applyOperationToPalette(state.block.previewPalette, operation);
         // Apply grid size change if applicable
         const newGridSize = applyOperationToGridSize(state.block.gridSize, operation);
@@ -1260,9 +967,9 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
         }
         state.block.updatedAt = getCurrentTimestamp();
         state.undoManager = newUndoState;
-        // Clear selection if the selected shape was removed
-        if (state.selectedShapeId && !state.block.shapes.find((s) => s.id === state.selectedShapeId)) {
-          state.selectedShapeId = null;
+        // Clear selection if the selected unit was removed
+        if (state.selectedUnitId && !state.block.units.find((u) => u.id === state.selectedUnitId)) {
+          state.selectedUnitId = null;
         }
       });
     },
@@ -1280,7 +987,7 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
       set((state) => {
         state.mode = 'preview';
         // Clear selection and other active states when entering preview
-        state.selectedShapeId = null;
+        state.selectedUnitId = null;
         state.activeFabricRole = null;
         state.flyingGeesePlacement = null;
       });
@@ -1298,14 +1005,14 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
       });
     },
 
-    // Shape library selection
-    selectShapeForPlacement: (shape) => {
+    // Unit library selection
+    selectUnitForPlacement: (unitType) => {
       set((state) => {
-        state.selectedShapeType = shape;
-        if (shape !== null) {
-          state.mode = 'placing_shape';
+        state.selectedUnitType = unitType;
+        if (unitType !== null) {
+          state.mode = 'placing_unit';
           // Clear other active states when entering placing mode
-          state.selectedShapeId = null;
+          state.selectedUnitId = null;
           state.activeFabricRole = null;
           state.flyingGeesePlacement = null;
         } else {
@@ -1320,11 +1027,11 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
       });
     },
 
-    clearShapeSelection: () => {
+    clearUnitSelection: () => {
       set((state) => {
-        state.selectedShapeType = null;
+        state.selectedUnitType = null;
         state.hoveredCell = null;
-        if (state.mode === 'placing_shape' || state.mode === 'placing_flying_geese_second') {
+        if (state.mode === 'placing_unit' || state.mode === 'placing_flying_geese_second') {
           state.mode = 'idle';
         }
         state.flyingGeesePlacement = null;
@@ -1370,11 +1077,11 @@ export const useBlockDesignerStore: UseBoundStore<StoreApi<BlockDesignerStore>> 
 /** Get the current block */
 export const useBlock = () => useBlockDesignerStore((state) => state.block);
 
-/** Get the currently selected shape */
-export const useSelectedShape = () => {
+/** Get the currently selected unit */
+export const useSelectedUnit = () => {
   return useBlockDesignerStore((state) => {
-    if (!state.selectedShapeId) return null;
-    return state.block.shapes.find((s) => s.id === state.selectedShapeId) ?? null;
+    if (!state.selectedUnitId) return null;
+    return state.block.units.find((u) => u.id === state.selectedUnitId) ?? null;
   });
 };
 
@@ -1412,16 +1119,16 @@ export const useIsPreviewMode = () => useBlockDesignerStore((state) => state.mod
 export const usePreviewRotationPreset = () =>
   useBlockDesignerStore((state) => state.previewRotationPreset);
 
-/** Get the selected shape type from library */
-export const useSelectedShapeType = () =>
-  useBlockDesignerStore((state) => state.selectedShapeType);
+/** Get the selected unit type from library */
+export const useSelectedUnitType = () =>
+  useBlockDesignerStore((state) => state.selectedUnitType);
 
 /** Get the hovered cell position */
 export const useHoveredCell = () => useBlockDesignerStore((state) => state.hoveredCell);
 
-/** Check if in placing shape mode */
-export const useIsPlacingShape = () =>
-  useBlockDesignerStore((state) => state.mode === 'placing_shape');
+/** Check if in placing unit mode */
+export const useIsPlacingUnit = () =>
+  useBlockDesignerStore((state) => state.mode === 'placing_unit');
 
 /** Get the current block grid size */
 export const useBlockGridSize = () => useBlockDesignerStore((state) => state.block.gridSize);

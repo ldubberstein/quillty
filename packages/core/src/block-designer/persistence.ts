@@ -5,7 +5,27 @@
  * and the database format for Supabase persistence.
  */
 
-import type { Block, Shape, Palette, GridSize } from './types';
+import type { Block, Unit, Palette, GridSize } from './types';
+
+/**
+ * Migrate a unit from legacy database format.
+ * Handles the rename of partFabricRoles → patchFabricRoles for FlyingGeese and QST units.
+ */
+function migrateUnit(unit: Record<string, unknown>): Unit {
+  if ('partFabricRoles' in unit && !('patchFabricRoles' in unit)) {
+    const { partFabricRoles, ...rest } = unit;
+    return { ...rest, patchFabricRoles: partFabricRoles } as unknown as Unit;
+  }
+  return unit as unknown as Unit;
+}
+
+/**
+ * Migrate an array of units from legacy database format.
+ * Applies per-unit property renames (partFabricRoles → patchFabricRoles).
+ */
+export function migrateUnits(units: unknown[]): Unit[] {
+  return units.map((u) => migrateUnit(u as Record<string, unknown>));
+}
 
 /**
  * Design data structure stored in the database's JSONB column.
@@ -14,8 +34,8 @@ import type { Block, Shape, Palette, GridSize } from './types';
 export interface BlockDesignData {
   /** Version of the design data format (for future migrations) */
   version: 1;
-  /** The shapes that make up the block design */
-  shapes: Shape[];
+  /** The units that make up the block design */
+  units: Unit[];
   /** The preview palette with fabric role colors */
   previewPalette: Palette;
 }
@@ -32,7 +52,7 @@ export interface BlockPersistData {
   gridSize: GridSize;
   /** Serialized design data */
   designData: BlockDesignData;
-  /** Number of pieces/shapes in the block */
+  /** Number of pieces/units in the block */
   pieceCount: number;
 }
 
@@ -45,7 +65,7 @@ export interface BlockPersistData {
 export function serializeBlockForDb(block: Block): BlockPersistData {
   const designData: BlockDesignData = {
     version: 1,
-    shapes: block.shapes,
+    units: block.units,
     previewPalette: block.previewPalette,
   };
 
@@ -54,7 +74,7 @@ export function serializeBlockForDb(block: Block): BlockPersistData {
     description: block.description,
     gridSize: block.gridSize,
     designData,
-    pieceCount: block.shapes.length,
+    pieceCount: block.units.length,
   };
 }
 
@@ -79,8 +99,10 @@ export function deserializeBlockFromDb(dbBlock: {
   // Parse design data (handle both old and new formats)
   const designData = dbBlock.design_data as BlockDesignData | null;
 
-  // Extract shapes and palette from design data
-  const shapes: Shape[] = designData?.shapes ?? [];
+  // Extract units and palette from design data
+  // Support legacy format where units were stored as "shapes"
+  const rawUnits = designData?.units ?? (designData as any)?.shapes ?? [];
+  const units: Unit[] = migrateUnits(rawUnits);
   const previewPalette: Palette = designData?.previewPalette ?? {
     roles: [
       { id: 'background', name: 'Background', color: '#FFFFFF' },
@@ -98,7 +120,7 @@ export function deserializeBlockFromDb(dbBlock: {
     description: dbBlock.description,
     hashtags: [],
     gridSize: dbBlock.grid_size as GridSize,
-    shapes,
+    units,
     previewPalette,
     status: dbBlock.status,
     publishedAt: dbBlock.published_at,
@@ -124,7 +146,7 @@ export function extractHashtags(description: string): string[] {
 
 /**
  * Validates that a block has enough content to be published.
- * All grid cells must have a shape covering them.
+ * All grid cells must have a unit covering them.
  *
  * @param block - The block to validate
  * @returns Object with valid flag and optional error message
@@ -133,24 +155,24 @@ export function validateBlockForPublish(block: Block): {
   valid: boolean;
   error?: string;
 } {
-  if (block.shapes.length === 0) {
+  if (block.units.length === 0) {
     return {
       valid: false,
-      error: 'Add at least one shape before publishing',
+      error: 'Add at least one unit before publishing',
     };
   }
 
-  // Check that all grid cells are covered by shapes
+  // Check that all grid cells are covered by units
   const gridSize = block.gridSize;
   const totalCells = gridSize * gridSize;
 
   // Create a set to track covered cells
   const coveredCells = new Set<string>();
 
-  // Mark all cells covered by each shape
-  for (const shape of block.shapes) {
-    const { row: startRow, col: startCol } = shape.position;
-    const { rows: spanRows, cols: spanCols } = shape.span;
+  // Mark all cells covered by each unit
+  for (const unit of block.units) {
+    const { row: startRow, col: startCol } = unit.position;
+    const { rows: spanRows, cols: spanCols } = unit.span;
 
     for (let r = startRow; r < startRow + spanRows; r++) {
       for (let c = startCol; c < startCol + spanCols; c++) {

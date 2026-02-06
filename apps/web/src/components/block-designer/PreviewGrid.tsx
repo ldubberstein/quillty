@@ -5,19 +5,12 @@ import { Stage, Layer, Group, Rect, Line } from 'react-konva';
 import {
   useBlockDesignerStore,
   usePreviewRotationPreset,
+  getUnitTrianglesWithColors,
   type PreviewRotationPreset,
   type Rotation,
-  type Shape,
-  type SquareShape,
-  type HstShape,
-  type FlyingGeeseShape,
-  type QstShape,
+  type Unit,
   type Palette,
   type GridSize,
-  getHstTriangles,
-  triangleToFlatPoints,
-  getFlyingGeeseTriangles,
-  getQstTriangles,
 } from '@quillty/core';
 
 /** Padding around the preview grid */
@@ -66,7 +59,7 @@ function getRotationsForPreset(preset: PreviewRotationPreset): Rotation[][] {
 }
 
 interface PreviewBlockProps {
-  shapes: Shape[];
+  units: Unit[];
   palette: Palette;
   gridSize: GridSize;
   cellSize: number;
@@ -77,7 +70,7 @@ interface PreviewBlockProps {
 
 /** Render a single block instance with rotation */
 function PreviewBlock({
-  shapes,
+  units,
   palette,
   gridSize,
   cellSize,
@@ -87,132 +80,20 @@ function PreviewBlock({
 }: PreviewBlockProps) {
   const blockSize = gridSize * cellSize;
 
-  // Render shapes using RELATIVE coordinates (0 to blockSize)
+  // Render units using RELATIVE coordinates (0 to blockSize)
   // The Group handles positioning on the stage
-  const renderShape = (shape: Shape) => {
-    const role = palette.roles.find((r) => r.id === (shape as SquareShape).fabricRole);
-    const fillColor = role?.color ?? '#CCCCCC';
-    const padding = 1;
+  const renderUnit = (unit: Unit) => {
+    const x = unit.position.col * cellSize;
+    const y = unit.position.row * cellSize;
+    const triangles = getUnitTrianglesWithColors(unit, cellSize, palette);
 
-    if (shape.type === 'square') {
-      // Use relative coordinates (within the block)
-      const x = shape.position.col * cellSize;
-      const y = shape.position.row * cellSize;
-      const size = cellSize - padding * 2;
-
-      return (
-        <Rect
-          key={shape.id}
-          x={x + padding}
-          y={y + padding}
-          width={size}
-          height={size}
-          fill={fillColor}
-          stroke="#9CA3AF"
-          strokeWidth={1}
-        />
-      );
-    }
-
-    if (shape.type === 'hst') {
-      const hstShape = shape as HstShape;
-      const primaryRole = palette.roles.find((r) => r.id === hstShape.fabricRole);
-      const secondaryRole = palette.roles.find((r) => r.id === hstShape.secondaryFabricRole);
-      const primaryColor = primaryRole?.color ?? '#CCCCCC';
-      const secondaryColor = secondaryRole?.color ?? '#FFFFFF';
-
-      // Use relative coordinates (within the block)
-      const x = shape.position.col * cellSize;
-      const y = shape.position.row * cellSize;
-      const size = cellSize - padding * 2;
-
-      const triangles = getHstTriangles(hstShape.variant, size, size);
-      const primaryPoints = triangleToFlatPoints(triangles.primary);
-      const secondaryPoints = triangleToFlatPoints(triangles.secondary);
-
-      return (
-        <Group key={shape.id} x={x + padding} y={y + padding}>
-          <Line
-            points={secondaryPoints}
-            fill={secondaryColor}
-            stroke="#9CA3AF"
-            strokeWidth={1}
-            closed
-          />
-          <Line
-            points={primaryPoints}
-            fill={primaryColor}
-            stroke="#9CA3AF"
-            strokeWidth={1}
-            closed
-          />
-        </Group>
-      );
-    }
-
-    if (shape.type === 'flying_geese') {
-      const fgShape = shape as FlyingGeeseShape;
-      const gooseRole = palette.roles.find((r) => r.id === fgShape.partFabricRoles.goose);
-      const sky1Role = palette.roles.find((r) => r.id === fgShape.partFabricRoles.sky1);
-      const sky2Role = palette.roles.find((r) => r.id === fgShape.partFabricRoles.sky2);
-      const gooseColor = gooseRole?.color ?? '#CCCCCC';
-      const sky1Color = sky1Role?.color ?? '#FFFFFF';
-      const sky2Color = sky2Role?.color ?? '#FFFFFF';
-
-      // Use relative coordinates (within the block)
-      const x = shape.position.col * cellSize;
-      const y = shape.position.row * cellSize;
-      const isHorizontal = fgShape.span.cols === 2;
-      const totalWidth = (isHorizontal ? 2 : 1) * cellSize - padding * 2;
-      const totalHeight = (isHorizontal ? 1 : 2) * cellSize - padding * 2;
-
-      const triangles = getFlyingGeeseTriangles(fgShape.direction, totalWidth, totalHeight);
-      const goosePoints = triangleToFlatPoints(triangles.goose);
-      const sky1Points = triangleToFlatPoints(triangles.sky1);
-      const sky2Points = triangleToFlatPoints(triangles.sky2);
-
-      return (
-        <Group key={shape.id} x={x + padding} y={y + padding}>
-          <Line points={sky1Points} fill={sky1Color} stroke="#9CA3AF" strokeWidth={1} closed />
-          <Line points={sky2Points} fill={sky2Color} stroke="#9CA3AF" strokeWidth={1} closed />
-          <Line points={goosePoints} fill={gooseColor} stroke="#9CA3AF" strokeWidth={1} closed />
-        </Group>
-      );
-    }
-
-    if (shape.type === 'qst') {
-      const qstShape = shape as QstShape;
-      const topRole = palette.roles.find((r) => r.id === qstShape.partFabricRoles.top);
-      const rightRole = palette.roles.find((r) => r.id === qstShape.partFabricRoles.right);
-      const bottomRole = palette.roles.find((r) => r.id === qstShape.partFabricRoles.bottom);
-      const leftRole = palette.roles.find((r) => r.id === qstShape.partFabricRoles.left);
-      const topColor = topRole?.color ?? '#CCCCCC';
-      const rightColor = rightRole?.color ?? '#FFFFFF';
-      const bottomColor = bottomRole?.color ?? '#CCCCCC';
-      const leftColor = leftRole?.color ?? '#FFFFFF';
-
-      // Use relative coordinates (within the block)
-      const x = shape.position.col * cellSize;
-      const y = shape.position.row * cellSize;
-      const size = cellSize - padding * 2;
-
-      const triangles = getQstTriangles(size, size);
-      const topPoints = triangleToFlatPoints(triangles.top);
-      const rightPoints = triangleToFlatPoints(triangles.right);
-      const bottomPoints = triangleToFlatPoints(triangles.bottom);
-      const leftPoints = triangleToFlatPoints(triangles.left);
-
-      return (
-        <Group key={shape.id} x={x + padding} y={y + padding}>
-          <Line points={topPoints} fill={topColor} stroke="#9CA3AF" strokeWidth={1} closed />
-          <Line points={rightPoints} fill={rightColor} stroke="#9CA3AF" strokeWidth={1} closed />
-          <Line points={bottomPoints} fill={bottomColor} stroke="#9CA3AF" strokeWidth={1} closed />
-          <Line points={leftPoints} fill={leftColor} stroke="#9CA3AF" strokeWidth={1} closed />
-        </Group>
-      );
-    }
-
-    return null;
+    return (
+      <Group key={unit.id} x={x} y={y}>
+        {triangles.map((tri, i) => (
+          <Line key={i} points={tri.points} fill={tri.color} stroke="#9CA3AF" strokeWidth={1} closed />
+        ))}
+      </Group>
+    );
   };
 
   return (
@@ -233,8 +114,8 @@ function PreviewBlock({
         stroke="#D1D5DB"
         strokeWidth={1}
       />
-      {/* Render all shapes */}
-      {shapes.map(renderShape)}
+      {/* Render all units */}
+      {units.map(renderUnit)}
     </Group>
   );
 }
@@ -247,7 +128,7 @@ export function PreviewGrid() {
   const exitPreview = useBlockDesignerStore((state) => state.exitPreview);
   const previewRotationPreset = usePreviewRotationPreset();
 
-  const { gridSize, shapes, previewPalette } = block;
+  const { gridSize, units, previewPalette } = block;
 
   // Calculate rotations for current preset (memoized to keep random stable)
   const rotations = useMemo(
@@ -334,7 +215,7 @@ export function PreviewGrid() {
                   return (
                     <PreviewBlock
                       key={`${row}-${col}`}
-                      shapes={shapes}
+                      units={units}
                       palette={previewPalette}
                       gridSize={gridSize}
                       cellSize={cellSize}

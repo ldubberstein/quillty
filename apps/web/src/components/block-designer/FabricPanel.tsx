@@ -3,12 +3,12 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Check, Plus, X, AlertTriangle } from 'lucide-react';
 import { useBlockDesignerStore, MAX_PALETTE_ROLES } from '@quillty/core';
-import type { FabricRoleId, Shape } from '@quillty/core';
+import type { FabricRoleId, Unit } from '@quillty/core';
 import { ColorSwatch, CollapsiblePanel, useSidebarPanel } from '../shared';
 
 interface RemoveRoleDialogProps {
   roleName: string;
-  affectedShapeCount: number;
+  affectedUnitCount: number;
   availableRoles: Array<{ id: FabricRoleId; name: string; color: string }>;
   selectedFallback: FabricRoleId;
   onFallbackChange: (roleId: FabricRoleId) => void;
@@ -18,7 +18,7 @@ interface RemoveRoleDialogProps {
 
 function RemoveRoleDialog({
   roleName,
-  affectedShapeCount,
+  affectedUnitCount,
   availableRoles,
   selectedFallback,
   onFallbackChange,
@@ -46,7 +46,7 @@ function RemoveRoleDialog({
     [onCancel]
   );
 
-  const shapeWord = affectedShapeCount === 1 ? 'shape' : 'shapes';
+  const unitWord = affectedUnitCount === 1 ? 'unit' : 'units';
 
   return (
     <div
@@ -72,9 +72,9 @@ function RemoveRoleDialog({
         {/* Content */}
         <div className="px-5 py-4">
           <p className="text-sm text-gray-600">
-            <span className="font-medium text-gray-900">{affectedShapeCount} {shapeWord}</span>{' '}
-            {affectedShapeCount === 1 ? 'uses' : 'use'} the &ldquo;{roleName}&rdquo; color.
-            {affectedShapeCount === 1 ? ' It' : ' They'} will be reassigned to:
+            <span className="font-medium text-gray-900">{affectedUnitCount} {unitWord}</span>{' '}
+            {affectedUnitCount === 1 ? 'uses' : 'use'} the &ldquo;{roleName}&rdquo; color.
+            {affectedUnitCount === 1 ? ' It' : ' They'} will be reassigned to:
           </p>
 
           <select
@@ -116,7 +116,7 @@ function RemoveRoleDialog({
  * FabricPanel - Sidebar panel for fabric/color assignment
  *
  * Shows the block's palette roles with color swatches.
- * - Tap a role to enter paint mode (tap shapes to assign)
+ * - Tap a role to enter paint mode (tap units to assign)
  * - Tap a color swatch to open color picker
  * - Add/remove color roles
  */
@@ -129,7 +129,7 @@ export function FabricPanel() {
   const addRole = useBlockDesignerStore((state) => state.addRole);
   const removeRole = useBlockDesignerStore((state) => state.removeRole);
   const canRemoveRole = useBlockDesignerStore((state) => state.canRemoveRole);
-  const getShapesUsingRole = useBlockDesignerStore((state) => state.getShapesUsingRole);
+  const getUnitsUsingRole = useBlockDesignerStore((state) => state.getUnitsUsingRole);
 
   const { isExpanded, toggle } = useSidebarPanel('fabrics');
   const isPaintMode = mode === 'paint_mode';
@@ -138,7 +138,7 @@ export function FabricPanel() {
   const [pendingRemoveRole, setPendingRemoveRole] = useState<{
     id: FabricRoleId;
     name: string;
-    affectedShapes: Shape[];
+    affectedUnits: Unit[];
   } | null>(null);
   const [fallbackRoleId, setFallbackRoleId] = useState<FabricRoleId>('');
 
@@ -169,22 +169,22 @@ export function FabricPanel() {
     addRole();
   }, [addRole]);
 
-  // Handle remove role - check for affected shapes first
+  // Handle remove role - check for affected units first
   const handleRemoveRole = useCallback(
     (roleId: FabricRoleId, roleName: string) => {
-      const affectedShapes = getShapesUsingRole(roleId);
+      const affectedUnits = getUnitsUsingRole(roleId);
 
-      if (affectedShapes.length > 0) {
+      if (affectedUnits.length > 0) {
         // Find a default fallback role (first role that isn't the one being removed)
         const defaultFallback = palette.roles.find((r) => r.id !== roleId)?.id ?? '';
         setFallbackRoleId(defaultFallback);
-        setPendingRemoveRole({ id: roleId, name: roleName, affectedShapes });
+        setPendingRemoveRole({ id: roleId, name: roleName, affectedUnits });
       } else {
-        // No shapes affected, remove immediately
+        // No units affected, remove immediately
         removeRole(roleId);
       }
     },
-    [getShapesUsingRole, palette.roles, removeRole]
+    [getUnitsUsingRole, palette.roles, removeRole]
   );
 
   // Confirm removal with reassignment
@@ -234,8 +234,8 @@ export function FabricPanel() {
       >
         <p className="text-xs text-gray-400 mb-2">
           {isPaintMode
-            ? 'Tap shapes on the canvas to paint them'
-            : 'Select a fabric, then tap shapes to paint'}
+            ? 'Tap units on the canvas to paint them'
+            : 'Select a fabric, then tap units to paint'}
         </p>
 
         <div className="space-y-1">
@@ -330,7 +330,7 @@ export function FabricPanel() {
       {pendingRemoveRole && (
         <RemoveRoleDialog
           roleName={pendingRemoveRole.name}
-          affectedShapeCount={pendingRemoveRole.affectedShapes.length}
+          affectedUnitCount={pendingRemoveRole.affectedUnits.length}
           availableRoles={palette.roles.filter((r) => r.id !== pendingRemoveRole.id)}
           selectedFallback={fallbackRoleId}
           onFallbackChange={setFallbackRoleId}

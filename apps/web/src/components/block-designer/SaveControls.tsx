@@ -29,7 +29,7 @@ export function SaveControls({ onPublished }: SaveControlsProps) {
   const [showPublishModal, setShowPublishModal] = useState(false);
 
   // Track if we have unsaved changes (simple version - tracks any change after last save)
-  const lastShapesRef = useRef<string>(JSON.stringify(block.shapes));
+  const lastUnitsRef = useRef<string>(JSON.stringify(block.units));
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Check if user is authenticated
@@ -85,7 +85,7 @@ export function SaveControls({ onPublished }: SaveControlsProps) {
       }
 
       setLastSaved(new Date());
-      lastShapesRef.current = JSON.stringify(block.shapes);
+      lastUnitsRef.current = JSON.stringify(block.units);
     } catch (error) {
       console.error('Failed to save draft:', error);
       setSaveError(error instanceof Error ? error.message : 'Failed to save draft');
@@ -98,8 +98,8 @@ export function SaveControls({ onPublished }: SaveControlsProps) {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    const currentShapes = JSON.stringify(block.shapes);
-    const hasChanges = currentShapes !== lastShapesRef.current;
+    const currentUnits = JSON.stringify(block.units);
+    const hasChanges = currentUnits !== lastUnitsRef.current;
 
     if (hasChanges) {
       // Clear existing timer
@@ -118,7 +118,7 @@ export function SaveControls({ onPublished }: SaveControlsProps) {
         clearTimeout(autoSaveTimerRef.current);
       }
     };
-  }, [block.shapes, isAuthenticated, handleSaveDraft]);
+  }, [block.units, isAuthenticated, handleSaveDraft]);
 
   // Handle publish button click
   const handlePublishClick = useCallback(() => {
@@ -128,8 +128,8 @@ export function SaveControls({ onPublished }: SaveControlsProps) {
     }
 
     // Save first if there are unsaved changes
-    const currentShapes = JSON.stringify(block.shapes);
-    if (currentShapes !== lastShapesRef.current && block.id) {
+    const currentUnits = JSON.stringify(block.units);
+    if (currentUnits !== lastUnitsRef.current && block.id) {
       handleSaveDraft();
     }
 
@@ -211,22 +211,21 @@ export function SaveControls({ onPublished }: SaveControlsProps) {
           <span className="hidden sm:inline">{isSaving ? 'Saving...' : 'Save Draft'}</span>
         </button>
 
-        {/* Publish button */}
-        <div className="flex flex-col items-end gap-1">
+        {/* Publish button with hover tooltip */}
+        <div className="relative group">
           <button
             onClick={handlePublishClick}
             disabled={!publishValidation.valid || isSaving || !block.id}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title={!block.id ? 'Save draft first' : !publishValidation.valid ? publishValidation.error : 'Publish block'}
           >
             <Upload className="w-4 h-4" />
             <span className="hidden sm:inline">Publish</span>
           </button>
-          {!block.id && (
-            <span className="text-xs text-gray-500 hidden sm:inline">Save draft first</span>
-          )}
-          {block.id && !publishValidation.valid && publishValidation.error && (
-            <span className="text-xs text-amber-600 hidden sm:inline">{publishValidation.error}</span>
+          {/* Tooltip shown on hover when disabled */}
+          {(!block.id || !publishValidation.valid) && (
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 text-xs text-gray-700 bg-white border border-gray-200 rounded shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              {!block.id ? 'Save draft first' : publishValidation.error}
+            </div>
           )}
         </div>
       </div>

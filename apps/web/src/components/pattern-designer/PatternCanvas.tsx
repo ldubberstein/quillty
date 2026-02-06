@@ -22,8 +22,9 @@ import {
   useTotalBorderWidth,
   usePlacementRotation,
   useRangeFillAnchor,
+  migrateUnits,
 } from '@quillty/core';
-import type { GridPosition, Shape, BlockInstance } from '@quillty/core';
+import type { GridPosition, Unit, BlockInstance } from '@quillty/core';
 
 /** Canvas sizing constants */
 const CANVAS_PADDING = 40;
@@ -31,23 +32,23 @@ const MIN_CELL_SIZE = 60;
 const MAX_CELL_SIZE = 120;
 
 /**
- * Helper to extract shapes from a block
- * Handles both direct shapes array and API format with design_data JSON
+ * Helper to extract units from a block
+ * Handles both direct units array and API format with design_data JSON
  */
-function getBlockShapes(block: { shapes?: Shape[]; design_data?: unknown }): Shape[] {
-  // Direct shapes array (from core Block type)
-  if (block.shapes && Array.isArray(block.shapes)) {
-    return block.shapes;
+function getBlockUnits(block: { units?: Unit[]; design_data?: unknown }): Unit[] {
+  // Direct units array (from core Block type)
+  if (block.units && Array.isArray(block.units)) {
+    return block.units;
   }
 
-  // API format: design_data is a JSON object with shapes
+  // API format: design_data is a JSON object with units
   if (block.design_data) {
     try {
       const designData =
         typeof block.design_data === 'string'
           ? JSON.parse(block.design_data)
           : block.design_data;
-      return designData.shapes ?? [];
+      return migrateUnits(designData.units ?? designData.shapes ?? []);
     } catch {
       return [];
     }
@@ -431,7 +432,7 @@ export function PatternCanvas() {
 
   // Get the selected block for ghost preview
   const selectedBlock = selectedLibraryBlockId ? blockCache[selectedLibraryBlockId] : null;
-  const selectedBlockShapes = selectedBlock ? getBlockShapes(selectedBlock) : [];
+  const selectedBlockUnits = selectedBlock ? getBlockUnits(selectedBlock) : [];
 
   // Calculate range fill preview positions when shift is held
   const rangeFillPreviewPositions = useMemo(() => {
@@ -539,15 +540,15 @@ export function PatternCanvas() {
                 const block = blockCache[instance.blockId];
                 if (!block) return null;
 
-                // Extract shapes from block (handles API format with design_data)
-                const shapes = getBlockShapes(block);
-                if (shapes.length === 0) return null;
+                // Extract units from block (handles API format with design_data)
+                const units = getBlockUnits(block);
+                if (units.length === 0) return null;
 
                 return (
                   <BlockInstanceRenderer
                     key={instance.id}
                     instance={instance}
-                    shapes={shapes}
+                    units={units}
                     blockGridSize={block.gridSize || 3}
                     palette={palette}
                     cellSize={cellSize}
@@ -560,7 +561,7 @@ export function PatternCanvas() {
               })}
 
               {/* Ghost preview when hovering empty slot in placement mode (single cell) */}
-              {isPlacingBlock && hoveredSlot && !isPreviewingFillEmpty && !showRangeFillPreview && selectedBlock && selectedBlockShapes.length > 0 && (
+              {isPlacingBlock && hoveredSlot && !isPreviewingFillEmpty && !showRangeFillPreview && selectedBlock && selectedBlockUnits.length > 0 && (
                 <Group opacity={0.5} listening={false}>
                   <BlockInstanceRenderer
                     instance={{
@@ -571,7 +572,7 @@ export function PatternCanvas() {
                       flipHorizontal: false,
                       flipVertical: false,
                     }}
-                    shapes={selectedBlockShapes}
+                    units={selectedBlockUnits}
                     blockGridSize={selectedBlock.gridSize || 3}
                     palette={palette}
                     cellSize={cellSize}
@@ -595,7 +596,7 @@ export function PatternCanvas() {
               )}
 
               {/* Range fill ghost preview when shift is held */}
-              {showRangeFillPreview && selectedBlock && selectedBlockShapes.length > 0 && (
+              {showRangeFillPreview && selectedBlock && selectedBlockUnits.length > 0 && (
                 <Group opacity={0.5} listening={false}>
                   {rangeFillPreviewPositions.map(({ row, col }) => (
                     <BlockInstanceRenderer
@@ -608,7 +609,7 @@ export function PatternCanvas() {
                         flipHorizontal: false,
                         flipVertical: false,
                       }}
-                      shapes={selectedBlockShapes}
+                      units={selectedBlockUnits}
                       blockGridSize={selectedBlock.gridSize || 3}
                       palette={palette}
                       cellSize={cellSize}
@@ -621,7 +622,7 @@ export function PatternCanvas() {
               )}
 
               {/* Ghost preview for all empty slots when hovering "Fill Empty" button */}
-              {isPreviewingFillEmpty && selectedBlock && selectedBlockShapes.length > 0 && (
+              {isPreviewingFillEmpty && selectedBlock && selectedBlockUnits.length > 0 && (
                 <Group opacity={0.5} listening={false}>
                   {slots
                     .filter(({ isOccupied }) => !isOccupied)
@@ -636,7 +637,7 @@ export function PatternCanvas() {
                           flipHorizontal: false,
                           flipVertical: false,
                         }}
-                        shapes={selectedBlockShapes}
+                        units={selectedBlockUnits}
                         blockGridSize={selectedBlock.gridSize || 3}
                         palette={palette}
                         cellSize={cellSize}

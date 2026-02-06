@@ -1,30 +1,30 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ShapeLibraryPanel } from './ShapeLibraryPanel';
-import type { ShapeSelectionType } from '@quillty/core';
+import type { UnitSelectionType } from '@quillty/core';
 
 // Mock store state
-let mockSelectedShapeType: ShapeSelectionType | null = null;
+let mockSelectedUnitType: UnitSelectionType | null = null;
 let mockMode = 'idle';
-const mockSelectShapeForPlacement = vi.fn();
-const mockClearShapeSelection = vi.fn();
+const mockSelectUnitForPlacement = vi.fn();
+const mockClearUnitSelection = vi.fn();
 
 vi.mock('@quillty/core', () => ({
   useBlockDesignerStore: vi.fn((selector: (state: unknown) => unknown) => {
     const state = {
-      selectShapeForPlacement: mockSelectShapeForPlacement,
-      clearShapeSelection: mockClearShapeSelection,
+      selectUnitForPlacement: mockSelectUnitForPlacement,
+      clearUnitSelection: mockClearUnitSelection,
       mode: mockMode,
     };
     return selector(state);
   }),
-  useSelectedShapeType: vi.fn(() => mockSelectedShapeType),
+  useSelectedUnitType: vi.fn(() => mockSelectedUnitType),
 }));
 
 describe('ShapeLibraryPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSelectedShapeType = null;
+    mockSelectedUnitType = null;
     mockMode = 'idle';
   });
 
@@ -35,7 +35,7 @@ describe('ShapeLibraryPanel', () => {
       expect(screen.getByText('Shapes')).toBeInTheDocument();
     });
 
-    it('renders all shape options', () => {
+    it('renders all unit options', () => {
       render(<ShapeLibraryPanel />);
 
       expect(screen.getByRole('button', { name: /select square/i })).toBeInTheDocument();
@@ -54,54 +54,54 @@ describe('ShapeLibraryPanel', () => {
     });
   });
 
-  describe('shape selection', () => {
-    it('calls selectShapeForPlacement when clicking a shape', () => {
+  describe('unit selection', () => {
+    it('calls selectUnitForPlacement when clicking a unit', () => {
       render(<ShapeLibraryPanel />);
 
       fireEvent.click(screen.getByRole('button', { name: /select square/i }));
 
-      expect(mockSelectShapeForPlacement).toHaveBeenCalledWith({ type: 'square' });
+      expect(mockSelectUnitForPlacement).toHaveBeenCalledWith({ type: 'square' });
     });
 
-    it('calls selectShapeForPlacement with HST variant when clicking HST shape', () => {
+    it('calls selectUnitForPlacement with HST variant when clicking HST unit', () => {
       render(<ShapeLibraryPanel />);
 
       fireEvent.click(screen.getByRole('button', { name: /select ◸/i }));
 
-      expect(mockSelectShapeForPlacement).toHaveBeenCalledWith({
+      expect(mockSelectUnitForPlacement).toHaveBeenCalledWith({
         type: 'hst',
         variant: 'nw',
       });
     });
 
-    it('calls selectShapeForPlacement with flying_geese when clicking flying geese', () => {
+    it('calls selectUnitForPlacement with flying_geese when clicking flying geese', () => {
       render(<ShapeLibraryPanel />);
 
       fireEvent.click(screen.getByRole('button', { name: /select geese/i }));
 
-      expect(mockSelectShapeForPlacement).toHaveBeenCalledWith({ type: 'flying_geese' });
+      expect(mockSelectUnitForPlacement).toHaveBeenCalledWith({ type: 'flying_geese' });
     });
 
-    it('calls clearShapeSelection when clicking already selected shape', () => {
-      mockSelectedShapeType = { type: 'square' };
+    it('calls clearUnitSelection when clicking already selected unit', () => {
+      mockSelectedUnitType = { type: 'square' };
       render(<ShapeLibraryPanel />);
 
       fireEvent.click(screen.getByRole('button', { name: /select square/i }));
 
-      expect(mockClearShapeSelection).toHaveBeenCalled();
-      expect(mockSelectShapeForPlacement).not.toHaveBeenCalled();
+      expect(mockClearUnitSelection).toHaveBeenCalled();
+      expect(mockSelectUnitForPlacement).not.toHaveBeenCalled();
     });
 
-    it('shows selected shape with pressed state', () => {
-      mockSelectedShapeType = { type: 'square' };
+    it('shows selected unit with pressed state', () => {
+      mockSelectedUnitType = { type: 'square' };
       render(<ShapeLibraryPanel />);
 
       const squareButton = screen.getByRole('button', { name: /select square/i });
       expect(squareButton).toHaveAttribute('aria-pressed', 'true');
     });
 
-    it('shows non-selected shapes without pressed state', () => {
-      mockSelectedShapeType = { type: 'square' };
+    it('shows non-selected units without pressed state', () => {
+      mockSelectedUnitType = { type: 'square' };
       render(<ShapeLibraryPanel />);
 
       const hstButton = screen.getByRole('button', { name: /select ◸/i });
@@ -110,35 +110,35 @@ describe('ShapeLibraryPanel', () => {
   });
 
   describe('placing mode feedback', () => {
-    it('shows feedback when in placing_shape mode', () => {
-      mockMode = 'placing_shape';
-      mockSelectedShapeType = { type: 'square' };
+    it('shows feedback when in placing_unit mode', () => {
+      mockMode = 'placing_unit';
+      mockSelectedUnitType = { type: 'square' };
       render(<ShapeLibraryPanel />);
 
-      expect(screen.getByText(/tap cells to place shape/i)).toBeInTheDocument();
+      expect(screen.getByText(/tap cells to place unit/i)).toBeInTheDocument();
     });
 
-    it('shows cancel button when in placing_shape mode', () => {
-      mockMode = 'placing_shape';
-      mockSelectedShapeType = { type: 'square' };
+    it('shows cancel button when in placing_unit mode', () => {
+      mockMode = 'placing_unit';
+      mockSelectedUnitType = { type: 'square' };
       render(<ShapeLibraryPanel />);
 
       expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
     });
 
-    it('calls clearShapeSelection when cancel button is clicked', () => {
-      mockMode = 'placing_shape';
-      mockSelectedShapeType = { type: 'square' };
+    it('calls clearUnitSelection when cancel button is clicked', () => {
+      mockMode = 'placing_unit';
+      mockSelectedUnitType = { type: 'square' };
       render(<ShapeLibraryPanel />);
 
       fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
 
-      expect(mockClearShapeSelection).toHaveBeenCalled();
+      expect(mockClearUnitSelection).toHaveBeenCalled();
     });
 
     it('shows flying geese instructions when flying geese selected', () => {
-      mockMode = 'placing_shape';
-      mockSelectedShapeType = { type: 'flying_geese' };
+      mockMode = 'placing_unit';
+      mockSelectedUnitType = { type: 'flying_geese' };
       render(<ShapeLibraryPanel />);
 
       expect(screen.getByText(/tap first cell, then adjacent cell/i)).toBeInTheDocument();
@@ -146,7 +146,7 @@ describe('ShapeLibraryPanel', () => {
 
     it('shows second tap instruction for flying geese second mode', () => {
       mockMode = 'placing_flying_geese_second';
-      mockSelectedShapeType = { type: 'flying_geese' };
+      mockSelectedUnitType = { type: 'flying_geese' };
       render(<ShapeLibraryPanel />);
 
       expect(screen.getByText(/tap an adjacent cell to complete/i)).toBeInTheDocument();
@@ -155,7 +155,7 @@ describe('ShapeLibraryPanel', () => {
 
   describe('HST variant selection', () => {
     it('correctly identifies selected HST variant', () => {
-      mockSelectedShapeType = { type: 'hst', variant: 'ne' };
+      mockSelectedUnitType = { type: 'hst', variant: 'ne' };
       render(<ShapeLibraryPanel />);
 
       // The NE variant should be selected

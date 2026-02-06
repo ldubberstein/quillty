@@ -16,7 +16,7 @@ const mockSetRoleColor = vi.fn();
 const mockAddRole = vi.fn(() => 'new-role-id');
 const mockRemoveRole = vi.fn();
 const mockCanRemoveRole = vi.fn(() => true);
-const mockGetShapesUsingRole = vi.fn(() => []);
+const mockGetUnitsUsingRole = vi.fn(() => []);
 
 // Store state that can be modified per test
 let mockState = {
@@ -47,7 +47,7 @@ vi.mock('@quillty/core', () => ({
       addRole: mockAddRole,
       removeRole: mockRemoveRole,
       canRemoveRole: mockCanRemoveRole,
-      getShapesUsingRole: mockGetShapesUsingRole,
+      getUnitsUsingRole: mockGetUnitsUsingRole,
     };
     return selector ? selector(state) : state;
   }),
@@ -59,7 +59,7 @@ describe('FabricPanel', () => {
     vi.clearAllMocks();
     // Reset mock functions
     mockCanRemoveRole.mockReturnValue(true);
-    mockGetShapesUsingRole.mockReturnValue([]);
+    mockGetUnitsUsingRole.mockReturnValue([]);
     // Reset mock state
     mockState = {
       activeFabricRole: null,
@@ -101,7 +101,7 @@ describe('FabricPanel', () => {
     it('displays instruction text when not in paint mode', () => {
       render(<FabricPanel />);
       expect(
-        screen.getByText('Select a fabric, then tap shapes to paint')
+        screen.getByText('Select a fabric, then tap units to paint')
       ).toBeInTheDocument();
     });
 
@@ -129,7 +129,7 @@ describe('FabricPanel', () => {
 
     it('shows paint mode instruction text', () => {
       render(<FabricPanel />);
-      expect(screen.getByText('Tap shapes on the canvas to paint them')).toBeInTheDocument();
+      expect(screen.getByText('Tap units on the canvas to paint them')).toBeInTheDocument();
     });
 
     it('shows Exit Paint Mode button', () => {

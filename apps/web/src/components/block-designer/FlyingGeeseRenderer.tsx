@@ -2,11 +2,11 @@
 
 import { Group, Line } from 'react-konva';
 import { getFlyingGeeseTriangles, triangleToFlatPoints } from '@quillty/core';
-import type { FlyingGeeseShape, FlyingGeesePartId, Palette } from '@quillty/core';
+import type { FlyingGeeseUnit, FlyingGeesePatchId, Palette } from '@quillty/core';
 
 interface FlyingGeeseRendererProps {
-  /** The Flying Geese shape to render */
-  shape: FlyingGeeseShape;
+  /** The Flying Geese unit to render */
+  unit: FlyingGeeseUnit;
   /** Size of each cell in pixels */
   cellSize: number;
   /** X offset for the grid */
@@ -15,21 +15,21 @@ interface FlyingGeeseRendererProps {
   offsetY: number;
   /** Palette for resolving fabric role colors */
   palette: Palette;
-  /** Whether this shape is selected */
+  /** Whether this unit is selected */
   isSelected?: boolean;
-  /** Callback when a triangle part is clicked */
-  onClick?: (partId: FlyingGeesePartId) => void;
+  /** Callback when a triangle patch is clicked */
+  onClick?: (patchId: FlyingGeesePatchId) => void;
 }
 
 /**
- * FlyingGeeseRenderer - Renders a Flying Geese shape on the canvas
+ * FlyingGeeseRenderer - Renders a Flying Geese unit on the canvas
  *
  * Flying Geese spans 2 cells and consists of:
  * - A center triangle (the "goose") - uses primary fabric role
  * - Two side triangles (the "sky") - uses secondary fabric role
  */
 export function FlyingGeeseRenderer({
-  shape,
+  unit,
   cellSize,
   offsetX,
   offsetY,
@@ -37,38 +37,38 @@ export function FlyingGeeseRenderer({
   isSelected = false,
   onClick,
 }: FlyingGeeseRendererProps) {
-  // Get colors from palette for each part's fabric role
-  const gooseRole = palette.roles.find((r) => r.id === shape.partFabricRoles.goose);
-  const sky1Role = palette.roles.find((r) => r.id === shape.partFabricRoles.sky1);
-  const sky2Role = palette.roles.find((r) => r.id === shape.partFabricRoles.sky2);
+  // Get colors from palette for each patch's fabric role
+  const gooseRole = palette.roles.find((r) => r.id === unit.patchFabricRoles.goose);
+  const sky1Role = palette.roles.find((r) => r.id === unit.patchFabricRoles.sky1);
+  const sky2Role = palette.roles.find((r) => r.id === unit.patchFabricRoles.sky2);
   const gooseColor = gooseRole?.color ?? '#CCCCCC';
   const sky1Color = sky1Role?.color ?? '#FFFFFF';
   const sky2Color = sky2Role?.color ?? '#FFFFFF';
 
   // Calculate pixel position
-  const x = offsetX + shape.position.col * cellSize;
-  const y = offsetY + shape.position.row * cellSize;
+  const x = offsetX + unit.position.col * cellSize;
+  const y = offsetY + unit.position.row * cellSize;
 
   // Small padding to show grid lines
   const padding = 1;
 
   // Calculate total size based on span (2 cells in one direction)
-  const isHorizontal = shape.span.cols === 2;
+  const isHorizontal = unit.span.cols === 2;
   const totalWidth = (isHorizontal ? 2 : 1) * cellSize - padding * 2;
   const totalHeight = (isHorizontal ? 1 : 2) * cellSize - padding * 2;
 
   // Get triangle geometry for this direction
-  const triangles = getFlyingGeeseTriangles(shape.direction, totalWidth, totalHeight);
+  const triangles = getFlyingGeeseTriangles(unit.direction, totalWidth, totalHeight);
   const goosePoints = triangleToFlatPoints(triangles.goose);
   const sky1Points = triangleToFlatPoints(triangles.sky1);
   const sky2Points = triangleToFlatPoints(triangles.sky2);
 
-  // Click handlers for individual triangles (each part independently)
+  // Click handlers for individual triangles (each patch independently)
   const handleGooseClick = onClick ? () => onClick('goose') : undefined;
   const handleSky1Click = onClick ? () => onClick('sky1') : undefined;
   const handleSky2Click = onClick ? () => onClick('sky2') : undefined;
 
-  // Darker gray outline to make shapes distinct from grid lines
+  // Darker gray outline to make units distinct from grid lines
   const outlineColor = '#9CA3AF'; // gray-400
 
   return (

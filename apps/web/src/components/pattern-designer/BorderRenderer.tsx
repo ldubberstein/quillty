@@ -91,64 +91,128 @@ export function BorderRenderer({
     const key = `border-${border.id}`;
 
     if (border.cornerStyle === 'butted') {
-      // Butted corners: top/bottom full width, sides between them
-      borderElements.push(
-        <Group key={key}>
-          {/* Top strip (full width) */}
-          <Rect
-            x={outerX}
-            y={outerY}
-            width={outerWidth}
-            height={borderWidthPx}
-            fill={color}
-          />
-          {/* Bottom strip (full width) */}
-          <Rect
-            x={outerX}
-            y={outerY + outerHeight - borderWidthPx}
-            width={outerWidth}
-            height={borderWidthPx}
-            fill={color}
-          />
-          {/* Left strip (between top and bottom) */}
-          <Rect
-            x={outerX}
-            y={outerY + borderWidthPx}
-            width={borderWidthPx}
-            height={outerHeight - borderWidthPx * 2}
-            fill={color}
-          />
-          {/* Right strip (between top and bottom) */}
-          <Rect
-            x={outerX + outerWidth - borderWidthPx}
-            y={outerY + borderWidthPx}
-            width={borderWidthPx}
-            height={outerHeight - borderWidthPx * 2}
-            fill={color}
-          />
-          {/* Seam lines */}
-          <Line
-            points={[innerX, outerY, innerX, innerY]}
-            stroke={BORDER_SEAM_COLOR}
-            strokeWidth={BORDER_SEAM_WIDTH}
-          />
-          <Line
-            points={[innerX + innerWidth, outerY, innerX + innerWidth, innerY]}
-            stroke={BORDER_SEAM_COLOR}
-            strokeWidth={BORDER_SEAM_WIDTH}
-          />
-          <Line
-            points={[innerX, innerY + innerHeight, innerX, outerY + outerHeight]}
-            stroke={BORDER_SEAM_COLOR}
-            strokeWidth={BORDER_SEAM_WIDTH}
-          />
-          <Line
-            points={[innerX + innerWidth, innerY + innerHeight, innerX + innerWidth, outerY + outerHeight]}
-            stroke={BORDER_SEAM_COLOR}
-            strokeWidth={BORDER_SEAM_WIDTH}
-          />
-        </Group>
-      );
+      // Butted corners: overlap direction determines which strips are on top
+      const isVerticalOverHorizontal = border.buttedOverlap === 'vertical_over_horizontal';
+
+      if (isVerticalOverHorizontal) {
+        // Vertical over horizontal: left/right full height, top/bottom between them
+        borderElements.push(
+          <Group key={key}>
+            {/* Left strip (full height) */}
+            <Rect
+              x={outerX}
+              y={outerY}
+              width={borderWidthPx}
+              height={outerHeight}
+              fill={color}
+            />
+            {/* Right strip (full height) */}
+            <Rect
+              x={outerX + outerWidth - borderWidthPx}
+              y={outerY}
+              width={borderWidthPx}
+              height={outerHeight}
+              fill={color}
+            />
+            {/* Top strip (between left and right) */}
+            <Rect
+              x={outerX + borderWidthPx}
+              y={outerY}
+              width={outerWidth - borderWidthPx * 2}
+              height={borderWidthPx}
+              fill={color}
+            />
+            {/* Bottom strip (between left and right) */}
+            <Rect
+              x={outerX + borderWidthPx}
+              y={outerY + outerHeight - borderWidthPx}
+              width={outerWidth - borderWidthPx * 2}
+              height={borderWidthPx}
+              fill={color}
+            />
+            {/* Seam lines (horizontal) */}
+            <Line
+              points={[outerX, innerY, innerX, innerY]}
+              stroke={BORDER_SEAM_COLOR}
+              strokeWidth={BORDER_SEAM_WIDTH}
+            />
+            <Line
+              points={[innerX + innerWidth, innerY, outerX + outerWidth, innerY]}
+              stroke={BORDER_SEAM_COLOR}
+              strokeWidth={BORDER_SEAM_WIDTH}
+            />
+            <Line
+              points={[outerX, innerY + innerHeight, innerX, innerY + innerHeight]}
+              stroke={BORDER_SEAM_COLOR}
+              strokeWidth={BORDER_SEAM_WIDTH}
+            />
+            <Line
+              points={[innerX + innerWidth, innerY + innerHeight, outerX + outerWidth, innerY + innerHeight]}
+              stroke={BORDER_SEAM_COLOR}
+              strokeWidth={BORDER_SEAM_WIDTH}
+            />
+          </Group>
+        );
+      } else {
+        // Horizontal over vertical (default): top/bottom full width, sides between them
+        borderElements.push(
+          <Group key={key}>
+            {/* Top strip (full width) */}
+            <Rect
+              x={outerX}
+              y={outerY}
+              width={outerWidth}
+              height={borderWidthPx}
+              fill={color}
+            />
+            {/* Bottom strip (full width) */}
+            <Rect
+              x={outerX}
+              y={outerY + outerHeight - borderWidthPx}
+              width={outerWidth}
+              height={borderWidthPx}
+              fill={color}
+            />
+            {/* Left strip (between top and bottom) */}
+            <Rect
+              x={outerX}
+              y={outerY + borderWidthPx}
+              width={borderWidthPx}
+              height={outerHeight - borderWidthPx * 2}
+              fill={color}
+            />
+            {/* Right strip (between top and bottom) */}
+            <Rect
+              x={outerX + outerWidth - borderWidthPx}
+              y={outerY + borderWidthPx}
+              width={borderWidthPx}
+              height={outerHeight - borderWidthPx * 2}
+              fill={color}
+            />
+            {/* Seam lines (vertical) */}
+            <Line
+              points={[innerX, outerY, innerX, innerY]}
+              stroke={BORDER_SEAM_COLOR}
+              strokeWidth={BORDER_SEAM_WIDTH}
+            />
+            <Line
+              points={[innerX + innerWidth, outerY, innerX + innerWidth, innerY]}
+              stroke={BORDER_SEAM_COLOR}
+              strokeWidth={BORDER_SEAM_WIDTH}
+            />
+            <Line
+              points={[innerX, innerY + innerHeight, innerX, outerY + outerHeight]}
+              stroke={BORDER_SEAM_COLOR}
+              strokeWidth={BORDER_SEAM_WIDTH}
+            />
+            <Line
+              points={[innerX + innerWidth, innerY + innerHeight, innerX + innerWidth, outerY + outerHeight]}
+              stroke={BORDER_SEAM_COLOR}
+              strokeWidth={BORDER_SEAM_WIDTH}
+            />
+          </Group>
+        );
+      }
     } else if (border.cornerStyle === 'cornerstone') {
       // Cornerstone: separate corner squares
       borderElements.push(

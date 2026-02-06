@@ -21,7 +21,7 @@ const mockClearSelections = vi.fn();
 const mockSetPreviewingFillEmpty = vi.fn();
 
 // Capture calls to BlockThumbnail
-const thumbnailCalls: Array<{ palette: Palette; shapes: unknown[]; gridSize: number }> = [];
+const thumbnailCalls: Array<{ palette: Palette; units: unknown[]; gridSize: number }> = [];
 
 let mockSelectedLibraryBlockId: string | null = null;
 
@@ -47,7 +47,7 @@ const mockBlocks = [
     name: 'Test Block 1',
     grid_size: 3,
     design_data: JSON.stringify({
-      shapes: [{ id: 'shape-1', type: 'square', gridPosition: { row: 0, col: 0 }, fabricRoleId: 'feature' }],
+      units: [{ id: 'unit-1', type: 'square', gridPosition: { row: 0, col: 0 }, fabricRoleId: 'feature' }],
       previewPalette: mockBlockPalette,
     }),
   },
@@ -56,7 +56,7 @@ const mockBlocks = [
     name: 'Test Block 2',
     grid_size: 4,
     design_data: {
-      shapes: [{ id: 'shape-2', type: 'square', gridPosition: { row: 0, col: 0 }, fabricRoleId: 'accent1' }],
+      units: [{ id: 'unit-2', type: 'square', gridPosition: { row: 0, col: 0 }, fabricRoleId: 'accent1' }],
       previewPalette: mockBlockPalette,
     },
   },
@@ -83,8 +83,8 @@ const mockPatternPalette: Palette = {
 vi.mock('next/dynamic', () => ({
   default: () => {
     // Return a component that captures props and renders a test element
-    const MockComponent = ({ palette, shapes, gridSize }: { palette: Palette; shapes: unknown[]; gridSize: number }) => {
-      thumbnailCalls.push({ palette, shapes, gridSize });
+    const MockComponent = ({ palette, units, gridSize }: { palette: Palette; units: unknown[]; gridSize: number }) => {
+      thumbnailCalls.push({ palette, units, gridSize });
       // Use background color to identify the palette source
       const bgColor = palette.roles.find(r => r.id === 'background')?.color ?? 'unknown';
       return (
@@ -380,7 +380,7 @@ describe('BlockLibraryPanel', () => {
 import * as coreModule from '@quillty/core';
 
 describe('InThisPatternSection', () => {
-  // Mock block cache with CoreBlock format (has shapes directly)
+  // Mock block cache with CoreBlock format (has units directly)
   const mockCoreBlock = {
     id: 'cached-block-1',
     creatorId: 'user-1',
@@ -389,7 +389,7 @@ describe('InThisPatternSection', () => {
     description: null,
     hashtags: [],
     gridSize: 3,
-    shapes: [{ id: 'shape-1', type: 'square', position: { row: 0, col: 0 }, fabricRole: 'feature' }],
+    units: [{ id: 'unit-1', type: 'square', position: { row: 0, col: 0 }, fabricRole: 'feature' }],
     previewPalette: mockPatternPalette,
     fabricRequirements: [],
     cuttingInstructions: [],

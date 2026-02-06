@@ -25,7 +25,7 @@ vi.mock('@quillty/core', () => ({
     const state = {
       block: {
         gridSize: 3,
-        shapes: [],
+        units: [],
         previewPalette: {
           roles: [
             { id: 'background', name: 'Background', color: '#FFFFFF' },
@@ -33,8 +33,8 @@ vi.mock('@quillty/core', () => ({
           ],
         },
       },
-      selectedShapeId: null,
-      selectedShapeType: null,
+      selectedUnitId: null,
+      selectedUnitType: null,
       hoveredCell: null,
       mode: 'idle',
       rangeFillAnchor: null,
@@ -42,18 +42,18 @@ vi.mock('@quillty/core', () => ({
       addHst: mockAddHst,
       isCellOccupied: mockIsCellOccupied,
       clearSelection: mockClearSelection,
-      selectShapeForPlacement: vi.fn(),
+      selectUnitForPlacement: vi.fn(),
       setHoveredCell: vi.fn(),
-      clearShapeSelection: vi.fn(),
+      clearUnitSelection: vi.fn(),
       setRangeFillAnchor: vi.fn(),
       getRangeFillPositions: vi.fn(() => []),
-      addShapesBatch: vi.fn(),
+      addUnitsBatch: vi.fn(),
     };
     return selector ? selector(state) : state;
   }),
-  useSelectedShapeType: vi.fn(() => null),
+  useSelectedUnitType: vi.fn(() => null),
   useHoveredCell: vi.fn(() => null),
-  useIsPlacingShape: vi.fn(() => false),
+  useIsPlacingUnit: vi.fn(() => false),
   useBlockRangeFillAnchor: vi.fn(() => null),
   DEFAULT_GRID_SIZE: 3,
 }));
@@ -170,8 +170,8 @@ describe('BlockCanvas', () => {
     });
   });
 
-  describe('shape rendering', () => {
-    it('renders base grid elements when shapes array is empty', async () => {
+  describe('unit rendering', () => {
+    it('renders base grid elements when units array is empty', async () => {
       await act(async () => {
         render(<BlockCanvas />);
       });
@@ -195,8 +195,8 @@ describe('BlockCanvas', () => {
     });
   });
 
-  describe('shape picker', () => {
-    it('does not show shape picker by default', async () => {
+  describe('unit picker', () => {
+    it('does not show unit picker by default', async () => {
       await act(async () => {
         render(<BlockCanvas />);
       });

@@ -52,9 +52,10 @@ export async function POST(
     }
 
     // Validate block has required content for publishing
-    const designData = existingBlock.design_data as { shapes?: unknown[] };
-    if (!designData?.shapes || designData.shapes.length === 0) {
-      return badRequest('Block must have at least one shape to be published');
+    const designData = existingBlock.design_data as { units?: unknown[]; shapes?: unknown[] };
+    const units = designData?.units ?? designData?.shapes ?? [];
+    if (units.length === 0) {
+      return badRequest('Block must have at least one unit to be published');
     }
 
     if (!existingBlock.name || existingBlock.name.trim() === '') {

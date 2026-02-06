@@ -2,11 +2,11 @@
 
 import { Group, Line } from 'react-konva';
 import { getQstTriangles, triangleToFlatPoints } from '@quillty/core';
-import type { QstShape, Palette, QstPartId } from '@quillty/core';
+import type { QstUnit, Palette, QstPatchId } from '@quillty/core';
 
 interface QstRendererProps {
-  /** The QST shape to render */
-  shape: QstShape;
+  /** The QST unit to render */
+  unit: QstUnit;
   /** Size of each cell in pixels */
   cellSize: number;
   /** X offset for the grid */
@@ -15,20 +15,20 @@ interface QstRendererProps {
   offsetY: number;
   /** Palette for resolving fabric role colors */
   palette: Palette;
-  /** Whether this shape is selected */
+  /** Whether this unit is selected */
   isSelected?: boolean;
-  /** Callback when a triangle part is clicked */
-  onClick?: (partId: QstPartId) => void;
+  /** Callback when a triangle patch is clicked */
+  onClick?: (patchId: QstPatchId) => void;
 }
 
 /**
- * QstRenderer - Renders a quarter-square triangle shape on the canvas
+ * QstRenderer - Renders a quarter-square triangle unit on the canvas
  *
  * Uses four Konva Line elements (filled polygons) to render the four
  * triangles with their respective colors from the palette.
  */
 export function QstRenderer({
-  shape,
+  unit,
   cellSize,
   offsetX,
   offsetY,
@@ -37,10 +37,10 @@ export function QstRenderer({
   onClick,
 }: QstRendererProps) {
   // Get colors from palette for all four fabric roles
-  const topRole = palette.roles.find((r) => r.id === shape.partFabricRoles.top);
-  const rightRole = palette.roles.find((r) => r.id === shape.partFabricRoles.right);
-  const bottomRole = palette.roles.find((r) => r.id === shape.partFabricRoles.bottom);
-  const leftRole = palette.roles.find((r) => r.id === shape.partFabricRoles.left);
+  const topRole = palette.roles.find((r) => r.id === unit.patchFabricRoles.top);
+  const rightRole = palette.roles.find((r) => r.id === unit.patchFabricRoles.right);
+  const bottomRole = palette.roles.find((r) => r.id === unit.patchFabricRoles.bottom);
+  const leftRole = palette.roles.find((r) => r.id === unit.patchFabricRoles.left);
 
   const topColor = topRole?.color ?? '#CCCCCC';
   const rightColor = rightRole?.color ?? '#FFFFFF';
@@ -48,8 +48,8 @@ export function QstRenderer({
   const leftColor = leftRole?.color ?? '#FFFFFF';
 
   // Calculate pixel position
-  const x = offsetX + shape.position.col * cellSize;
-  const y = offsetY + shape.position.row * cellSize;
+  const x = offsetX + unit.position.col * cellSize;
+  const y = offsetY + unit.position.row * cellSize;
 
   // Small padding to show grid lines
   const padding = 1;
@@ -68,7 +68,7 @@ export function QstRenderer({
   const handleBottomClick = onClick ? () => onClick('bottom') : undefined;
   const handleLeftClick = onClick ? () => onClick('left') : undefined;
 
-  // Darker gray outline to make shapes distinct from grid lines
+  // Darker gray outline to make units distinct from grid lines
   const outlineColor = '#9CA3AF'; // gray-400
 
   return (

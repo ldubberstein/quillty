@@ -20,6 +20,7 @@ export type {
   ResizeDirection,
   // Border types
   BorderCornerStyle,
+  ButtedOverlapDirection,
   BorderStyle,
   PiecedBorderConfig,
   Border,

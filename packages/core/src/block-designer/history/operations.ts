@@ -5,32 +5,33 @@
  * Operations store the data needed to apply and invert each change.
  */
 
-import type { Shape, FabricRoleId, FabricRole, Palette, GridSize, FlyingGeeseShape, QstShape } from '../types';
+import type { Unit, FabricRoleId, FabricRole, Palette, GridSize, FlyingGeeseUnit, QstUnit } from '../types';
+import { unitUsesRole } from '../unit-bridge';
 
 /**
- * Operation to add a shape
+ * Operation to add a unit
  */
-export interface AddShapeOperation {
-  type: 'add_shape';
-  shape: Shape;
+export interface AddUnitOperation {
+  type: 'add_unit';
+  unit: Unit;
 }
 
 /**
- * Operation to remove a shape (stores full shape for redo)
+ * Operation to remove a unit (stores full unit for redo)
  */
-export interface RemoveShapeOperation {
-  type: 'remove_shape';
-  shape: Shape;
+export interface RemoveUnitOperation {
+  type: 'remove_unit';
+  unit: Unit;
 }
 
 /**
- * Operation to update a shape's properties
+ * Operation to update a unit's properties
  */
-export interface UpdateShapeOperation {
-  type: 'update_shape';
-  shapeId: string;
-  prev: Partial<Shape>;
-  next: Partial<Shape>;
+export interface UpdateUnitOperation {
+  type: 'update_unit';
+  unitId: string;
+  prev: Partial<Unit>;
+  next: Partial<Unit>;
 }
 
 /**
@@ -44,14 +45,14 @@ export interface UpdatePaletteOperation {
 }
 
 /**
- * Operation to resize the grid (stores removed shapes for undo when shrinking)
+ * Operation to resize the grid (stores removed units for undo when shrinking)
  */
 export interface ResizeGridOperation {
   type: 'resize_grid';
   prevSize: GridSize;
   nextSize: GridSize;
-  /** Shapes removed when shrinking the grid (for restore on undo) */
-  removedShapes: Shape[];
+  /** Units removed when shrinking the grid (for restore on undo) */
+  removedUnits: Unit[];
 }
 
 /**
@@ -71,17 +72,17 @@ export interface AddRoleOperation {
 }
 
 /**
- * Captures the previous role assignments for a shape (for undo on remove role)
+ * Captures the previous role assignments for a unit (for undo on remove role)
  */
-export interface ShapeRoleState {
+export interface UnitRoleState {
   fabricRole?: FabricRoleId;
   secondaryFabricRole?: FabricRoleId;
-  partFabricRoles?: {
+  patchFabricRoles?: {
     goose: FabricRoleId;
     sky1: FabricRoleId;
     sky2: FabricRoleId;
   };
-  qstPartFabricRoles?: {
+  qstPatchFabricRoles?: {
     top: FabricRoleId;
     right: FabricRoleId;
     bottom: FabricRoleId;
@@ -91,19 +92,19 @@ export interface ShapeRoleState {
 
 /**
  * Operation to remove a fabric role from the palette
- * Stores affected shapes for restoring their role assignments on undo
+ * Stores affected units for restoring their role assignments on undo
  */
 export interface RemoveRoleOperation {
   type: 'remove_role';
   role: FabricRole;
   /** Index where the role was in the palette (for restoring position on undo) */
   index: number;
-  /** Shapes that had their roles reassigned, with their previous role assignments */
-  affectedShapes: Array<{
-    shapeId: string;
-    prevRoles: ShapeRoleState;
+  /** Units that had their roles reassigned, with their previous role assignments */
+  affectedUnits: Array<{
+    unitId: string;
+    prevRoles: UnitRoleState;
   }>;
-  /** The role that shapes were reassigned to */
+  /** The role that units were reassigned to */
   fallbackRoleId: FabricRoleId;
 }
 
@@ -121,9 +122,9 @@ export interface RenameRoleOperation {
  * Union type of all operations
  */
 export type Operation =
-  | AddShapeOperation
-  | RemoveShapeOperation
-  | UpdateShapeOperation
+  | AddUnitOperation
+  | RemoveUnitOperation
+  | UpdateUnitOperation
   | UpdatePaletteOperation
   | ResizeGridOperation
   | BatchOperation
@@ -136,16 +137,16 @@ export type Operation =
  */
 export function invertOperation(op: Operation): Operation {
   switch (op.type) {
-    case 'add_shape':
-      return { type: 'remove_shape', shape: op.shape };
+    case 'add_unit':
+      return { type: 'remove_unit', unit: op.unit };
 
-    case 'remove_shape':
-      return { type: 'add_shape', shape: op.shape };
+    case 'remove_unit':
+      return { type: 'add_unit', unit: op.unit };
 
-    case 'update_shape':
+    case 'update_unit':
       return {
-        type: 'update_shape',
-        shapeId: op.shapeId,
+        type: 'update_unit',
+        unitId: op.unitId,
         prev: op.next,
         next: op.prev,
       };
@@ -163,7 +164,7 @@ export function invertOperation(op: Operation): Operation {
         type: 'resize_grid',
         prevSize: op.nextSize,
         nextSize: op.prevSize,
-        removedShapes: op.removedShapes,
+        removedUnits: op.removedUnits,
       };
 
     case 'batch':
@@ -177,41 +178,41 @@ export function invertOperation(op: Operation): Operation {
         type: 'remove_role',
         role: op.role,
         index: -1, // Will be determined at apply time
-        affectedShapes: [], // No shapes affected when undoing an add
+        affectedUnits: [], // No units affected when undoing an add
         fallbackRoleId: '', // Not used when undoing an add
       };
 
     case 'remove_role': {
-      // When undoing a remove, we need to both restore the role AND restore shape assignments
+      // When undoing a remove, we need to both restore the role AND restore unit assignments
       const operations: Operation[] = [
         { type: 'add_role', role: op.role },
       ];
 
-      // Add update operations to restore original role assignments to affected shapes
-      for (const { shapeId, prevRoles } of op.affectedShapes) {
+      // Add update operations to restore original role assignments to affected units
+      for (const { unitId, prevRoles } of op.affectedUnits) {
         if (prevRoles.fabricRole !== undefined) {
           operations.push({
-            type: 'update_shape',
-            shapeId,
+            type: 'update_unit',
+            unitId,
             prev: { fabricRole: op.fallbackRoleId },
             next: { fabricRole: prevRoles.fabricRole },
           });
         }
         if (prevRoles.secondaryFabricRole !== undefined) {
           operations.push({
-            type: 'update_shape',
-            shapeId,
+            type: 'update_unit',
+            unitId,
             prev: { secondaryFabricRole: op.fallbackRoleId },
             next: { secondaryFabricRole: prevRoles.secondaryFabricRole },
           });
         }
-        if (prevRoles.partFabricRoles !== undefined) {
-          // Restore Flying Geese part roles
+        if (prevRoles.patchFabricRoles !== undefined) {
+          // Restore Flying Geese patch roles
           operations.push({
-            type: 'update_shape',
-            shapeId,
-            prev: { partFabricRoles: { goose: op.fallbackRoleId, sky1: op.fallbackRoleId, sky2: op.fallbackRoleId } },
-            next: { partFabricRoles: prevRoles.partFabricRoles },
+            type: 'update_unit',
+            unitId,
+            prev: { patchFabricRoles: { goose: op.fallbackRoleId, sky1: op.fallbackRoleId, sky2: op.fallbackRoleId } },
+            next: { patchFabricRoles: prevRoles.patchFabricRoles },
           });
         }
       }
@@ -232,53 +233,53 @@ export function invertOperation(op: Operation): Operation {
 }
 
 /**
- * Apply an operation to a shapes array
+ * Apply an operation to a units array
  */
-export function applyOperationToShapes(shapes: Shape[], op: Operation): Shape[] {
+export function applyOperationToUnits(units: Unit[], op: Operation): Unit[] {
   switch (op.type) {
-    case 'add_shape':
-      return [...shapes, op.shape];
+    case 'add_unit':
+      return [...units, op.unit];
 
-    case 'remove_shape':
-      return shapes.filter((s) => s.id !== op.shape.id);
+    case 'remove_unit':
+      return units.filter((u) => u.id !== op.unit.id);
 
-    case 'update_shape': {
-      return shapes.map((s) => {
-        if (s.id === op.shapeId) {
-          return { ...s, ...op.next } as Shape;
+    case 'update_unit': {
+      return units.map((u) => {
+        if (u.id === op.unitId) {
+          return { ...u, ...op.next } as Unit;
         }
-        return s;
+        return u;
       });
     }
 
     case 'update_palette':
     case 'add_role':
     case 'rename_role':
-      // These palette operations don't affect shapes array
-      return shapes;
+      // These palette operations don't affect units array
+      return units;
 
     case 'remove_role': {
       // When undoing a remove (via inverted add_role), we need to restore
-      // the original role assignments to affected shapes
+      // the original role assignments to affected units
       // This is handled by the store directly when applying the inverted operation
-      // For the forward remove operation, shapes are already reassigned before recording
-      return shapes;
+      // For the forward remove operation, units are already reassigned before recording
+      return units;
     }
 
     case 'resize_grid':
-      // When undoing a shrink (going back to larger), restore removed shapes
-      // When redoing a shrink (going to smaller), remove out-of-bounds shapes
+      // When undoing a shrink (going back to larger), restore removed units
+      // When redoing a shrink (going to smaller), remove out-of-bounds units
       if (op.nextSize > op.prevSize) {
-        // Expanding: restore previously removed shapes
-        return [...shapes, ...op.removedShapes];
+        // Expanding: restore previously removed units
+        return [...units, ...op.removedUnits];
       } else {
-        // Shrinking: remove shapes that would be removed
-        const removedIds = new Set(op.removedShapes.map((s) => s.id));
-        return shapes.filter((s) => !removedIds.has(s.id));
+        // Shrinking: remove units that would be removed
+        const removedIds = new Set(op.removedUnits.map((u) => u.id));
+        return units.filter((u) => !removedIds.has(u.id));
       }
 
     case 'batch':
-      return op.operations.reduce(applyOperationToShapes, shapes);
+      return op.operations.reduce(applyOperationToUnits, units);
   }
 }
 
@@ -306,14 +307,14 @@ export function applyOperationToGridSize(currentSize: GridSize, op: Operation): 
 }
 
 /**
- * Find shapes that would be out of bounds for a given grid size
+ * Find units that would be out of bounds for a given grid size
  */
-export function getShapesOutOfBounds(shapes: Shape[], gridSize: GridSize): Shape[] {
-  return shapes.filter((shape) => {
-    const { row, col } = shape.position;
-    const { rows: spanRows, cols: spanCols } = shape.span;
+export function getUnitsOutOfBounds(units: Unit[], gridSize: GridSize): Unit[] {
+  return units.filter((unit) => {
+    const { row, col } = unit.position;
+    const { rows: spanRows, cols: spanCols } = unit.span;
 
-    // Check if any part of the shape extends beyond the new grid bounds
+    // Check if any part of the unit extends beyond the new grid bounds
     return (
       row >= gridSize ||
       col >= gridSize ||
@@ -375,65 +376,36 @@ export function applyOperationToPalette(palette: Palette, op: Operation): Palett
 }
 
 /**
- * Extract the role state from a shape for recording in undo operations
+ * Extract the role state from a unit for recording in undo operations
  */
-export function extractRolesFromShape(shape: Shape): ShapeRoleState {
-  if (shape.type === 'square') {
-    return { fabricRole: shape.fabricRole };
+export function extractRolesFromUnit(unit: Unit): UnitRoleState {
+  if (unit.type === 'square') {
+    return { fabricRole: unit.fabricRole };
   }
-  if (shape.type === 'hst') {
+  if (unit.type === 'hst') {
     return {
-      fabricRole: shape.fabricRole,
-      secondaryFabricRole: shape.secondaryFabricRole,
+      fabricRole: unit.fabricRole,
+      secondaryFabricRole: unit.secondaryFabricRole,
     };
   }
-  if (shape.type === 'flying_geese') {
-    const fg = shape as FlyingGeeseShape;
+  if (unit.type === 'flying_geese') {
+    const fg = unit as FlyingGeeseUnit;
     return {
-      partFabricRoles: { ...fg.partFabricRoles },
+      patchFabricRoles: { ...fg.patchFabricRoles },
     };
   }
-  if (shape.type === 'qst') {
-    const qst = shape as QstShape;
+  if (unit.type === 'qst') {
+    const qst = unit as QstUnit;
     return {
-      qstPartFabricRoles: { ...qst.partFabricRoles },
+      qstPatchFabricRoles: { ...qst.patchFabricRoles },
     };
   }
   return {};
 }
 
 /**
- * Get all shapes that use a specific fabric role
+ * Get all units that use a specific fabric role
  */
-export function getShapesUsingRole(shapes: Shape[], roleId: FabricRoleId): Shape[] {
-  return shapes.filter((shape) => {
-    if (shape.type === 'square' || shape.type === 'hst') {
-      if (shape.fabricRole === roleId) return true;
-    }
-    if (shape.type === 'hst') {
-      if (shape.secondaryFabricRole === roleId) return true;
-    }
-    if (shape.type === 'flying_geese') {
-      const fg = shape as FlyingGeeseShape;
-      if (
-        fg.partFabricRoles.goose === roleId ||
-        fg.partFabricRoles.sky1 === roleId ||
-        fg.partFabricRoles.sky2 === roleId
-      ) {
-        return true;
-      }
-    }
-    if (shape.type === 'qst') {
-      const qst = shape as QstShape;
-      if (
-        qst.partFabricRoles.top === roleId ||
-        qst.partFabricRoles.right === roleId ||
-        qst.partFabricRoles.bottom === roleId ||
-        qst.partFabricRoles.left === roleId
-      ) {
-        return true;
-      }
-    }
-    return false;
-  });
+export function getUnitsUsingRole(units: Unit[], roleId: FabricRoleId): Unit[] {
+  return units.filter((unit) => unitUsesRole(unit, roleId));
 }

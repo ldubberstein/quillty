@@ -1,22 +1,22 @@
 'use client';
 
-import type { ShapeSelectionType } from '@quillty/core';
+import type { UnitSelectionType } from '@quillty/core';
 
 /**
- * Shape option for the library panel
+ * Unit option for the library panel
  */
-export interface ShapeOption {
+export interface UnitOption {
   id: string;
   label: string;
   icon: React.ReactNode;
-  selection: ShapeSelectionType;
+  selection: UnitSelectionType;
   wide?: boolean;
 }
 
 /**
- * All available shape options for the library
+ * All available unit options for the library
  */
-export const SHAPE_OPTIONS: ShapeOption[] = [
+export const UNIT_OPTIONS: UnitOption[] = [
   {
     id: 'square',
     label: 'Square',
@@ -100,16 +100,16 @@ export const SHAPE_OPTIONS: ShapeOption[] = [
   },
 ];
 
-interface ShapeThumbnailProps {
-  option: ShapeOption;
+interface UnitThumbnailProps {
+  option: UnitOption;
   isSelected: boolean;
   onClick: () => void;
 }
 
 /**
- * ShapeThumbnail - Individual shape button for the library panel
+ * UnitThumbnail - Individual unit button for the library panel
  */
-export function ShapeThumbnail({ option, isSelected, onClick }: ShapeThumbnailProps) {
+export function UnitThumbnail({ option, isSelected, onClick }: UnitThumbnailProps) {
   return (
     <button
       onClick={onClick}
@@ -132,3 +132,11 @@ export function ShapeThumbnail({ option, isSelected, onClick }: ShapeThumbnailPr
     </button>
   );
 }
+
+// Backwards-compatible re-exports
+/** @deprecated Use UnitOption instead */
+export type ShapeOption = UnitOption;
+/** @deprecated Use UNIT_OPTIONS instead */
+export const SHAPE_OPTIONS = UNIT_OPTIONS;
+/** @deprecated Use UnitThumbnail instead */
+export const ShapeThumbnail = UnitThumbnail;

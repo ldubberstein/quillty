@@ -8,7 +8,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SquareRenderer } from './SquareRenderer';
-import type { SquareShape, Palette } from '@quillty/core';
+import type { SquareUnit, Palette } from '@quillty/core';
 
 describe('SquareRenderer', () => {
   const mockPalette: Palette = {
@@ -20,7 +20,7 @@ describe('SquareRenderer', () => {
     ],
   };
 
-  const mockShape: SquareShape = {
+  const mockUnit: SquareUnit = {
     id: 'test-square-1',
     type: 'square',
     position: { row: 0, col: 0 },
@@ -29,7 +29,7 @@ describe('SquareRenderer', () => {
   };
 
   const defaultProps = {
-    shape: mockShape,
+    unit: mockUnit,
     cellSize: 100,
     offsetX: 50,
     offsetY: 50,
@@ -61,11 +61,11 @@ describe('SquareRenderer', () => {
     });
 
     it('calculates correct position for cell (1,2)', () => {
-      const shape: SquareShape = {
-        ...mockShape,
+      const unit: SquareUnit = {
+        ...mockUnit,
         position: { row: 1, col: 2 },
       };
-      render(<SquareRenderer {...defaultProps} shape={shape} />);
+      render(<SquareRenderer {...defaultProps} unit={unit} />);
       const rect = screen.getByTestId('konva-rect');
       // x = 50 + (2 * 100) + 1 = 251
       // y = 50 + (1 * 100) + 1 = 151
@@ -100,31 +100,31 @@ describe('SquareRenderer', () => {
     });
 
     it('uses background color when fabricRole is background', () => {
-      const shape: SquareShape = {
-        ...mockShape,
+      const unit: SquareUnit = {
+        ...mockUnit,
         fabricRole: 'background',
       };
-      render(<SquareRenderer {...defaultProps} shape={shape} />);
+      render(<SquareRenderer {...defaultProps} unit={unit} />);
       const rect = screen.getByTestId('konva-rect');
       expect(rect).toHaveAttribute('fill', '#FFFFFF');
     });
 
     it('uses accent1 color when fabricRole is accent1', () => {
-      const shape: SquareShape = {
-        ...mockShape,
+      const unit: SquareUnit = {
+        ...mockUnit,
         fabricRole: 'accent1',
       };
-      render(<SquareRenderer {...defaultProps} shape={shape} />);
+      render(<SquareRenderer {...defaultProps} unit={unit} />);
       const rect = screen.getByTestId('konva-rect');
       expect(rect).toHaveAttribute('fill', '#E85D04');
     });
 
     it('uses fallback color when role not found', () => {
-      const shape: SquareShape = {
-        ...mockShape,
+      const unit: SquareUnit = {
+        ...mockUnit,
         fabricRole: 'nonexistent',
       };
-      render(<SquareRenderer {...defaultProps} shape={shape} />);
+      render(<SquareRenderer {...defaultProps} unit={unit} />);
       const rect = screen.getByTestId('konva-rect');
       expect(rect).toHaveAttribute('fill', '#CCCCCC');
     });

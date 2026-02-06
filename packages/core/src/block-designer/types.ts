@@ -1,8 +1,8 @@
 /**
  * Block Designer Types
  *
- * Shape-centric data model per DATA_MODEL.md
- * Shapes: SquareShape, HstShape, FlyingGeeseShape, QstShape
+ * Unit-centric data model per DATA_MODEL.md
+ * Units: SquareUnit, HstUnit, FlyingGeeseUnit, QstUnit
  */
 
 // =============================================================================
@@ -25,20 +25,20 @@ export type GridSize = 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 export type Rotation = 0 | 90 | 180 | 270;
 
 // =============================================================================
-// Shape Types
+// Unit Types
 // =============================================================================
 
 /**
- * Shape types
+ * Unit types
  * - square: 1×1 solid square
  * - hst: Half-square triangle (2 triangles in 1 cell)
  * - flying_geese: 2:1 ratio rectangle with center + side triangles
  * - qst: Quarter-square triangle (4 triangles in 1 cell)
  */
-export type ShapeType = 'square' | 'hst' | 'flying_geese' | 'qst';
+export type UnitType = 'square' | 'hst' | 'flying_geese' | 'qst';
 
 /**
- * HST variants (pre-rotated orientations for shape picker)
+ * HST variants (pre-rotated orientations for unit picker)
  * - nw: ◸ diagonal from top-left to bottom-right, fill top-left triangle
  * - ne: ◹ diagonal from top-right to bottom-left, fill top-right triangle
  * - sw: ◺ diagonal from top-right to bottom-left, fill bottom-left triangle
@@ -52,13 +52,13 @@ export type HstVariant = 'nw' | 'ne' | 'sw' | 'se';
 export type FlyingGeeseDirection = 'up' | 'down' | 'left' | 'right';
 
 /**
- * QST part names for fabric role assignment
+ * QST patch names for fabric role assignment
  * Named by compass direction from center
  */
-export type QstPartId = 'top' | 'right' | 'bottom' | 'left';
+export type QstPatchId = 'top' | 'right' | 'bottom' | 'left';
 
-/** Fabric roles for each part of a QST shape */
-export interface QstPartRoles {
+/** Fabric roles for each patch of a QST unit */
+export interface QstPatchRoles {
   /** Top triangle */
   top: FabricRoleId;
   /** Right triangle */
@@ -79,7 +79,7 @@ export interface GridPosition {
   col: number;
 }
 
-/** How many cells a shape occupies */
+/** How many cells a unit occupies */
 export interface Span {
   rows: number;
   cols: number;
@@ -115,31 +115,31 @@ export interface Palette {
 }
 
 // =============================================================================
-// Shape Definitions
+// Unit Definitions
 // =============================================================================
 
-/** Base shape interface - all shapes extend this */
-export interface BaseShape {
+/** Base unit interface - all units extend this */
+export interface BaseUnit {
   /** Unique ID within block, enables undo/redo */
   id: UUID;
-  /** Shape type discriminator */
-  type: ShapeType;
+  /** Unit type discriminator */
+  type: UnitType;
   /** Top-left corner position in grid */
   position: GridPosition;
-  /** How many cells shape occupies */
+  /** How many cells unit occupies */
   span: Span;
   /** Primary fabric role reference */
   fabricRole: FabricRoleId;
 }
 
-/** Square shape - simplest 1×1 shape */
-export interface SquareShape extends BaseShape {
+/** Square unit - simplest 1×1 unit */
+export interface SquareUnit extends BaseUnit {
   type: 'square';
   span: { rows: 1; cols: 1 };
 }
 
 /** Half-square triangle - two triangles in one cell */
-export interface HstShape extends BaseShape {
+export interface HstUnit extends BaseUnit {
   type: 'hst';
   span: { rows: 1; cols: 1 };
   /** Which corner/orientation the primary triangle fills */
@@ -149,15 +149,15 @@ export interface HstShape extends BaseShape {
 }
 
 /**
- * Flying Geese part names for fabric role assignment
+ * Flying Geese patch names for fabric role assignment
  * - goose: Center triangle (the "goose")
  * - sky1: First side triangle
  * - sky2: Second side triangle
  */
-export type FlyingGeesePartId = 'goose' | 'sky1' | 'sky2';
+export type FlyingGeesePatchId = 'goose' | 'sky1' | 'sky2';
 
-/** Fabric roles for each part of a Flying Geese shape */
-export interface FlyingGeesePartRoles {
+/** Fabric roles for each patch of a Flying Geese unit */
+export interface FlyingGeesePatchRoles {
   /** Center triangle (the "goose") */
   goose: FabricRoleId;
   /** First side triangle */
@@ -166,33 +166,33 @@ export interface FlyingGeesePartRoles {
   sky2: FabricRoleId;
 }
 
-/** Flying Geese - 2:1 ratio spanning 2 cells with 3 independently colorable parts */
-export interface FlyingGeeseShape extends Omit<BaseShape, 'fabricRole'> {
+/** Flying Geese - 2:1 ratio spanning 2 cells with 3 independently colorable patches */
+export interface FlyingGeeseUnit extends Omit<BaseUnit, 'fabricRole'> {
   type: 'flying_geese';
   /** Either horizontal (1×2) or vertical (2×1) */
   span: { rows: 1; cols: 2 } | { rows: 2; cols: 1 };
   /** Direction the center "goose" triangle points */
   direction: FlyingGeeseDirection;
-  /** Fabric roles for each part - enables independent coloring of all 3 triangles */
-  partFabricRoles: FlyingGeesePartRoles;
+  /** Fabric roles for each patch - enables independent coloring of all 3 triangles */
+  patchFabricRoles: FlyingGeesePatchRoles;
 }
 
 /**
- * Quarter-Square Triangle - 4 triangles in one cell with independently colorable parts
+ * Quarter-Square Triangle - 4 triangles in one cell with independently colorable patches
  *
- * Note: QST has no variants - the shape geometry is always the same (4 triangles meeting at center).
- * Visual variety comes from coloring the 4 triangles differently. The shape has 2-fold rotational
- * symmetry, so rotation is achieved by cycling the part colors.
+ * Note: QST has no variants - the unit geometry is always the same (4 triangles meeting at center).
+ * Visual variety comes from coloring the 4 triangles differently. The unit has 2-fold rotational
+ * symmetry, so rotation is achieved by cycling the patch colors.
  */
-export interface QstShape extends Omit<BaseShape, 'fabricRole'> {
+export interface QstUnit extends Omit<BaseUnit, 'fabricRole'> {
   type: 'qst';
   span: { rows: 1; cols: 1 };
   /** Fabric roles for each of the 4 triangles */
-  partFabricRoles: QstPartRoles;
+  patchFabricRoles: QstPatchRoles;
 }
 
-/** Union type for all shapes */
-export type Shape = SquareShape | HstShape | FlyingGeeseShape | QstShape;
+/** Union type for all units */
+export type Unit = SquareUnit | HstUnit | FlyingGeeseUnit | QstUnit;
 
 // =============================================================================
 // Block
@@ -221,8 +221,8 @@ export interface Block {
   /** Grid configuration (2×2, 3×3, or 4×4) */
   gridSize: GridSize;
 
-  /** Shape-centric content - the core design data */
-  shapes: Shape[];
+  /** Unit-centric content - the core design data */
+  units: Unit[];
 
   /** Preview palette for standalone display */
   previewPalette: Palette;
@@ -239,16 +239,16 @@ export interface Block {
 }
 
 // =============================================================================
-// Helper Types for Shape Creation
+// Helper Types for Unit Creation
 // =============================================================================
 
-/** Input for creating a new SquareShape (without auto-generated fields) */
+/** Input for creating a new SquareUnit (without auto-generated fields) */
 export interface CreateSquareInput {
   position: GridPosition;
   fabricRole: FabricRoleId;
 }
 
-/** Input for creating a new HstShape */
+/** Input for creating a new HstUnit */
 export interface CreateHstInput {
   position: GridPosition;
   variant: HstVariant;
@@ -256,23 +256,23 @@ export interface CreateHstInput {
   secondaryFabricRole: FabricRoleId;
 }
 
-/** Input for creating a new FlyingGeeseShape */
+/** Input for creating a new FlyingGeeseUnit */
 export interface CreateFlyingGeeseInput {
   position: GridPosition;
   direction: FlyingGeeseDirection;
-  /** Fabric roles for each part (goose, sky1, sky2) */
-  partFabricRoles: FlyingGeesePartRoles;
+  /** Fabric roles for each patch (goose, sky1, sky2) */
+  patchFabricRoles: FlyingGeesePatchRoles;
 }
 
-/** Input for creating a new QstShape */
+/** Input for creating a new QstUnit */
 export interface CreateQstInput {
   position: GridPosition;
-  /** Fabric roles for each part (top, right, bottom, left) */
-  partFabricRoles: QstPartRoles;
+  /** Fabric roles for each patch (top, right, bottom, left) */
+  patchFabricRoles: QstPatchRoles;
 }
 
-/** Union of all shape creation inputs */
-export type CreateShapeInput = CreateSquareInput | CreateHstInput | CreateFlyingGeeseInput | CreateQstInput;
+/** Union of all unit creation inputs */
+export type CreateUnitInput = CreateSquareInput | CreateHstInput | CreateFlyingGeeseInput | CreateQstInput;
 
 // =============================================================================
 // Block Designer State Types
@@ -281,7 +281,7 @@ export type CreateShapeInput = CreateSquareInput | CreateHstInput | CreateFlying
 /** Designer interaction modes */
 export type DesignerMode =
   | 'idle'
-  | 'placing_shape'
+  | 'placing_unit'
   | 'placing_flying_geese_second'
   | 'paint_mode'
   | 'preview';
@@ -302,14 +302,14 @@ export interface FlyingGeesePlacementState {
 }
 
 // =============================================================================
-// Shape Selection (Library)
+// Unit Selection (Library)
 // =============================================================================
 
 /**
- * Shape selection from library for placement
- * Used when user selects a shape from the ShapeLibraryPanel
+ * Unit selection from library for placement
+ * Used when user selects a unit from the ShapeLibraryPanel
  */
-export type ShapeSelectionType =
+export type UnitSelectionType =
   | { type: 'square' }
   | { type: 'hst'; variant: HstVariant }
   | { type: 'flying_geese' }

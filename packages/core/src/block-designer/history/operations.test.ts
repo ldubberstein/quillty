@@ -1,50 +1,50 @@
 import { describe, it, expect } from 'vitest';
 import {
   invertOperation,
-  applyOperationToShapes,
+  applyOperationToUnits,
   applyOperationToPalette,
   applyOperationToGridSize,
-  getShapesOutOfBounds,
+  getUnitsOutOfBounds,
   type Operation,
 } from './operations';
-import type { Shape, Palette, GridSize } from '../types';
+import type { Unit, Palette, GridSize } from '../types';
 
 describe('operations', () => {
   describe('invertOperation', () => {
-    it('inverts add_shape to remove_shape', () => {
-      const shape: Shape = {
+    it('inverts add_unit to remove_unit', () => {
+      const unit: Unit = {
         id: 'shape-1',
         type: 'square',
         position: { row: 0, col: 0 },
         span: { rows: 1, cols: 1 },
         fabricRole: 'background',
       };
-      const op: Operation = { type: 'add_shape', shape };
+      const op: Operation = { type: 'add_unit', unit };
 
       const inverted = invertOperation(op);
 
-      expect(inverted).toEqual({ type: 'remove_shape', shape });
+      expect(inverted).toEqual({ type: 'remove_unit', unit });
     });
 
-    it('inverts remove_shape to add_shape', () => {
-      const shape: Shape = {
+    it('inverts remove_unit to add_unit', () => {
+      const unit: Unit = {
         id: 'shape-1',
         type: 'square',
         position: { row: 0, col: 0 },
         span: { rows: 1, cols: 1 },
         fabricRole: 'background',
       };
-      const op: Operation = { type: 'remove_shape', shape };
+      const op: Operation = { type: 'remove_unit', unit };
 
       const inverted = invertOperation(op);
 
-      expect(inverted).toEqual({ type: 'add_shape', shape });
+      expect(inverted).toEqual({ type: 'add_unit', unit });
     });
 
-    it('inverts update_shape by swapping prev and next', () => {
+    it('inverts update_unit by swapping prev and next', () => {
       const op: Operation = {
-        type: 'update_shape',
-        shapeId: 'shape-1',
+        type: 'update_unit',
+        unitId: 'shape-1',
         prev: { fabricRole: 'background' },
         next: { fabricRole: 'accent1' },
       };
@@ -52,8 +52,8 @@ describe('operations', () => {
       const inverted = invertOperation(op);
 
       expect(inverted).toEqual({
-        type: 'update_shape',
-        shapeId: 'shape-1',
+        type: 'update_unit',
+        unitId: 'shape-1',
         prev: { fabricRole: 'accent1' },
         next: { fabricRole: 'background' },
       });
@@ -78,14 +78,14 @@ describe('operations', () => {
     });
 
     it('inverts batch operation in reverse order', () => {
-      const shape1: Shape = {
+      const unit1: Unit = {
         id: 'shape-1',
         type: 'square',
         position: { row: 0, col: 0 },
         span: { rows: 1, cols: 1 },
         fabricRole: 'background',
       };
-      const shape2: Shape = {
+      const unit2: Unit = {
         id: 'shape-2',
         type: 'square',
         position: { row: 1, col: 1 },
@@ -95,8 +95,8 @@ describe('operations', () => {
       const op: Operation = {
         type: 'batch',
         operations: [
-          { type: 'add_shape', shape: shape1 },
-          { type: 'add_shape', shape: shape2 },
+          { type: 'add_unit', unit: unit1 },
+          { type: 'add_unit', unit: unit2 },
         ],
       };
 
@@ -105,71 +105,71 @@ describe('operations', () => {
       expect(inverted).toEqual({
         type: 'batch',
         operations: [
-          { type: 'remove_shape', shape: shape2 },
-          { type: 'remove_shape', shape: shape1 },
+          { type: 'remove_unit', unit: unit2 },
+          { type: 'remove_unit', unit: unit1 },
         ],
       });
     });
   });
 
-  describe('applyOperationToShapes', () => {
-    it('adds a shape for add_shape operation', () => {
-      const shapes: Shape[] = [];
-      const newShape: Shape = {
+  describe('applyOperationToUnits', () => {
+    it('adds a unit for add_unit operation', () => {
+      const units: Unit[] = [];
+      const newUnit: Unit = {
         id: 'shape-1',
         type: 'square',
         position: { row: 0, col: 0 },
         span: { rows: 1, cols: 1 },
         fabricRole: 'background',
       };
-      const op: Operation = { type: 'add_shape', shape: newShape };
+      const op: Operation = { type: 'add_unit', unit: newUnit };
 
-      const result = applyOperationToShapes(shapes, op);
+      const result = applyOperationToUnits(units, op);
 
-      expect(result).toEqual([newShape]);
+      expect(result).toEqual([newUnit]);
     });
 
-    it('removes a shape for remove_shape operation', () => {
-      const shape: Shape = {
+    it('removes a unit for remove_unit operation', () => {
+      const unit: Unit = {
         id: 'shape-1',
         type: 'square',
         position: { row: 0, col: 0 },
         span: { rows: 1, cols: 1 },
         fabricRole: 'background',
       };
-      const shapes: Shape[] = [shape];
-      const op: Operation = { type: 'remove_shape', shape };
+      const units: Unit[] = [unit];
+      const op: Operation = { type: 'remove_unit', unit };
 
-      const result = applyOperationToShapes(shapes, op);
+      const result = applyOperationToUnits(units, op);
 
       expect(result).toEqual([]);
     });
 
-    it('updates a shape for update_shape operation', () => {
-      const shape: Shape = {
+    it('updates a unit for update_unit operation', () => {
+      const unit: Unit = {
         id: 'shape-1',
         type: 'square',
         position: { row: 0, col: 0 },
         span: { rows: 1, cols: 1 },
         fabricRole: 'background',
       };
-      const shapes: Shape[] = [shape];
+      const units: Unit[] = [unit];
       const op: Operation = {
-        type: 'update_shape',
-        shapeId: 'shape-1',
+        type: 'update_unit',
+        unitId: 'shape-1',
         prev: { fabricRole: 'background' },
         next: { fabricRole: 'accent1' },
       };
 
-      const result = applyOperationToShapes(shapes, op);
+      const result = applyOperationToUnits(units, op);
 
       expect(result).toEqual([
-        { ...shape, fabricRole: 'accent1' },
+        { ...unit, fabricRole: 'accent1' },
       ]);
     });
 
-    it('returns unchanged shapes for update_palette operation', () => {
-      const shapes: Shape[] = [
+    it('returns unchanged units for update_palette operation', () => {
+      const units: Unit[] = [
         {
           id: 'shape-1',
           type: 'square',
@@ -185,21 +185,21 @@ describe('operations', () => {
         nextColor: '#000',
       };
 
-      const result = applyOperationToShapes(shapes, op);
+      const result = applyOperationToUnits(units, op);
 
-      expect(result).toBe(shapes);
+      expect(result).toBe(units);
     });
 
     it('applies batch operations in order', () => {
-      const shapes: Shape[] = [];
-      const shape1: Shape = {
+      const units: Unit[] = [];
+      const unit1: Unit = {
         id: 'shape-1',
         type: 'square',
         position: { row: 0, col: 0 },
         span: { rows: 1, cols: 1 },
         fabricRole: 'background',
       };
-      const shape2: Shape = {
+      const unit2: Unit = {
         id: 'shape-2',
         type: 'square',
         position: { row: 1, col: 1 },
@@ -209,14 +209,14 @@ describe('operations', () => {
       const op: Operation = {
         type: 'batch',
         operations: [
-          { type: 'add_shape', shape: shape1 },
-          { type: 'add_shape', shape: shape2 },
+          { type: 'add_unit', unit: unit1 },
+          { type: 'add_unit', unit: unit2 },
         ],
       };
 
-      const result = applyOperationToShapes(shapes, op);
+      const result = applyOperationToUnits(units, op);
 
-      expect(result).toEqual([shape1, shape2]);
+      expect(result).toEqual([unit1, unit2]);
     });
   });
 
@@ -242,15 +242,15 @@ describe('operations', () => {
       expect(result.roles[1].color).toBe('#FF0000');
     });
 
-    it('returns unchanged palette for shape operations', () => {
-      const shape: Shape = {
+    it('returns unchanged palette for unit operations', () => {
+      const unit: Unit = {
         id: 'shape-1',
         type: 'square',
         position: { row: 0, col: 0 },
         span: { rows: 1, cols: 1 },
         fabricRole: 'background',
       };
-      const op: Operation = { type: 'add_shape', shape };
+      const op: Operation = { type: 'add_unit', unit };
 
       const result = applyOperationToPalette(basePalette, op);
 
@@ -284,14 +284,14 @@ describe('operations', () => {
   });
 
   describe('resize_grid operations', () => {
-    const shape1: Shape = {
+    const unit1: Unit = {
       id: 'shape-1',
       type: 'square',
       position: { row: 0, col: 0 },
       span: { rows: 1, cols: 1 },
       fabricRole: 'background',
     };
-    const shape2: Shape = {
+    const unit2: Unit = {
       id: 'shape-2',
       type: 'square',
       position: { row: 4, col: 4 },
@@ -305,7 +305,7 @@ describe('operations', () => {
           type: 'resize_grid',
           prevSize: 5,
           nextSize: 3,
-          removedShapes: [shape2],
+          removedUnits: [unit2],
         };
 
         const inverted = invertOperation(op);
@@ -314,41 +314,41 @@ describe('operations', () => {
           type: 'resize_grid',
           prevSize: 3,
           nextSize: 5,
-          removedShapes: [shape2],
+          removedUnits: [unit2],
         });
       });
     });
 
-    describe('applyOperationToShapes', () => {
-      it('restores shapes when expanding (undo shrink)', () => {
-        const shapes: Shape[] = [shape1];
+    describe('applyOperationToUnits', () => {
+      it('restores units when expanding (undo shrink)', () => {
+        const units: Unit[] = [unit1];
         const op: Operation = {
           type: 'resize_grid',
           prevSize: 3,
           nextSize: 5,
-          removedShapes: [shape2],
+          removedUnits: [unit2],
         };
 
-        const result = applyOperationToShapes(shapes, op);
+        const result = applyOperationToUnits(units, op);
 
         expect(result).toHaveLength(2);
-        expect(result).toContainEqual(shape1);
-        expect(result).toContainEqual(shape2);
+        expect(result).toContainEqual(unit1);
+        expect(result).toContainEqual(unit2);
       });
 
-      it('removes shapes when shrinking (redo shrink)', () => {
-        const shapes: Shape[] = [shape1, shape2];
+      it('removes units when shrinking (redo shrink)', () => {
+        const units: Unit[] = [unit1, unit2];
         const op: Operation = {
           type: 'resize_grid',
           prevSize: 5,
           nextSize: 3,
-          removedShapes: [shape2],
+          removedUnits: [unit2],
         };
 
-        const result = applyOperationToShapes(shapes, op);
+        const result = applyOperationToUnits(units, op);
 
         expect(result).toHaveLength(1);
-        expect(result).toContainEqual(shape1);
+        expect(result).toContainEqual(unit1);
       });
     });
 
@@ -358,7 +358,7 @@ describe('operations', () => {
           type: 'resize_grid',
           prevSize: 3,
           nextSize: 5,
-          removedShapes: [],
+          removedUnits: [],
         };
 
         const result = applyOperationToGridSize(3, op);
@@ -367,7 +367,7 @@ describe('operations', () => {
       });
 
       it('returns null for non-grid-size operations', () => {
-        const op: Operation = { type: 'add_shape', shape: shape1 };
+        const op: Operation = { type: 'add_unit', unit: unit1 };
 
         const result = applyOperationToGridSize(3, op);
 
@@ -378,12 +378,12 @@ describe('operations', () => {
         const op: Operation = {
           type: 'batch',
           operations: [
-            { type: 'add_shape', shape: shape1 },
+            { type: 'add_unit', unit: unit1 },
             {
               type: 'resize_grid',
               prevSize: 3,
               nextSize: 6,
-              removedShapes: [],
+              removedUnits: [],
             },
           ],
         };
@@ -397,7 +397,7 @@ describe('operations', () => {
         const op: Operation = {
           type: 'batch',
           operations: [
-            { type: 'add_shape', shape: shape1 },
+            { type: 'add_unit', unit: unit1 },
           ],
         };
 
@@ -408,9 +408,9 @@ describe('operations', () => {
     });
   });
 
-  describe('getShapesOutOfBounds', () => {
-    it('returns empty array when all shapes are in bounds', () => {
-      const shapes: Shape[] = [
+  describe('getUnitsOutOfBounds', () => {
+    it('returns empty array when all units are in bounds', () => {
+      const units: Unit[] = [
         {
           id: 'shape-1',
           type: 'square',
@@ -427,13 +427,13 @@ describe('operations', () => {
         },
       ];
 
-      const result = getShapesOutOfBounds(shapes, 3);
+      const result = getUnitsOutOfBounds(units, 3);
 
       expect(result).toHaveLength(0);
     });
 
-    it('returns shapes outside given grid size', () => {
-      const shapes: Shape[] = [
+    it('returns units outside given grid size', () => {
+      const units: Unit[] = [
         {
           id: 'shape-1',
           type: 'square',
@@ -450,33 +450,33 @@ describe('operations', () => {
         },
       ];
 
-      const result = getShapesOutOfBounds(shapes, 3);
+      const result = getUnitsOutOfBounds(units, 3);
 
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('shape-2');
     });
 
-    it('considers shape span when checking bounds', () => {
-      const shapes: Shape[] = [
+    it('considers unit span when checking bounds', () => {
+      const units: Unit[] = [
         {
           id: 'fg-1',
           type: 'flying_geese',
           position: { row: 2, col: 2 },
           span: { rows: 1, cols: 2 },
           direction: 'right',
-          partFabricRoles: { goose: 'feature', sky1: 'background', sky2: 'background' },
-        } as Shape,
+          patchFabricRoles: { goose: 'feature', sky1: 'background', sky2: 'background' },
+        } as Unit,
       ];
 
       // Position (2,2) with span (1,2) means it occupies (2,2) and (2,3)
       // For grid size 3, col 3 is out of bounds
-      const result = getShapesOutOfBounds(shapes, 3);
+      const result = getUnitsOutOfBounds(units, 3);
 
       expect(result).toHaveLength(1);
     });
 
-    it('returns all out-of-bounds shapes', () => {
-      const shapes: Shape[] = [
+    it('returns all out-of-bounds units', () => {
+      const units: Unit[] = [
         {
           id: 'shape-1',
           type: 'square',
@@ -500,7 +500,7 @@ describe('operations', () => {
         },
       ];
 
-      const result = getShapesOutOfBounds(shapes, 4);
+      const result = getUnitsOutOfBounds(units, 4);
 
       expect(result).toHaveLength(3);
     });
